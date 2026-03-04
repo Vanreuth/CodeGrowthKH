@@ -13,11 +13,8 @@ export default function HomeLayout({
         <TopBar />
       </header>
 
-      {/* Main */}
-      <main className="flex-1">
-        <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
-          {children}
-        </div>
+      <main className="flex-1 w-full overflow-x-hidden">
+        {children}
       </main>
 
       {/* Footer */}

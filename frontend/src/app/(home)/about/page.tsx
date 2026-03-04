@@ -18,7 +18,7 @@ import { Button } from "@/components/ui/button";
 
 export default function AboutPage() {
   return (
-    <div className="space-y-10 pb-16">
+    <div className="space-y-10 pb-16 mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 mt-10">
       {/* ── Hero ────────────────────────────────────────────────────────────── */}
       <section className="relative overflow-hidden rounded-3xl border border-slate-200 bg-white/80 p-7 shadow-sm md:p-12 dark:border-white/10 dark:bg-slate-900/70">
         {/* Decorative blobs */}

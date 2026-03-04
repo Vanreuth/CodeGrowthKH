@@ -147,7 +147,7 @@ export function FeaturedCoursesSection() {
   }, [courses, query, selectedCategory]);
 
   return (
-    <section className="container-app py-20">
+    <section className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-20">
       <div className="mx-auto max-w-4xl text-center">
         <div className="mx-auto mb-4 h-1 w-28 rounded-full bg-gradient-to-r from-blue-600 to-indigo-500" />
         <h2 className="text-3xl font-black text-slate-900 dark:text-white md:text-5xl">
@@ -158,7 +158,7 @@ export function FeaturedCoursesSection() {
         </p>
       </div>
 
-      <div className="mx-auto mt-8 max-w-6xl rounded-2xl border border-slate-200/70 bg-white/80 p-4 shadow-sm backdrop-blur dark:border-white/10 dark:bg-slate-900/60">
+      <div className="mx-auto mt-8 max-w-7xl rounded-2xl border border-slate-200/70 bg-white/80 p-4 shadow-sm backdrop-blur dark:border-white/10 dark:bg-slate-900/60">
         <div className="relative">
           <Search className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-400" />
           <Input

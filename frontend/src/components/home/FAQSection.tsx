@@ -5,7 +5,7 @@ import { faqs } from "@/components/constants/home-data";
 export function FAQSection() {
   return (
     <section className="border-y border-slate-100 bg-slate-50/80 py-20 dark:border-white/8 dark:bg-slate-950/50">
-      <div className="container-app">
+      <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mb-12 text-center">
           <Badge className="mb-3 border-emerald-200/60 bg-emerald-50 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300">
             <Layers3 className="mr-1.5 h-3 w-3" />

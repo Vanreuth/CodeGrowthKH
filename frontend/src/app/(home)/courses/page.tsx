@@ -109,7 +109,7 @@ export default function CoursesPage() {
 	const hasActiveFilters = query.trim() !== "" || selectedLevel !== "All" || selectedCategory !== "All";
 
 	return (
-		<div className="space-y-8">
+		<div className="space-y-8 mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 mt-10">
 			{/* ── Page Header ── */}
 			<section className="relative overflow-hidden rounded-3xl border border-white/60 bg-white/60 px-6 py-10 shadow-lg shadow-violet-100/40 backdrop-blur-sm dark:border-white/10 dark:bg-slate-900/50 dark:shadow-black/20 md:px-10">
 				<div className="pointer-events-none absolute -top-12 -right-12 h-40 w-40 rounded-full bg-violet-300/25 blur-2xl dark:bg-violet-700/15" />

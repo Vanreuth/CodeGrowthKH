@@ -80,7 +80,7 @@ export function RoadmapSection() {
 
   return (
     <section className="bg-gradient-to-br from-slate-50 via-blue-50/30 to-violet-50/30 py-20 dark:from-slate-950 dark:via-blue-950/10 dark:to-violet-950/10">
-      <div className="container-app">
+      <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mb-10 text-center">
           <div className="mx-auto mb-4 h-1 w-24 rounded-full bg-gradient-to-r from-blue-500 to-violet-500" />
           <Badge className="mb-3 border-violet-200/60 bg-violet-50 text-violet-700 dark:border-violet-500/30 dark:bg-violet-500/10 dark:text-violet-300">

@@ -1,50 +1,163 @@
 import Link from "next/link";
-import { Facebook, GraduationCap, Mail, MapPin, Phone, Youtube } from "lucide-react";
+import {
+  ArrowUpRight,
+  Facebook,
+  GraduationCap,
+  Mail,
+  MapPin,
+  Phone,
+  Send,
+  Youtube,
+} from "lucide-react";
 
 const quickLinks = [
-  { href: "/", label: "ទំព័រដើម", en: "Home" },
-  { href: "/courses", label: "វគ្គសិក្សា", en: "Courses" },
+  { href: "/",        label: "ទំព័រដើម",     en: "Home"    },
+  { href: "/courses", label: "វគ្គសិក្សា",   en: "Courses" },
   { href: "/roadmap", label: "ផែនទីសិក្សា", en: "Roadmap" },
-  { href: "/about", label: "អំពីយើង", en: "About" },
-  { href: "/contact", label: "ទំនាក់ទំនង", en: "Contact" },
+  { href: "/about",   label: "អំពីយើង",     en: "About"   },
+  { href: "/contact", label: "ទំនាក់ទំនង",   en: "Contact" },
 ];
 
-const techStack = ["HTML & CSS", "JavaScript", "React", "Next.js", "Spring Boot", "Docker"];
+const courses = [
+  { label: "HTML & CSS មូលដ្ឋានគ្រឹះ",      href: "/courses" },
+  { label: "JavaScript ពីដំបូង",            href: "/courses" },
+  { label: "React.js UI ទំនើប",             href: "/courses" },
+  { label: "Next.js Full-Stack",            href: "/courses" },
+  { label: "Spring Boot Backend",           href: "/courses" },
+  { label: "Docker & DevOps",               href: "/courses" },
+];
+
+const socials = [
+  {
+    href: "#",
+    icon: Facebook,
+    label: "Facebook",
+    color: "hover:bg-blue-600 hover:border-blue-600 hover:text-white",
+  },
+  {
+    href: "#",
+    icon: Youtube,
+    label: "YouTube",
+    color: "hover:bg-red-500 hover:border-red-500 hover:text-white",
+  },
+  {
+    href: "#",
+    icon: Send,
+    label: "Telegram",
+    color: "hover:bg-sky-500 hover:border-sky-500 hover:text-white",
+  },
+];
+
+const contacts = [
+  { icon: Mail,   value: "hello@adutilearning.com", href: "mailto:hello@adutilearning.com" },
+  { icon: Phone,  value: "+855 12 345 678",         href: "tel:+85512345678" },
+  { icon: MapPin, value: "Phnom Penh, Cambodia",    href: "https://maps.google.com/?q=Phnom+Penh" },
+];
 
 export default function Footer() {
   return (
-    <footer className="relative mt-24 overflow-hidden border-t border-blue-100/80 dark:border-white/10">
-      {/* Subtle decorative gradient */}
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-blue-50/60 via-indigo-50/30 to-violet-50/50 dark:from-slate-950 dark:via-blue-950/15 dark:to-violet-950/15" />
+    <footer className="relative mt-24 overflow-hidden">
+      {/* ── Background layers ── */}
+      <div className="absolute inset-0 bg-gradient-to-br from-slate-50 via-blue-50/40 to-violet-50/30 dark:from-slate-950 dark:via-blue-950/20 dark:to-violet-950/20" />
+      {/* Subtle grid pattern */}
+      <div
+        className="pointer-events-none absolute inset-0 opacity-[0.03] dark:opacity-[0.06]"
+        style={{
+          backgroundImage:
+            "linear-gradient(#6366f1 1px, transparent 1px), linear-gradient(to right, #6366f1 1px, transparent 1px)",
+          backgroundSize: "40px 40px",
+        }}
+      />
+      {/* Top border glow */}
+      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-blue-400/40 to-transparent dark:via-blue-500/30" />
 
       <div className="relative">
-        {/* Main footer grid */}
-        <div className="container-app grid gap-10 py-14 sm:grid-cols-2 lg:grid-cols-[1.4fr_0.8fr_0.8fr_1fr]">
-          {/* Brand column */}
-          <div className="space-y-4">
-            <Link href="/" className="group inline-flex items-center gap-2.5">
-              <div className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-blue-600 to-violet-600 text-white shadow-md shadow-blue-500/25 transition-transform group-hover:scale-105">
-                <GraduationCap className="h-4.5 w-4.5" />
+
+        {/* ── Newsletter banner ─────────────────────────────────────────── */}
+        <div className="border-b border-blue-100/70 dark:border-white/8">
+          <div className="container-app py-10">
+            <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-700 px-7 py-8 shadow-xl shadow-blue-600/15 md:px-10">
+              {/* Decorative blobs */}
+              <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-white/8 blur-2xl" />
+              <div className="pointer-events-none absolute -bottom-10 left-10 h-36 w-36 rounded-full bg-white/5 blur-xl" />
+              <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/25 to-transparent" />
+
+              <div className="relative flex flex-col items-start justify-between gap-6 md:flex-row md:items-center">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-widest text-white/60">
+                    ព័ត៌មានថ្មី
+                  </p>
+                  <h3 className="mt-1.5 text-xl font-extrabold text-white md:text-2xl">
+                    ទទួលការអប់រំ IT ចុងក្រោយ ជាភាសាខ្មែរ
+                  </h3>
+                  <p className="mt-1 text-sm text-blue-100/80">
+                    Course launches, tips, roadmap updates — direct to your inbox.
+                  </p>
+                </div>
+                <div className="flex w-full shrink-0 max-w-sm gap-2">
+                  <input
+                    type="email"
+                    placeholder="Email address..."
+                    className="flex-1 min-w-0 rounded-full border border-white/20 bg-white/15 px-4 py-2.5 text-sm text-white placeholder:text-white/50 backdrop-blur-sm outline-none focus:border-white/40 focus:bg-white/20 transition-all"
+                  />
+                  <button className="shrink-0 inline-flex items-center gap-1.5 rounded-full bg-white px-5 py-2.5 text-sm font-bold text-blue-700 shadow-lg transition-all hover:scale-[1.03] hover:bg-blue-50 hover:shadow-xl active:scale-[0.98]">
+                    Subscribe
+                    <ArrowUpRight className="h-3.5 w-3.5" />
+                  </button>
+                </div>
               </div>
-              <span className="text-base font-bold text-slate-900 dark:text-white">ADUTI Learning</span>
+            </div>
+          </div>
+        </div>
+
+        {/* ── Main footer columns ───────────────────────────────────────── */}
+        <div className="container-app grid gap-10 py-14 sm:grid-cols-2 lg:grid-cols-[1.5fr_0.9fr_1fr_1.1fr]">
+
+          {/* Brand column */}
+          <div className="space-y-5">
+            <Link href="/" className="group inline-flex items-center gap-3">
+              <div className="grid h-10 w-10 place-items-center rounded-[11px] bg-gradient-to-br from-blue-600 to-violet-600 text-white shadow-md shadow-blue-500/30 transition-transform duration-200 group-hover:scale-105">
+                <GraduationCap className="h-5 w-5" />
+              </div>
+              <div className="leading-none">
+                <p className="text-[15px] font-bold text-slate-900 dark:text-white">ADUTI Learning</p>
+                <p className="mt-0.5 text-[11px] text-slate-400 dark:text-slate-500">រៀនកូដជាភាសាខ្មែរ</p>
+              </div>
             </Link>
-            <p className="max-w-xs text-sm leading-relaxed text-slate-600 dark:text-slate-400">
-              វេទិកាសិក្សាដែលផ្តោតលើការអនុវត្តជាក់ស្តែង សម្រាប់អ្នកចង់ក្លាយជា
-              Frontend, Backend និង Fullstack Developer។
+
+            <p className="max-w-[260px] text-sm leading-relaxed text-slate-600 dark:text-slate-400">
+              វេទិកាអប់រំ IT ជាភាសាខ្មែរ ដែលជួយអ្នករៀនក្លាយជា Frontend, Backend
+              និង Fullstack Developer ក្នុង 6–12 ខែ។
             </p>
-            {/* Social links */}
-            <div className="flex items-center gap-2 pt-1">
+
+            {/* Stats pills */}
+            <div className="flex flex-wrap gap-2">
               {[
-                { href: "#", icon: Facebook, label: "Facebook" },
-                { href: "#", icon: Youtube, label: "YouTube" },
-              ].map(({ href, icon: Icon, label }) => (
+                { label: "2,400+ Learners", color: "bg-blue-50 text-blue-700 border-blue-200/60 dark:bg-blue-500/10 dark:text-blue-300 dark:border-blue-500/20" },
+                { label: "30+ Courses", color: "bg-violet-50 text-violet-700 border-violet-200/60 dark:bg-violet-500/10 dark:text-violet-300 dark:border-violet-500/20" },
+                { label: "95% ពេញចិត្ត", color: "bg-emerald-50 text-emerald-700 border-emerald-200/60 dark:bg-emerald-500/10 dark:text-emerald-300 dark:border-emerald-500/20" },
+              ].map((s) => (
+                <span key={s.label} className={`inline-flex rounded-full border px-2.5 py-0.5 text-[11px] font-semibold ${s.color}`}>
+                  {s.label}
+                </span>
+              ))}
+            </div>
+
+            {/* Socials */}
+            <div className="flex items-center gap-2 pt-1">
+              {socials.map(({ href, icon: Icon, label, color }) => (
                 <Link
                   key={label}
                   href={href}
                   aria-label={label}
-                  className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 transition-all hover:border-blue-300 hover:bg-blue-50 hover:text-blue-600 dark:border-white/15 dark:bg-slate-900/60 dark:text-slate-400 dark:hover:border-blue-500/40 dark:hover:bg-blue-950/40 dark:hover:text-blue-300"
+                  title={label}
+                  className={cn(
+                    "inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 shadow-sm transition-all duration-200",
+                    "dark:border-white/10 dark:bg-slate-900/60 dark:text-slate-400",
+                    color
+                  )}
                 >
-                  <Icon className="h-3.5 w-3.5" />
+                  <Icon className="h-4 w-4" />
                 </Link>
               ))}
             </div>
@@ -52,16 +165,23 @@ export default function Footer() {
 
           {/* Quick links */}
           <div>
-            <p className="mb-4 text-xs font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500">Links</p>
-            <ul className="space-y-2.5">
+            <p className="mb-5 text-[11px] font-bold uppercase tracking-[0.12em] text-slate-400 dark:text-slate-500">
+              Navigation
+            </p>
+            <ul className="space-y-3">
               {quickLinks.map((item) => (
                 <li key={item.href}>
                   <Link
                     href={item.href}
-                    className="group inline-flex items-center gap-1.5 text-sm text-slate-600 transition-colors hover:text-blue-700 dark:text-slate-400 dark:hover:text-blue-300"
+                    className="group flex items-center justify-between text-sm text-slate-600 transition-colors hover:text-blue-700 dark:text-slate-400 dark:hover:text-blue-300"
                   >
-                    <span className="h-1 w-1 rounded-full bg-slate-300 transition-colors group-hover:bg-blue-500 dark:bg-slate-600 dark:group-hover:bg-blue-400" />
-                    {item.label}
+                    <span className="flex items-center gap-2">
+                      <span className="h-1.5 w-1.5 rounded-full bg-slate-300 transition-all duration-200 group-hover:w-3 group-hover:bg-blue-500 dark:bg-slate-600 dark:group-hover:bg-blue-400" />
+                      {item.label}
+                    </span>
+                    <span className="text-[10px] text-slate-300 group-hover:text-blue-400 dark:text-slate-600 dark:group-hover:text-blue-500 transition-colors">
+                      {item.en}
+                    </span>
                   </Link>
                 </li>
               ))}
@@ -70,16 +190,18 @@ export default function Footer() {
 
           {/* Courses */}
           <div>
-            <p className="mb-4 text-xs font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500">Courses</p>
-            <ul className="space-y-2.5">
-              {techStack.map((name) => (
-                <li key={name}>
+            <p className="mb-5 text-[11px] font-bold uppercase tracking-[0.12em] text-slate-400 dark:text-slate-500">
+              Courses
+            </p>
+            <ul className="space-y-3">
+              {courses.map((c) => (
+                <li key={c.label}>
                   <Link
-                    href="/courses"
-                    className="group inline-flex items-center gap-1.5 text-sm text-slate-600 transition-colors hover:text-blue-700 dark:text-slate-400 dark:hover:text-blue-300"
+                    href={c.href}
+                    className="group flex items-center gap-2 text-sm text-slate-600 transition-colors hover:text-blue-700 dark:text-slate-400 dark:hover:text-blue-300"
                   >
-                    <span className="h-1 w-1 rounded-full bg-slate-300 transition-colors group-hover:bg-blue-500 dark:bg-slate-600 dark:group-hover:bg-blue-400" />
-                    {name}
+                    <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-slate-300 transition-all duration-200 group-hover:w-3 group-hover:bg-blue-500 dark:bg-slate-600 dark:group-hover:bg-blue-400" />
+                    <span className="line-clamp-1">{c.label}</span>
                   </Link>
                 </li>
               ))}
@@ -88,35 +210,72 @@ export default function Footer() {
 
           {/* Contact */}
           <div>
-            <p className="mb-4 text-xs font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500">Contact</p>
-            <div className="space-y-3">
-              {[
-                { icon: Mail, value: "hello@adutilearning.com" },
-                { icon: Phone, value: "+855 12 345 678" },
-                { icon: MapPin, value: "Phnom Penh, Cambodia" },
-              ].map(({ icon: Icon, value }) => (
-                <div key={value} className="flex items-start gap-2.5 text-sm text-slate-600 dark:text-slate-400">
-                  <Icon className="mt-0.5 h-3.5 w-3.5 shrink-0 text-blue-500 dark:text-blue-400" />
-                  <span>{value}</span>
-                </div>
+            <p className="mb-5 text-[11px] font-bold uppercase tracking-[0.12em] text-slate-400 dark:text-slate-500">
+              Contact Us
+            </p>
+            <ul className="space-y-3">
+              {contacts.map(({ icon: Icon, value, href }) => (
+                <li key={value}>
+                  <a
+                    href={href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="group flex items-start gap-3 text-sm text-slate-600 transition-colors hover:text-blue-700 dark:text-slate-400 dark:hover:text-blue-300"
+                  >
+                    <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white shadow-sm transition-all group-hover:border-blue-300 group-hover:bg-blue-50 dark:border-white/10 dark:bg-slate-900/60 dark:group-hover:border-blue-500/30 dark:group-hover:bg-blue-950/40">
+                      <Icon className="h-3 w-3 text-blue-500 dark:text-blue-400" />
+                    </span>
+                    <span>{value}</span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+
+            {/* Office hours badge */}
+            <div className="mt-5 inline-flex items-center gap-2 rounded-xl border border-emerald-200/60 bg-emerald-50 px-3 py-2 dark:border-emerald-500/20 dark:bg-emerald-500/10">
+              <span className="relative flex h-2 w-2">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" />
+                <span className="relative h-2 w-2 rounded-full bg-emerald-500" />
+              </span>
+              <span className="text-xs font-medium text-emerald-700 dark:text-emerald-400">
+                Mon–Sat, 8am–8pm (GMT+7)
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* ── Bottom bar ────────────────────────────────────────────────── */}
+        <div className="border-t border-blue-100/60 dark:border-white/8">
+          <div className="container-app flex flex-col items-center justify-between gap-3 py-4 sm:flex-row">
+            <p className="text-xs text-slate-400 dark:text-slate-600">
+              © {new Date().getFullYear()}{" "}
+              <span className="font-semibold text-slate-600 dark:text-slate-400">ADUTI Learning</span>
+              . All rights reserved.
+            </p>
+            <div className="flex items-center gap-1">
+              {["Privacy Policy", "Terms of Service", "Sitemap"].map((item, i, arr) => (
+                <span key={item} className="flex items-center">
+                  <Link
+                    href="#"
+                    className="text-xs text-slate-400 transition-colors hover:text-slate-700 dark:text-slate-600 dark:hover:text-slate-400"
+                  >
+                    {item}
+                  </Link>
+                  {i < arr.length - 1 && (
+                    <span className="mx-3 h-3 w-px bg-slate-200 dark:bg-white/10" />
+                  )}
+                </span>
               ))}
             </div>
           </div>
         </div>
 
-        {/* Bottom bar */}
-        <div className="border-t border-blue-100/60 dark:border-white/8">
-          <div className="container-app flex flex-col items-center justify-between gap-2 py-4 sm:flex-row">
-            <p className="text-xs text-slate-500 dark:text-slate-500">
-              © {new Date().getFullYear()} ADUTI Learning. All rights reserved.
-            </p>
-            <div className="flex items-center gap-4 text-xs text-slate-400 dark:text-slate-600">
-              <Link href="#" className="hover:text-slate-600 dark:hover:text-slate-400">Privacy Policy</Link>
-              <Link href="#" className="hover:text-slate-600 dark:hover:text-slate-400">Terms of Service</Link>
-            </div>
-          </div>
-        </div>
       </div>
     </footer>
   );
+}
+
+// tiny cn helper (in case not imported at module level)
+function cn(...classes: (string | boolean | undefined)[]) {
+  return classes.filter(Boolean).join(" ");
 }

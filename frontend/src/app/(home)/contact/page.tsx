@@ -45,7 +45,7 @@ export default function ContactPage() {
   }
 
   return (
-    <div className="space-y-10 pb-16">
+    <div className="space-y-10 pb-16 mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
       {/* ── Hero ─────────────────────────────────────────────────────────── */}
       <section className="relative overflow-hidden rounded-3xl border border-slate-200 bg-white/80 p-7 shadow-sm md:p-12 dark:border-white/10 dark:bg-slate-900/70">
         <div className="pointer-events-none absolute -right-32 -top-32 h-80 w-80 rounded-full bg-gradient-to-br from-blue-400/10 via-violet-400/10 to-pink-300/10 blur-3xl" />

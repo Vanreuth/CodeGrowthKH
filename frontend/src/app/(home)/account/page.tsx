@@ -253,7 +253,7 @@ export default function AccountPage() {
 	}
 
 	return (
-		<div className="space-y-8 py-8">
+		<div className="space-y-8 py-8 mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
 			{/* Hero Section */}
 			<section className="relative overflow-hidden rounded-3xl border border-slate-200 bg-gradient-to-br from-violet-50 via-white to-blue-50 p-6 shadow-sm md:p-10 dark:border-white/10 dark:from-slate-900 dark:via-slate-900/95 dark:to-slate-800">
 				{/* Decorative elements */}

@@ -103,7 +103,7 @@ export function CommingCourseSection() {
   }, [courses]);
 
   return (
-    <section className="container-app py-16">
+    <section className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-16">
       <div className="mb-6 flex items-center justify-between gap-4">
         <div>
           <h2 className="text-2xl font-extrabold text-slate-900 dark:text-white md:text-3xl">

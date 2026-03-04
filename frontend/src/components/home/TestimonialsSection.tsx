@@ -4,7 +4,7 @@ import { testimonials } from "@/components/constants/home-data";
 
 export function TestimonialsSection() {
   return (
-    <section className="container-app py-20">
+    <section className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-20">
       <div className="mb-12 text-center">
         <Badge className="mb-3 border-amber-200/60 bg-amber-50 text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300">
           <MessageSquareQuote className="mr-1.5 h-3 w-3" />

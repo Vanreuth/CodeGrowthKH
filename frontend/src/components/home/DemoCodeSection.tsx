@@ -83,7 +83,7 @@ export function DemoCodeSection() {
   const progressText = useMemo(() => `${index + 1} / ${total} • ${current.lang}`, [index, total, current.lang]);
 
   return (
-    <section className="container-app py-16">
+    <section className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-16">
       <div className="mx-auto max-w-5xl text-center">
         <div className="mx-auto mb-4 h-1 w-24 rounded-full bg-gradient-to-r from-blue-500 to-indigo-500" />
         <h2 className="text-3xl font-black text-slate-900 dark:text-white md:text-5xl">

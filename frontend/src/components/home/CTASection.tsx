@@ -7,7 +7,7 @@ const AVATAR_INITIALS = ["SR", "DM", "SC", "KP", "MH"];
 
 export function CTASection() {
   return (
-    <section className="container-app py-20">
+    <section className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-20">
       <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-600 via-indigo-600 to-violet-700 px-6 py-16 text-center text-white shadow-2xl shadow-blue-600/20 md:px-12">
         {/* Decorative blobs */}
         <div className="pointer-events-none absolute -left-24 -top-24 h-72 w-72 rounded-full bg-white/5 blur-3xl" />

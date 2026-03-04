@@ -4,7 +4,7 @@ import { features } from "@/components/constants/home-data";
 
 export function WhySection() {
   return (
-    <section className="container-app py-20">
+    <section className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-20">
       <div className="mb-12 text-center">
         <Badge className="mb-3 border-indigo-200/60 bg-indigo-50 text-indigo-700 dark:border-indigo-500/30 dark:bg-indigo-500/10 dark:text-indigo-300">
           <Zap className="mr-1.5 h-3 w-3" />
