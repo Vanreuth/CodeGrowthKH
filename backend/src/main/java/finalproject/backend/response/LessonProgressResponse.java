@@ -25,10 +25,18 @@ public class LessonProgressResponse {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
-    // References
+    // User
     private Long userId;
     private String username;
+
+    // Lesson
     private Long lessonId;
     private String lessonTitle;
+
+    // Course (derived from lesson → chapter → course)
+    private Long courseId;
+    private String courseTitle;
 }
+
+
 

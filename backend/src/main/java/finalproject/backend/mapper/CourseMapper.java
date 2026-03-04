@@ -3,14 +3,24 @@ package finalproject.backend.mapper;
 import finalproject.backend.modal.Category;
 import finalproject.backend.modal.Course;
 import finalproject.backend.modal.User;
+import finalproject.backend.repository.LessonProgressRepository;
 import finalproject.backend.request.CourseRequest;
 import finalproject.backend.response.CourseResponse;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 @Component
+@RequiredArgsConstructor
 public class CourseMapper {
 
+    private final LessonProgressRepository lessonProgressRepository;
+
     public CourseResponse toResponse(Course course) {
+        long enrolled = course.getId() != null
+                ? lessonProgressRepository.countDistinctUsersByCourseId(course.getId())
+                : 0L;
+        long views = course.getViewCount() != null ? course.getViewCount() : 0L;
+
         return CourseResponse.builder()
                 .id(course.getId())
                 .title(course.getTitle())
@@ -25,6 +35,8 @@ public class CourseMapper {
                 .isFree(course.getIsFree())
                 .totalLessons(course.getTotalLessons())
                 .avgRating(course.getAvgRating())
+                .viewCount(views)
+                .enrolledCount(enrolled)
                 .pdfUrl(course.getPdfUrl())
                 .pdfName(course.getPdfName())
                 .pdfSizeKb(course.getPdfSizeKb())
@@ -32,6 +44,7 @@ public class CourseMapper {
                 .createdAt(course.getCreatedAt())
                 .updatedAt(course.getUpdatedAt())
                 .publishedAt(course.getPublishedAt())
+                .launchDate(course.getLaunchDate())
                 .instructorId(course.getInstructor() != null ? course.getInstructor().getId() : null)
                 .instructorName(course.getInstructor() != null ? course.getInstructor().getUsername() : null)
                 .categoryId(course.getCategory() != null ? course.getCategory().getId() : 0)
@@ -50,6 +63,7 @@ public class CourseMapper {
                 .status(request.getStatus())
                 .isFeatured(request.getFeatured())
                 .isFree(request.getFree())
+                .launchDate(request.getLaunchDate())
                 .instructor(instructor)
                 .category(category)
                 .build();
@@ -79,6 +93,9 @@ public class CourseMapper {
 
         course.setIsFeatured(request.getFeatured());
         course.setIsFree(request.getFree());
+
+        // launchDate: always overwrite (null = clear it, value = set it)
+        course.setLaunchDate(request.getLaunchDate());
 
         if (instructor != null)
             course.setInstructor(instructor);

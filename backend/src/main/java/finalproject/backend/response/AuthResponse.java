@@ -20,6 +20,7 @@ public class AuthResponse {
     private String phoneNumber;
     private String address;
     private String bio;
+    private String profilePicture;
     private List<String> roles;
     // ← no token field — cookie handles it
 }

@@ -83,6 +83,34 @@ public class CourseController {
         return ResponseEntity.ok(ApiResponse.success(courses, "Courses retrieved successfully"));
     }
 
+    @GetMapping("/featured")
+    public ResponseEntity<ApiResponse<PageResponse<CourseResponse>>> getFeaturedCourses(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortDir
+    ) {
+        Sort sort = sortDir.equalsIgnoreCase("desc")
+                ? Sort.by(sortBy).descending()
+                : Sort.by(sortBy).ascending();
+        Pageable pageable = PageRequest.of(page, size, sort);
+        return ResponseEntity.ok(
+                ApiResponse.success(courseService.getFeaturedCourses(pageable),
+                        "Featured courses retrieved successfully"));
+    }
+
+    @GetMapping("/coming-soon")
+    public ResponseEntity<ApiResponse<PageResponse<CourseResponse>>> getComingSoonCourses(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        // default sort: launchDate ascending (soonest first)
+        Pageable pageable = PageRequest.of(page, size, Sort.by("launchDate").ascending());
+        return ResponseEntity.ok(
+                ApiResponse.success(courseService.getComingSoonCourses(pageable),
+                        "Coming soon courses retrieved successfully"));
+    }
+
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<CourseResponse>> createCourse(
             @ModelAttribute CourseRequest request,

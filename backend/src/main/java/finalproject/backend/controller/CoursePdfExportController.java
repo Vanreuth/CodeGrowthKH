@@ -7,32 +7,39 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
-@RequestMapping("/api/v1/course-pdf-exports")
+@RequestMapping("/api/v1/course/pdf")
 @RequiredArgsConstructor
 public class CoursePdfExportController {
 
     private final CoursePdfExportService coursePdfExportService;
 
-    @GetMapping("/course/{courseId}")
+    @GetMapping
+    public ResponseEntity<ApiResponse<List<CoursePdfExportResponse>>> getAllCoursePdfs() {
+        return ResponseEntity.ok(coursePdfExportService.getAllCoursePdfs());
+    }
+
+    @GetMapping("/{courseId}")
     public ResponseEntity<ApiResponse<CoursePdfExportResponse>> getPdfExportByCourse(
             @PathVariable Long courseId) {
         return ResponseEntity.ok(coursePdfExportService.getPdfExportByCourse(courseId));
     }
 
-    @PostMapping("/course/{courseId}/download")
+    @PostMapping("/{courseId}/download")
     public ResponseEntity<ApiResponse<CoursePdfExportResponse>> incrementDownloadCount(
             @PathVariable Long courseId) {
         return ResponseEntity.ok(coursePdfExportService.incrementDownloadCount(courseId));
     }
 
-    @PostMapping("/course/{courseId}/generate")
+    @PostMapping("/{courseId}/generate")
     public ResponseEntity<ApiResponse<CoursePdfExportResponse>> generate(
             @PathVariable Long courseId) {
         return ResponseEntity.ok(coursePdfExportService.generatePdf(courseId));
     }
 
-    @DeleteMapping("/course/{courseId}")
+    @DeleteMapping("/{courseId}")
     public ResponseEntity<ApiResponse<Void>> deletePdfExport(@PathVariable Long courseId) {
         return ResponseEntity.ok(coursePdfExportService.deletePdfExport(courseId));
     }

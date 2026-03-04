@@ -2,6 +2,7 @@
 
 import { AppSidebar } from "@/components/sidebar";
 import { Topbar } from "@/components/topbar";
+import ProtectedRoute from "@/components/ProtectedRoute";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -26,19 +27,25 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   return (
-    <SidebarProvider
-      style={
-        {
-          "--sidebar-width": "250px",
-          "--sidebar-width-icon": "4rem",
-        } as React.CSSProperties
-      }
+    <ProtectedRoute
+      redirectTo="/login?returnUrl=/dashboard"
+      allowedRoles={["ADMIN"]}
+      unauthorizedRedirectTo="/"
     >
-      <div className="flex h-screen w-full bg-gradient-to-br from-background via-background to-muted/20">
-        <AppSidebar />
-        <MainLayout>{children}</MainLayout>
-      </div>
-    </SidebarProvider>
+      <SidebarProvider
+        style={
+          {
+            "--sidebar-width": "250px",
+            "--sidebar-width-icon": "4rem",
+          } as React.CSSProperties
+        }
+      >
+        <div className="flex h-screen w-full bg-gradient-to-br from-background via-background to-muted/20">
+          <AppSidebar />
+          <MainLayout>{children}</MainLayout>
+        </div>
+      </SidebarProvider>
+    </ProtectedRoute>
   );
 }
 

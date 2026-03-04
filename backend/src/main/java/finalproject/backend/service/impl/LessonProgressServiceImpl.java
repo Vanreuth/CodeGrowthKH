@@ -28,14 +28,18 @@ import java.util.stream.Collectors;
 public class LessonProgressServiceImpl implements LessonProgressService {
 
     private final LessonProgressRepository lessonProgressRepository;
-    private final LessonRepository lessonRepository;
-    private final UserRepository userRepository;
-    private final LessonProgressMapper lessonProgressMapper;
+    private final LessonRepository         lessonRepository;
+    private final UserRepository           userRepository;
+    private final LessonProgressMapper     lessonProgressMapper;
+
+    // ─────────────────────────────────────────────────────────────────────────
+    //  Write operations
+    // ─────────────────────────────────────────────────────────────────────────
 
     @Override
     @Transactional
     public ApiResponse<LessonProgressResponse> upsertProgress(LessonProgressRequest request) {
-        User user = findUserOrThrow(request.getUserId());
+        User   user   = findUserOrThrow(request.getUserId());
         Lesson lesson = findLessonOrThrow(request.getLessonId());
 
         LessonProgress progress = lessonProgressRepository
@@ -45,27 +49,33 @@ public class LessonProgressServiceImpl implements LessonProgressService {
                         .lesson(lesson)
                         .build());
 
+        // Scroll position
         progress.setScrollPct(request.getScrollPct());
-        progress.setReadTimeSeconds(progress.getReadTimeSeconds() + request.getReadTimeSeconds());
 
-        if (Boolean.TRUE.equals(request.isCompleted()) && !Boolean.TRUE.equals(progress.getCompleted())) {
+        // Accumulate reading time (never let it become negative)
+        int current = progress.getReadTimeSeconds() != null ? progress.getReadTimeSeconds() : 0;
+        progress.setReadTimeSeconds(current + Math.max(0, request.getReadTimeSeconds()));
+
+        // Mark completed once (idempotent)
+        if (request.isCompleted() && !Boolean.TRUE.equals(progress.getCompleted())) {
             progress.markCompleted();
         }
 
-        if (Boolean.TRUE.equals(request.isPdfDownloaded()) && !Boolean.TRUE.equals(progress.getPdfDownloaded())) {
+        // PDF downloaded flag (idempotent)
+        if (request.isPdfDownloaded() && !Boolean.TRUE.equals(progress.getPdfDownloaded())) {
             progress.setPdfDownloaded(true);
             progress.setPdfDownloadedAt(LocalDateTime.now());
         }
 
         LessonProgress saved = lessonProgressRepository.save(progress);
-        log.info("Upserted lesson progress id={} for user={} lesson={}", saved.getId(), user.getId(), lesson.getId());
+        log.info("Upserted progress id={} user={} lesson={}", saved.getId(), user.getId(), lesson.getId());
         return ApiResponse.success(lessonProgressMapper.toResponse(saved), "Progress saved successfully");
     }
 
     @Override
     @Transactional
     public ApiResponse<LessonProgressResponse> markCompleted(Long userId, Long lessonId) {
-        User user = findUserOrThrow(userId);
+        User   user   = findUserOrThrow(userId);
         Lesson lesson = findLessonOrThrow(lessonId);
 
         LessonProgress progress = lessonProgressRepository
@@ -75,11 +85,34 @@ public class LessonProgressServiceImpl implements LessonProgressService {
                         .lesson(lesson)
                         .build());
 
+        if (Boolean.TRUE.equals(progress.getCompleted())) {
+            // Already completed — just return without re-saving
+            return ApiResponse.success(lessonProgressMapper.toResponse(progress),
+                    "Lesson was already completed");
+        }
+
         progress.markCompleted();
         LessonProgress saved = lessonProgressRepository.save(progress);
         log.info("Marked lesson id={} completed for user id={}", lessonId, userId);
         return ApiResponse.success(lessonProgressMapper.toResponse(saved), "Lesson marked as completed");
     }
+
+    @Override
+    @Transactional
+    public ApiResponse<Void> deleteProgress(Long userId, Long lessonId) {
+        if (!lessonProgressRepository.existsByUserIdAndLessonId(userId, lessonId)) {
+            throw new CustomMessageException(
+                    "Progress not found for user id: " + userId + " and lesson id: " + lessonId,
+                    String.valueOf(HttpStatus.NOT_FOUND.value()));
+        }
+        lessonProgressRepository.deleteByUserIdAndLessonId(userId, lessonId);
+        log.info("Deleted progress for user id={} lesson id={}", userId, lessonId);
+        return ApiResponse.success("Progress deleted successfully");
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    //  Read operations
+    // ─────────────────────────────────────────────────────────────────────────
 
     @Override
     @Transactional(readOnly = true)
@@ -95,10 +128,7 @@ public class LessonProgressServiceImpl implements LessonProgressService {
     @Override
     @Transactional(readOnly = true)
     public ApiResponse<List<LessonProgressResponse>> getProgressByUser(Long userId) {
-        if (!userRepository.existsById(userId))
-            throw new CustomMessageException("User not found with id: " + userId,
-                    String.valueOf(HttpStatus.NOT_FOUND.value()));
-
+        ensureUserExists(userId);
         List<LessonProgressResponse> list = lessonProgressRepository.findByUserId(userId)
                 .stream()
                 .map(lessonProgressMapper::toResponse)
@@ -108,7 +138,19 @@ public class LessonProgressServiceImpl implements LessonProgressService {
 
     @Override
     @Transactional(readOnly = true)
+    public ApiResponse<List<LessonProgressResponse>> getProgressByCourseAndUser(Long courseId, Long userId) {
+        ensureUserExists(userId);
+        List<LessonProgressResponse> list = lessonProgressRepository.findByCourseIdAndUserId(courseId, userId)
+                .stream()
+                .map(lessonProgressMapper::toResponse)
+                .collect(Collectors.toList());
+        return ApiResponse.success(list, "Course progress retrieved successfully");
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public ApiResponse<Long> countCompletedByUser(Long userId) {
+        ensureUserExists(userId);
         long count = lessonProgressRepository.countCompletedByUserId(userId);
         return ApiResponse.success(count, "Completed lesson count retrieved");
     }
@@ -116,11 +158,14 @@ public class LessonProgressServiceImpl implements LessonProgressService {
     @Override
     @Transactional(readOnly = true)
     public ApiResponse<Long> countCompletedByCourseAndUser(Long courseId, Long userId) {
+        ensureUserExists(userId);
         long count = lessonProgressRepository.countCompletedByCourseIdAndUserId(courseId, userId);
         return ApiResponse.success(count, "Completed lesson count for course retrieved");
     }
 
-    // ── helpers ───────────────────────────────────────────────────────────────
+    // ─────────────────────────────────────────────────────────────────────────
+    //  Helpers
+    // ─────────────────────────────────────────────────────────────────────────
 
     private User findUserOrThrow(Long id) {
         return userRepository.findById(id)
@@ -134,6 +179,12 @@ public class LessonProgressServiceImpl implements LessonProgressService {
                 .orElseThrow(() -> new CustomMessageException(
                         "Lesson not found with id: " + id,
                         String.valueOf(HttpStatus.NOT_FOUND.value())));
+    }
+
+    private void ensureUserExists(Long id) {
+        if (!userRepository.existsById(id))
+            throw new CustomMessageException("User not found with id: " + id,
+                    String.valueOf(HttpStatus.NOT_FOUND.value()));
     }
 }
 

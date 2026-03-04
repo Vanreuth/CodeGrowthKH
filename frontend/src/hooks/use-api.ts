@@ -12,24 +12,26 @@ import type {
   DashboardStats,
   LessonProgressDto,
 } from "@/lib/types";
+import { fetchCategories as fetchCategoriesLegacy } from "@/lib/category/category";
 import {
-  fetchCategories,
-  fetchCourses,
   fetchCourseById,
   fetchCourseBySlug,
   fetchCourseWithChaptersBySlug,
-  fetchCoursesByCategory,
-  fetchChaptersByCourse,
+  fetchCourses as fetchCoursesLegacy,
+  fetchCoursesByCategory as fetchCoursesByCategoryLegacy,
+} from "@/lib/course/course";
+import { fetchChaptersByCourse } from "@/lib/chapter/chapter";
+import {
+  fetchLessonById,
   fetchLessonsByCourse,
   fetchLessonsByChapter,
-  fetchLessonById,
-  fetchSnippetsByLesson,
-  fetchUsers,
-  fetchUserById,
-  fetchDashboardStats,
-  getUserProgress,
-  getCurrentUser,
-} from "@/lib/api";
+} from "@/lib/lesson/lesson";
+import { fetchSnippetsByLesson } from "@/lib/codeShippet/codeShippet";
+import { fetchUsers as fetchUsersLegacy, fetchUserById } from "@/lib/user/user";
+import { fetchDashboardStats } from "@/lib/analiysis/analysis";
+import { getUserProgress, markLessonComplete } from "@/lib/lessonProgress/lessonProgress";
+import { apiGetMe } from "@/lib/auth/auth";
+import type { AuthResponse } from "@/lib/auth/types";
 
 // ─── Generic Fetch Hook ───────────────────────────────────────────────────────
 
@@ -78,6 +80,87 @@ function useQuery<T>(
   }, [fetch]);
 
   return { data, loading, error, refetch: fetch };
+}
+
+function isNumeric(value: unknown): value is number {
+  return typeof value === "number" && Number.isFinite(value);
+}
+
+async function getCurrentUser(): Promise<UserDto | null> {
+  const response = await apiGetMe();
+  if (!response.data) {
+    return null;
+  }
+
+  const auth = response.data as AuthResponse & {
+    role?: string;
+    isActive?: boolean;
+    createdAt?: string | null;
+    updatedAt?: string | null;
+  };
+
+  return {
+    id: auth.id,
+    username: auth.username,
+    email: auth.email,
+    phoneNumber: auth.phoneNumber ?? null,
+    address: auth.address ?? null,
+    bio: auth.bio ?? null,
+    avatar: null,
+    profilePicture: auth.profilePicture ?? null,
+    role: auth.roles?.[0] ?? "USER",
+    roles: auth.roles,
+    isActive: auth.isActive ?? true,
+    status: null,
+    loginAttempt: undefined,
+    createdAt: auth.createdAt ?? null,
+    updatedAt: auth.updatedAt ?? null,
+  };
+}
+
+function fetchCategories(pageOrOptions: number | Parameters<typeof fetchCategoriesLegacy>[0], size = 50) {
+  if (isNumeric(pageOrOptions)) {
+    return fetchCategoriesLegacy({ page: pageOrOptions, size });
+  }
+  return fetchCategoriesLegacy(pageOrOptions);
+}
+
+function fetchCourses(
+  pageOrOptions: number | Parameters<typeof fetchCoursesLegacy>[0],
+  size = 20,
+  sortBy = "createdAt",
+  sortDir: "asc" | "desc" = "desc",
+) {
+  if (isNumeric(pageOrOptions)) {
+    return fetchCoursesLegacy({
+      page: pageOrOptions,
+      size,
+      sortBy,
+      sortDir,
+    });
+  }
+
+  return fetchCoursesLegacy(pageOrOptions);
+}
+
+function fetchCoursesByCategory(
+  categoryId: number,
+  pageOrOptions: number | Parameters<typeof fetchCoursesByCategoryLegacy>[1],
+  size = 20,
+) {
+  if (isNumeric(pageOrOptions)) {
+    return fetchCoursesByCategoryLegacy(categoryId, { page: pageOrOptions, size });
+  }
+
+  return fetchCoursesByCategoryLegacy(categoryId, pageOrOptions);
+}
+
+function fetchUsers(pageOrOptions: number | Parameters<typeof fetchUsersLegacy>[0], size = 20) {
+  if (isNumeric(pageOrOptions)) {
+    return fetchUsersLegacy({ page: pageOrOptions, size });
+  }
+
+  return fetchUsersLegacy(pageOrOptions);
 }
 
 // ─── Categories Hook ──────────────────────────────────────────────────────────

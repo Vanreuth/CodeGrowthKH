@@ -248,8 +248,9 @@ private AuthResponse buildAuthResponse(User user) {
             .username(user.getUsername())
             .email(user.getEmail())
             .address(user.getAddress())
-            .phoneNumber(String.valueOf(user.getPhoneNumber()))
+            .phoneNumber(user.getPhoneNumber())
             .bio(user.getBio())
+            .profilePicture(user.getProfilePicture())
             .roles(roles)   // ← ["USER"] instead of ["ROLE_USER"]
             .build();
 }

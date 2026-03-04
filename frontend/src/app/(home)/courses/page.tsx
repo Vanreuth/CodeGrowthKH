@@ -2,11 +2,13 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { BookOpen, Loader2, Search, Star, Users, X } from "lucide-react";
+import { BookOpen, Eye, Loader2, Search, Star, Users, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { type CourseDto, type CategoryDto, fetchCourses, fetchCategories } from "@/lib/api";
-
+import type { CourseDto } from "@/lib/course/types";
+import type { CategoryDto } from "@/lib/category/types";
+import { fetchCourses } from "@/lib/course/course";
+import { fetchCategories } from "@/lib/category/category";
 // ─── Level helpers ────────────────────────────────────────────────────────────
 
 const levelColors: Record<string, string> = {
@@ -48,7 +50,10 @@ export default function CoursesPage() {
 
 	useEffect(() => {
 		let cancelled = false;
-		Promise.all([fetchCourses(0, 50), fetchCategories(0, 50)])
+		Promise.all([
+			fetchCourses({ page: 0, size: 50 }),
+			fetchCategories({ page: 0, size: 50 }),
+		])
 			.then(([coursesPage, categoriesPage]) => {
 				if (!cancelled) {
 					setApiCourses(coursesPage.content);
@@ -265,7 +270,7 @@ export default function CoursesPage() {
 										<p className="mt-1.5 text-sm text-slate-600 dark:text-slate-400 line-clamp-2">{course.description}</p>
 
 										{/* Meta */}
-										<div className="mt-3 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+										<div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500 dark:text-slate-400">
 											<span className="flex items-center gap-1">
 												<BookOpen className="h-3.5 w-3.5" />
 												{course.totalLessons || 0} មេរៀន
@@ -273,6 +278,10 @@ export default function CoursesPage() {
 											<span className="flex items-center gap-1">
 												<Users className="h-3.5 w-3.5" />
 												{(course.enrolledCount || 0).toLocaleString()}
+											</span>
+											<span className="flex items-center gap-1">
+												<Eye className="h-3.5 w-3.5" />
+												{(course.viewCount || 0).toLocaleString()}
 											</span>
 											{(course.avgRating || 0) > 0 && (
 												<span className="flex items-center gap-1 text-amber-500">

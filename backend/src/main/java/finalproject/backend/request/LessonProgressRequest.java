@@ -8,7 +8,7 @@ import lombok.Data;
 @Data
 public class LessonProgressRequest {
 
-    @NotNull(message = "User ID is required")
+    // Set automatically from the authenticated user — NOT expected from the client
     private Long userId;
 
     @NotNull(message = "Lesson ID is required")
@@ -24,4 +24,6 @@ public class LessonProgressRequest {
 
     private boolean pdfDownloaded = false;
 }
+
+
 

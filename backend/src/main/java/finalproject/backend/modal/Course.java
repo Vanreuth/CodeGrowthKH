@@ -46,7 +46,7 @@ public class Course {
 
     @Column(nullable = false)
     @Builder.Default
-    private String status = "DRAFT";  // DRAFT / PUBLISHED / ARCHIVED
+    private String status = "DRAFT";  // DRAFT / PUBLISHED / ARCHIVED / COMING_SOON
 
     @Column(name = "is_featured")
     @Builder.Default
@@ -55,6 +55,9 @@ public class Course {
     @Column(name = "is_free")
     @Builder.Default
     private Boolean isFree = false;
+
+    @Column(name = "launch_date")
+    private LocalDateTime launchDate;   // expected release date for COMING_SOON courses
 
     @Column(name = "total_lessons", columnDefinition = "integer default 0")
     @Builder.Default
@@ -78,6 +81,10 @@ public class Course {
     @Column(name = "avg_rating", precision = 3, scale = 2)
     @Builder.Default
     private BigDecimal avgRating = BigDecimal.ZERO; // 0.00–5.00
+
+    @Column(name = "view_count", columnDefinition = "bigint default 0")
+    @Builder.Default
+    private Long viewCount = 0L; // number of times the course page was viewed
 
     @Column(updatable = false)
     private LocalDateTime createdAt;
@@ -109,6 +116,7 @@ public class Course {
         if (isFeatured   == null) isFeatured   = false;
         if (isFree       == null) isFree       = false;
         if (totalLessons == null) totalLessons = 0;
+        if (viewCount    == null) viewCount    = 0L;
     }
 
     @PreUpdate

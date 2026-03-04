@@ -1,521 +1,341 @@
-// ─── API Base ─────────────────────────────────────────────────────────────────
-// Uses Next.js rewrites proxy (/api/* → backend) in browser,
-// and direct URL in server-side / build contexts.
+import { ApiError, ApiResponse, FetchOptions } from "./types";
 
-import type {
-  ApiResponse,
-  PageResponse,
-  CategoryDto,
-  CourseDto,
-  ChapterDto,
-  LessonDto,
-  CodeSnippetDto,
-  UserDto,
-  AuthResponse,
-  LoginRequest,
-  RegisterRequest,
-  CreateCategoryRequest,
-  UpdateCategoryRequest,
-  CreateCourseRequest,
-  CreateChapterRequest,
-  UpdateChapterRequest,
-  CreateLessonRequest,
-  UpdateLessonRequest,
-  CreateSnippetRequest,
-  UpdateSnippetRequest,
-  LessonProgressDto,
-  UpsertProgressRequest,
-  CoursePdfExportDto,
-  PaginationParams,
-  DashboardStats,
-} from "./types";
+function normalizeApiBase(value?: string): string {
+  if (!value) {
+    return "";
+  }
 
-// Re-export types for convenience
-export type {
-  ApiResponse,
-  PageResponse,
-  CategoryDto,
-  CourseDto,
-  ChapterDto,
-  LessonDto,
-  CodeSnippetDto,
-  UserDto,
-  AuthResponse,
-  LoginRequest,
-  RegisterRequest,
-  CreateCategoryRequest,
-  CreateCourseRequest,
-  CreateChapterRequest,
-  CreateLessonRequest,
-  CreateSnippetRequest,
-  LessonProgressDto,
-  CoursePdfExportDto,
-  PaginationParams,
-  DashboardStats,
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return "";
+  }
+
+  const lower = trimmed.toLowerCase();
+  if (lower === "undefined" || lower === "null" || lower === "none") {
+    return "";
+  }
+
+  return trimmed.replace(/\/+$/, "");
+}
+
+export const API_BASE = normalizeApiBase(
+  process.env.NEXT_PUBLIC_API_BASE_URL,
+ ) || "/api";
+export { ApiError };
+
+type RequestMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE" | "OPTIONS" | "HEAD";
+
+type ApiRequestOptions = Omit<RequestInit, "method" | "body" | "headers"> & {
+  headers?: HeadersInit;
+  method?: RequestMethod;
+  revalidate?: number;
+  body?: unknown;
 };
 
-const API_BASE =
-  typeof window !== "undefined"
-    ? "" // browser: use relative path via Next.js rewrite proxy
-    : (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080");
+function isApiResponse<T>(value: unknown): value is ApiResponse<T> {
+  return (
+    !!value &&
+    typeof value === "object" &&
+    "success" in (value as Record<string, unknown>) &&
+    "message" in (value as Record<string, unknown>) &&
+    "data" in (value as Record<string, unknown>)
+  );
+}
 
-// ─── Token Management ─────────────────────────────────────────────────────────
+function toApiResponse<T>(value: unknown): ApiResponse<T> {
+  if (isApiResponse<T>(value)) {
+    return value;
+  }
 
-let accessToken: string | null = null;
+  return {
+    success: true,
+    message: "OK",
+    data: (value as T) ?? (null as unknown as T),
+  };
+}
 
-export function setAccessToken(token: string | null) {
-  accessToken = token;
-  if (typeof window !== "undefined") {
-    if (token) {
-      localStorage.setItem("accessToken", token);
-    } else {
-      localStorage.removeItem("accessToken");
+function shouldUseJsonHeader(body: unknown): boolean {
+  return (
+    body === undefined ||
+    body === null ||
+    typeof body === "string" ||
+    (typeof body === "object" &&
+      !(body instanceof FormData) &&
+      !(body instanceof Blob) &&
+      !(body instanceof URLSearchParams))
+  );
+}
+
+function requestBody(body: unknown): BodyInit | undefined {
+  if (body == null) return undefined;
+  if (
+    body instanceof FormData ||
+    body instanceof Blob ||
+    body instanceof URLSearchParams
+  ) {
+    return body;
+  }
+  if (typeof body === "string") {
+    return body;
+  }
+  if (typeof body === "number" || typeof body === "boolean") {
+    return String(body);
+  }
+  if (typeof body === "object" && body instanceof ArrayBuffer) {
+    return body;
+  }
+  return JSON.stringify(body);
+}
+
+function requestHeaders(headers: HeadersInit | undefined, body: unknown): Headers {
+  const result = new Headers(headers);
+  if (shouldUseJsonHeader(body) && !result.has("Content-Type")) {
+    result.set("Content-Type", "application/json");
+  }
+  if (!result.has("Accept")) {
+    result.set("Accept", "application/json");
+  }
+  return result;
+}
+
+async function parseJson(response: Response): Promise<unknown | null> {
+  const contentType = response.headers.get("content-type") ?? "";
+  if (!contentType.includes("application/json")) {
+    return null;
+  }
+
+  try {
+    return await response.json();
+  } catch {
+    return null;
+  }
+}
+
+function requestErrorMessage(payload: unknown, status: number): string {
+  if (payload && typeof payload === "object") {
+    const msg = (payload as { message?: unknown }).message;
+    if (typeof msg === "string" && msg.trim().length > 0) {
+      return msg;
     }
   }
+  return `Request failed (${status})`;
 }
-
-export function getAccessToken(): string | null {
-  if (accessToken) return accessToken;
-  if (typeof window !== "undefined") {
-    accessToken = localStorage.getItem("accessToken");
-  }
-  return accessToken;
-}
-
-// ─── Fetch Helpers ────────────────────────────────────────────────────────────
 
 async function request<T>(
   path: string,
-  options: RequestInit = {}
-): Promise<T> {
-  const token = getAccessToken();
-  const headers: HeadersInit = {
-    ...(options.headers || {}),
+  method: RequestMethod,
+  options: ApiRequestOptions = {},
+): Promise<ApiResponse<T>> {
+  const { method: _method, revalidate, body, headers: requestHeadersInput, ...rest } = options;
+
+  const headers = requestHeaders(requestHeadersInput, body);
+  const init: RequestInit = {
+    ...rest,
+    method,
+    headers,
+    body: requestBody(body),
+    credentials: "include",
   };
 
-  if (token) {
-    (headers as Record<string, string>)["Authorization"] = `Bearer ${token}`;
+  if (typeof revalidate === "number") {
+    (init as RequestInit & { next?: { revalidate?: number } }).next = { revalidate };
   }
 
-  if (!(options.body instanceof FormData)) {
+  const response = await fetch(`${API_BASE}${path}`, init);
+
+  if (!response.ok) {
+    const payload = await parseJson(response);
+    throw new ApiError(response.status, requestErrorMessage(payload, response.status), path, payload);
+  }
+
+  if (response.status === 204) {
+    return { success: true, message: "OK", data: null as unknown as T };
+  }
+
+  const payload = await parseJson(response);
+  if (payload === null) {
+    return { success: true, message: "OK", data: null as unknown as T };
+  }
+
+  return toApiResponse<T>(payload);
+}
+
+export async function apiFetch<T>(
+  path: string,
+  options: ApiRequestOptions = {},
+): Promise<ApiResponse<T>> {
+  const { method = "GET", ...rest } = options;
+  return request<T>(path, method, rest);
+}
+
+export async function apiGet<T>(
+  path: string,
+  options: Omit<ApiRequestOptions, "method" | "body"> & FetchOptions = {},
+): Promise<ApiResponse<T>> {
+  return request<T>(path, "GET", options);
+}
+
+export async function apiPost<T>(
+  path: string,
+  body?: unknown,
+  options: Omit<ApiRequestOptions, "method" | "body"> & FetchOptions = {},
+): Promise<ApiResponse<T>> {
+  return request<T>(path, "POST", {
+    ...options,
+    body,
+  });
+}
+
+export async function apiPut<T>(
+  path: string,
+  body?: unknown,
+  options: Omit<ApiRequestOptions, "method" | "body"> & FetchOptions = {},
+): Promise<ApiResponse<T>> {
+  return request<T>(path, "PUT", {
+    ...options,
+    body,
+  });
+}
+
+export async function apiPatch<T>(
+  path: string,
+  body?: unknown,
+  options: Omit<ApiRequestOptions, "method" | "body"> & FetchOptions = {},
+): Promise<ApiResponse<T>> {
+  return request<T>(path, "PATCH", {
+    ...options,
+    body,
+  });
+}
+
+export async function apiDelete<T>(
+  path: string,
+  options: ApiRequestOptions = {},
+): Promise<ApiResponse<T>> {
+  return request<T>(path, "DELETE", options);
+}
+
+export function buildUrl(path: string, params: Record<string, unknown>): string {
+  const query = new URLSearchParams();
+
+  Object.entries(params).forEach(([key, value]) => {
+    if (value === undefined || value === null) {
+      return;
+    }
+
+    if (Array.isArray(value)) {
+      for (const item of value) {
+        if (item === undefined || item === null) return;
+        query.append(key, String(item));
+      }
+      return;
+    }
+
+    if (
+      typeof value === "string" ||
+      typeof value === "number" ||
+      typeof value === "boolean"
+    ) {
+      query.append(key, String(value));
+    }
+  });
+
+  const queryString = query.toString();
+  return queryString ? `${path}?${queryString}` : path;
+}
+
+export function toFormData(payload: Record<string, unknown>): FormData {
+  const form = new FormData();
+
+  Object.entries(payload).forEach(([key, value]) => {
+    if (value === undefined || value === null) {
+      return;
+    }
+
+    if (Array.isArray(value)) {
+      for (const item of value) {
+        if (item === undefined || item === null) {
+          continue;
+        }
+        form.append(key, item instanceof File || item instanceof Blob ? item : String(item));
+      }
+      return;
+    }
+
+    if (value instanceof File || value instanceof Blob) {
+      form.append(key, value);
+      return;
+    }
+
+    form.append(key, String(value));
+  });
+
+  return form;
+}
+
+export async function authFetch<T>(
+  url: string,
+  options: RequestInit = {},
+): Promise<T | null> {
+  const isAuthRoute =
+    url.includes("/api/v1/auth/login") || url.includes("/api/v1/auth/refresh");
+
+  const headers: HeadersInit = {
+    ...(options.headers as Record<string, string>) ?? {},
+  };
+  if (
+    options.body &&
+    typeof options.body === "string" &&
+    !(headers as Record<string, string>)["Content-Type"]
+  ) {
     (headers as Record<string, string>)["Content-Type"] = "application/json";
   }
 
-  const res = await fetch(`${API_BASE}${path}`, {
+  let res = await fetch(`${API_BASE}${url}`, {
     ...options,
     headers,
+    credentials: "include",
   });
+
+  if (res.status === 401 && !isAuthRoute) {
+    const refreshRes = await fetch(`${API_BASE}/api/v1/auth/refresh`, {
+      method: "POST",
+      credentials: "include",
+    });
+
+    if (refreshRes.ok) {
+      res = await fetch(`${API_BASE}${url}`, {
+        ...options,
+        headers,
+        credentials: "include",
+      });
+    } else {
+      if (
+        typeof window !== "undefined" &&
+        !window.location.pathname.includes("/login")
+      ) {
+        window.location.href = "/login?expired=true";
+      }
+      throw new Error("Session expired");
+    }
+  }
 
   if (!res.ok) {
-    const error = await res.json().catch(() => ({ message: `API error ${res.status}` }));
-    throw new Error(error.message || `API error ${res.status}: ${path}`);
+    let errorBody: unknown = null;
+    try {
+      errorBody = await res.json();
+    } catch {}
+
+    throw new Error((errorBody as { message?: string })?.message || `Request failed (${res.status})`);
   }
 
-  return res.json() as Promise<T>;
-}
-
-async function get<T>(path: string, revalidate = 60): Promise<T> {
-  const token = getAccessToken();
-  const headers: HeadersInit = {};
-  if (token) {
-    headers["Authorization"] = `Bearer ${token}`;
-  }
-
-  const res = await fetch(`${API_BASE}${path}`, {
-    headers,
-    next: { revalidate },
-  });
-
-  if (!res.ok) throw new Error(`API error ${res.status}: ${path}`);
-  return res.json() as Promise<T>;
-}
-
-async function post<T>(path: string, body?: unknown): Promise<T> {
-  return request<T>(path, {
-    method: "POST",
-    body: body instanceof FormData ? body : JSON.stringify(body),
-  });
-}
-
-async function put<T>(path: string, body?: unknown): Promise<T> {
-  return request<T>(path, {
-    method: "PUT",
-    body: body instanceof FormData ? body : JSON.stringify(body),
-  });
-}
-
-async function del<T>(path: string): Promise<T> {
-  return request<T>(path, { method: "DELETE" });
-}
-
-// ─── Auth API ─────────────────────────────────────────────────────────────────
-
-export async function login(data: LoginRequest): Promise<AuthResponse> {
-  const res = await post<ApiResponse<AuthResponse>>("/api/v1/auth/login", data);
-  return res.data;
-}
-
-export async function register(data: RegisterRequest): Promise<UserDto> {
-  const res = await post<ApiResponse<UserDto>>("/api/v1/auth/register", data);
-  return res.data;
-}
-
-export async function getCurrentUser(): Promise<UserDto> {
-  const res = await get<ApiResponse<UserDto>>("/api/v1/auth/me", 0);
-  return res.data;
-}
-
-export async function getAuthProfile(): Promise<AuthResponse> {
-  const res = await get<ApiResponse<AuthResponse>>("/api/v1/auth/me", 0);
-  return res.data;
-}
-
-export async function refreshToken(): Promise<AuthResponse> {
-  const res = await post<ApiResponse<AuthResponse>>("/api/v1/auth/refresh");
-  return res.data;
-}
-
-export async function logout(): Promise<void> {
-  await post("/api/v1/auth/logout");
-  setAccessToken(null);
-}
-
-export async function fetchOAuthProviders(): Promise<string[]> {
-  const res = await get<ApiResponse<string[]>>("/api/v1/auth/oauth2/providers", 0);
-  return res.data;
-}
-
-export async function getOAuthAuthorizationUrl(provider: string): Promise<string> {
-  const normalizedProvider = encodeURIComponent(provider.toLowerCase());
-  const res = await get<ApiResponse<string>>(
-    `/api/v1/auth/oauth2/authorize/${normalizedProvider}`,
-    0
-  );
-  return res.data;
-}
-
-// ─── Category API ─────────────────────────────────────────────────────────────
-
-export async function fetchCategories(
-  page = 0,
-  size = 50
-): Promise<PageResponse<CategoryDto>> {
-  const data = await get<ApiResponse<PageResponse<CategoryDto>>>(
-    `/api/v1/categories?page=${page}&size=${size}&sortBy=orderIndex&sortDir=asc`
-  );
-  return data.data;
-}
-
-export async function fetchCategoryById(id: number): Promise<CategoryDto> {
-  const data = await get<ApiResponse<CategoryDto>>(`/api/v1/categories/${id}`);
-  return data.data;
-}
-
-export async function fetchCategoryBySlug(slug: string): Promise<CategoryDto> {
-  const data = await get<ApiResponse<CategoryDto>>(`/api/v1/categories/slug/${slug}`);
-  return data.data;
-}
-
-export async function createCategory(data: CreateCategoryRequest): Promise<CategoryDto> {
-  const res = await post<ApiResponse<CategoryDto>>("/api/v1/categories", data);
-  return res.data;
-}
-
-export async function updateCategory(id: number, data: UpdateCategoryRequest): Promise<CategoryDto> {
-  const res = await put<ApiResponse<CategoryDto>>(`/api/v1/categories/${id}`, data);
-  return res.data;
-}
-
-export async function deleteCategory(id: number): Promise<void> {
-  await del(`/api/v1/categories/${id}`);
-}
-
-// ─── Course API ───────────────────────────────────────────────────────────────
-
-export async function fetchCourses(
-  page = 0,
-  size = 20,
-  sortBy = "createdAt",
-  sortDir: "asc" | "desc" = "desc"
-): Promise<PageResponse<CourseDto>> {
-  const data = await get<ApiResponse<PageResponse<CourseDto>>>(
-    `/api/v1/courses?page=${page}&size=${size}&sortBy=${sortBy}&sortDir=${sortDir}`
-  );
-  return data.data;
-}
-
-export async function fetchCourseById(id: number): Promise<CourseDto> {
-  const data = await get<ApiResponse<CourseDto>>(`/api/v1/courses/${id}`);
-  return data.data;
-}
-
-export async function fetchCourseBySlug(slug: string): Promise<CourseDto> {
-  const data = await get<ApiResponse<CourseDto>>(`/api/v1/courses/slug/${slug}`);
-  return data.data;
-}
-
-export async function fetchCourseWithChaptersBySlug(slug: string): Promise<CourseDto> {
-  const data = await get<ApiResponse<CourseDto>>(`/api/v1/courses/slug/${slug}/full`, 0);
-  return data.data;
-}
-
-export async function fetchCoursesByCategory(
-  categoryId: number,
-  page = 0,
-  size = 20
-): Promise<PageResponse<CourseDto>> {
-  const data = await get<ApiResponse<PageResponse<CourseDto>>>(
-    `/api/v1/courses/category/${categoryId}?page=${page}&size=${size}`
-  );
-  return data.data;
-}
-
-export async function fetchCoursesByInstructor(
-  instructorId: number,
-  page = 0,
-  size = 20
-): Promise<PageResponse<CourseDto>> {
-  const data = await get<ApiResponse<PageResponse<CourseDto>>>(
-    `/api/v1/courses/instructor/${instructorId}?page=${page}&size=${size}`
-  );
-  return data.data;
-}
-
-export async function createCourse(data: CreateCourseRequest): Promise<CourseDto> {
-  const formData = new FormData();
-  Object.entries(data).forEach(([key, value]) => {
-    if (value !== undefined && value !== null) {
-      if (value instanceof File) {
-        formData.append(key, value);
-      } else {
-        formData.append(key, String(value));
-      }
-    }
-  });
-  const res = await post<ApiResponse<CourseDto>>("/api/v1/courses", formData);
-  return res.data;
-}
-
-export async function updateCourse(id: number, data: Partial<CreateCourseRequest>): Promise<CourseDto> {
-  const formData = new FormData();
-  Object.entries(data).forEach(([key, value]) => {
-    if (value !== undefined && value !== null) {
-      if (value instanceof File) {
-        formData.append(key, value);
-      } else {
-        formData.append(key, String(value));
-      }
-    }
-  });
-  const res = await put<ApiResponse<CourseDto>>(`/api/v1/courses/${id}`, formData);
-  return res.data;
-}
-
-export async function deleteCourse(id: number): Promise<void> {
-  await del(`/api/v1/courses/${id}`);
-}
-
-// ─── Chapter API ──────────────────────────────────────────────────────────────
-
-export async function fetchChaptersByCourse(courseId: number): Promise<ChapterDto[]> {
-  const data = await get<ApiResponse<ChapterDto[]>>(`/api/v1/chapters/course/${courseId}`);
-  return data.data;
-}
-
-export async function fetchChapterById(id: number): Promise<ChapterDto> {
-  const data = await get<ApiResponse<ChapterDto>>(`/api/v1/chapters/${id}`);
-  return data.data;
-}
-
-export async function createChapter(data: CreateChapterRequest): Promise<ChapterDto> {
-  const res = await post<ApiResponse<ChapterDto>>("/api/v1/chapters", data);
-  return res.data;
-}
-
-export async function updateChapter(id: number, data: UpdateChapterRequest): Promise<ChapterDto> {
-  const res = await put<ApiResponse<ChapterDto>>(`/api/v1/chapters/${id}`, data);
-  return res.data;
-}
-
-export async function deleteChapter(id: number): Promise<void> {
-  await del(`/api/v1/chapters/${id}`);
-}
-
-// ─── Lesson API ───────────────────────────────────────────────────────────────
-
-export async function fetchLessonsByChapter(chapterId: number): Promise<LessonDto[]> {
-  const data = await get<ApiResponse<LessonDto[]>>(`/api/v1/lessons/chapter/${chapterId}`);
-  return data.data;
-}
-
-export async function fetchLessonsByCourse(courseId: number): Promise<LessonDto[]> {
-  const data = await get<ApiResponse<LessonDto[]>>(`/api/v1/lessons/course/${courseId}`);
-  return data.data;
-}
-
-export async function fetchLessonById(id: number): Promise<LessonDto> {
-  const data = await get<ApiResponse<LessonDto>>(`/api/v1/lessons/${id}`);
-  return data.data;
-}
-
-export async function fetchLessonBySlug(
-  courseSlug: string,
-  lessonSlug: string
-): Promise<LessonDto> {
-  const data = await get<ApiResponse<LessonDto>>(
-    `/api/v1/courses/slug/${courseSlug}/lessons/${lessonSlug}`,
-    0
-  );
-  return data.data;
-}
-
-export async function createLesson(data: CreateLessonRequest): Promise<LessonDto> {
-  const res = await post<ApiResponse<LessonDto>>("/api/v1/lessons", data);
-  return res.data;
-}
-
-export async function updateLesson(id: number, data: UpdateLessonRequest): Promise<LessonDto> {
-  const res = await put<ApiResponse<LessonDto>>(`/api/v1/lessons/${id}`, data);
-  return res.data;
-}
-
-export async function deleteLesson(id: number): Promise<void> {
-  await del(`/api/v1/lessons/${id}`);
-}
-
-// ─── Code Snippet API ─────────────────────────────────────────────────────────
-
-export async function fetchSnippetsByLesson(lessonId: number): Promise<CodeSnippetDto[]> {
-  const data = await get<ApiResponse<CodeSnippetDto[]>>(`/api/v1/snippets/lesson/${lessonId}`);
-  return data.data;
-}
-
-export async function fetchSnippetById(id: number): Promise<CodeSnippetDto> {
-  const data = await get<ApiResponse<CodeSnippetDto>>(`/api/v1/snippets/${id}`);
-  return data.data;
-}
-
-export async function createSnippet(data: CreateSnippetRequest): Promise<CodeSnippetDto> {
-  const res = await post<ApiResponse<CodeSnippetDto>>("/api/v1/snippets", data);
-  return res.data;
-}
-
-export async function updateSnippet(id: number, data: UpdateSnippetRequest): Promise<CodeSnippetDto> {
-  const res = await put<ApiResponse<CodeSnippetDto>>(`/api/v1/snippets/${id}`, data);
-  return res.data;
-}
-
-export async function deleteSnippet(id: number): Promise<void> {
-  await del(`/api/v1/snippets/${id}`);
-}
-
-// ─── Lesson Progress API ──────────────────────────────────────────────────────
-
-export async function upsertLessonProgress(data: UpsertProgressRequest): Promise<LessonProgressDto> {
-  const res = await post<ApiResponse<LessonProgressDto>>("/api/v1/lesson-progress", data);
-  return res.data;
-}
-
-export async function markLessonComplete(userId: number, lessonId: number): Promise<LessonProgressDto> {
-  const res = await post<ApiResponse<LessonProgressDto>>(
-    `/api/v1/lesson-progress/complete?userId=${userId}&lessonId=${lessonId}`
-  );
-  return res.data;
-}
-
-export async function getLessonProgress(userId: number, lessonId: number): Promise<LessonProgressDto | null> {
-  try {
-    const data = await get<ApiResponse<LessonProgressDto>>(
-      `/api/v1/lesson-progress?userId=${userId}&lessonId=${lessonId}`,
-      0
-    );
-    return data.data;
-  } catch {
+  if (res.status === 204) {
     return null;
   }
-}
 
-export async function getUserProgress(userId: number): Promise<LessonProgressDto[]> {
-  const data = await get<ApiResponse<LessonProgressDto[]>>(`/api/v1/lesson-progress/user/${userId}`, 0);
-  return data.data;
-}
-
-export async function getUserCompletedCount(userId: number): Promise<number> {
-  const data = await get<ApiResponse<number>>(`/api/v1/lesson-progress/user/${userId}/completed-count`, 0);
-  return data.data;
-}
-
-export async function getCourseProgress(courseId: number, userId: number): Promise<number> {
-  const data = await get<ApiResponse<number>>(
-    `/api/v1/lesson-progress/course/${courseId}/user/${userId}/completed-count`,
-    0
-  );
-  return data.data;
-}
-
-// ─── Course PDF Export API ────────────────────────────────────────────────────
-
-export async function getCoursePdfExport(courseId: number): Promise<CoursePdfExportDto | null> {
-  try {
-    const data = await get<ApiResponse<CoursePdfExportDto>>(`/api/v1/course-pdf-exports/course/${courseId}`);
-    return data.data;
-  } catch {
-    return null;
+  if (res.headers.get("content-type")?.includes("application/json")) {
+    return res.json();
   }
-}
 
-export async function incrementPdfDownload(courseId: number): Promise<CoursePdfExportDto> {
-  const res = await post<ApiResponse<CoursePdfExportDto>>(`/api/v1/course-pdf-exports/course/${courseId}/download`);
-  return res.data;
-}
-
-export async function deletePdfExport(courseId: number): Promise<void> {
-  await del(`/api/v1/course-pdf-exports/course/${courseId}`);
-}
-
-// ─── Users API (Admin) ────────────────────────────────────────────────────────
-
-export async function fetchUsers(page = 0, size = 20): Promise<PageResponse<UserDto>> {
-  const data = await get<ApiResponse<PageResponse<UserDto>>>(`/api/v1/users?page=${page}&size=${size}`, 0);
-  return data.data;
-}
-
-export async function fetchUserById(id: number): Promise<UserDto> {
-  const data = await get<ApiResponse<UserDto>>(`/api/v1/users/${id}`, 0);
-  return data.data;
-}
-
-// ─── Dashboard Stats (computed from various endpoints) ────────────────────────
-
-export async function fetchDashboardStats(): Promise<DashboardStats> {
-  const emptyUserPage: PageResponse<UserDto> = {
-    content: [],
-    pageNumber: 0,
-    pageSize: 10,
-    totalElements: 0,
-    totalPages: 0,
-  };
-  const emptyCoursePage: PageResponse<CourseDto> = {
-    content: [],
-    pageNumber: 0,
-    pageSize: 10,
-    totalElements: 0,
-    totalPages: 0,
-  };
-
-  const [usersPage, coursesPage] = await Promise.all([
-    fetchUsers(0, 10).catch(() => emptyUserPage),
-    fetchCourses(0, 10).catch(() => emptyCoursePage),
-  ]);
-
-  return {
-    totalUsers: usersPage.totalElements || usersPage.content.length,
-    totalCourses: coursesPage.totalElements || coursesPage.content.length,
-    totalEnrollments: coursesPage.content.reduce((acc, c) => acc + (c.enrolledCount || 0), 0),
-    totalLessons: coursesPage.content.reduce((acc, c) => acc + (c.totalLessons || 0), 0),
-    recentUsers: usersPage.content.slice(0, 5),
-    popularCourses: coursesPage.content.slice(0, 5),
-    userGrowth: [],
-    enrollmentTrend: [],
-  };
+  return null;
 }

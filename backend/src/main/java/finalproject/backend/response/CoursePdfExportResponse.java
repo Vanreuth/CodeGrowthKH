@@ -28,5 +28,7 @@ public class CoursePdfExportResponse {
     // Course reference
     private Long courseId;
     private String courseTitle;
+    private String thumbnail;
+    private String level;
 }
 

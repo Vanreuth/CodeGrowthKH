@@ -6,6 +6,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -26,10 +28,13 @@ public class CourseRequest {
 
     private String language = "Khmer";
 
-    private String status = "DRAFT";        // DRAFT / PUBLISHED / ARCHIVED
+    private String status = "DRAFT";        // DRAFT / PUBLISHED / ARCHIVED / COMING_SOON
 
     private Boolean featured = false;
     private Boolean free = false;
+
+    /** Expected launch date — used when status = COMING_SOON */
+    private LocalDateTime launchDate;
 
     @NotNull(message = "Category ID is required")
     private Integer categoryId;

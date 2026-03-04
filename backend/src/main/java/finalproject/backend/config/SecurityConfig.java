@@ -36,6 +36,7 @@ public class SecurityConfig {
     private final JwtAuthenticationFilter jwtFilter;
     private final CustomOAuth2UserService customOAuth2UserService;
     private final OAuth2SuccessHandler oAuth2SuccessHandler;
+    private final OAuth2FailureHandler oAuth2FailureHandler;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -63,6 +64,10 @@ public class SecurityConfig {
                         // Lessons — public read, admin write
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/v1/lessons/**").permitAll()
                         .requestMatchers("/api/v1/lessons/**").hasRole("ADMIN")
+                        // Course PDF export — public read/download count, admin generate/delete
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/v1/course/pdf/**").permitAll()
+                        .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/v1/course/pdf/*/download").permitAll()
+                        .requestMatchers("/api/v1/course/pdf/**").hasRole("ADMIN")
                         // Enrollments — authenticated users
                         .requestMatchers("/api/v1/enrollments/**").authenticated()
                         .anyRequest().authenticated()
@@ -92,6 +97,7 @@ public class SecurityConfig {
                 .oauth2Login(oauth -> oauth
                         .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService))
                         .successHandler(oAuth2SuccessHandler)
+                        .failureHandler(oAuth2FailureHandler)
                 )
 
                 // ✅ JWT filter for APIs (Added once, properly chained)

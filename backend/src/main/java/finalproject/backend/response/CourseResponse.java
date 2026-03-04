@@ -30,6 +30,8 @@ public class CourseResponse {
     private Boolean isFree;
     private Integer totalLessons;
     private BigDecimal avgRating;
+    private long viewCount;
+    private long enrolledCount;  // distinct users who started at least one lesson
     private String pdfUrl;
     private String pdfName;
     private Long pdfSizeKb;
@@ -37,6 +39,7 @@ public class CourseResponse {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private LocalDateTime publishedAt;
+    private LocalDateTime launchDate;   // set when status = COMING_SOON
 
     // Nested summary info
     private Long instructorId;

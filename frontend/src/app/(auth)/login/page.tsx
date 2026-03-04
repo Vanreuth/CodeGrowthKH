@@ -6,10 +6,11 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { toast } from "sonner";
 import { useSearchParams, useRouter } from "next/navigation";
-import { useAppDispatch } from "@/store/hook";
-import { logIn } from "@/store/slices/authSlice";
-import { fetchOAuthProviders, getOAuthAuthorizationUrl, login } from "@/lib/api";
+import Link from "next/link";
 
+import { useAuth } from "@/context/AuthContext";
+import { AuthError } from "@/lib/auth/auth";
+import { fetchOAuthProviders, getOAuthAuthorizationUrl } from "@/lib/auth/auth";
 import { Button } from "@/components/ui/button";
 import {
 	Form,
@@ -29,7 +30,6 @@ import {
 	CardTitle,
 } from "@/components/ui/card";
 import { LogIn, User, Lock } from "lucide-react";
-import Link from "next/link";
 
 const formSchema = z.object({
 	username: z.string().min(3, {
@@ -40,11 +40,43 @@ const formSchema = z.object({
 	}),
 });
 
+const DEFAULT_RETURN_URL = "/";
+
+function resolveReturnUrl(rawReturnUrl: string | null): string {
+	if (!rawReturnUrl) {
+		return DEFAULT_RETURN_URL;
+	}
+
+	try {
+		const decoded = decodeURIComponent(rawReturnUrl);
+		return decoded.startsWith("/") ? decoded : DEFAULT_RETURN_URL;
+	} catch {
+		return DEFAULT_RETURN_URL;
+	}
+}
+
+function isAdminRole(roles?: string[]): boolean {
+	return !!roles?.includes("ADMIN");
+}
+
+function resolvePostLoginRedirect(roles: string[] | undefined, returnUrl: string): string {
+	if (isAdminRole(roles)) {
+		return "/dashboard";
+	}
+
+	// Regular users should stay in user-facing area.
+	if (returnUrl.startsWith("/dashboard")) {
+		return "/";
+	}
+
+	return returnUrl;
+}
+
 export default function LoginPage() {
 	const searchParams = useSearchParams();
 	const router = useRouter();
-	const dispatch = useAppDispatch();
-	const returnUrl = searchParams.get("returnUrl") || "/dashboard";
+	const { login, user, initialized, loading } = useAuth();
+	const returnUrl = resolveReturnUrl(searchParams.get("returnUrl"));
 	const [oauthProviders, setOauthProviders] = useState<string[]>([]);
 	const [isOauthLoading, setIsOauthLoading] = useState(true);
 	const [activeOauthProvider, setActiveOauthProvider] = useState<string | null>(null);
@@ -56,6 +88,12 @@ export default function LoginPage() {
 			password: "",
 		},
 	});
+
+	useEffect(() => {
+		if (initialized && user) {
+			router.replace(resolvePostLoginRedirect(user.roles, returnUrl));
+		}
+	}, [initialized, user, router, returnUrl]);
 
 	useEffect(() => {
 		let isMounted = true;
@@ -85,34 +123,19 @@ export default function LoginPage() {
 
 	async function onSubmit(values: z.infer<typeof formSchema>) {
 		try {
-			const response = await login({ username: values.username, password: values.password });
-			if (response.id) {
-				// Store user info in Redux (no JWT token from this backend)
-				dispatch(logIn({
-					user: {
-						id: String(response.id),
-						username: response.username,
-						email: response.email,
-					},
-					token: `session-${response.id}`, // Placeholder - backend uses session auth
-				}));
-				
-				// Store user info in localStorage for persistence
-				localStorage.setItem("user", JSON.stringify({
-					id: response.id,
-					username: response.username,
-					email: response.email,
-					roles: response.roles,
-				}));
-				
-				toast.success("ចូលប្រើប្រាស់ជោគជ័យ!", {
-					description: "សូមស្វាគមន៍មកកាន់ ADUTI Learning!",
-				});
-				router.push(decodeURIComponent(returnUrl));
-			}
-		} catch {
+			const authenticatedUser = await login({ username: values.username, password: values.password });
+			toast.success("ចូលប្រើប្រាស់ជោគជ័យ!", {
+				description: "សូមស្វាគមន៍មកកាន់ ADUTI Learning!",
+			});
+			localStorage.removeItem("oauthReturnUrl");
+			router.replace(resolvePostLoginRedirect(authenticatedUser.roles, returnUrl));
+		} catch (error) {
+			const message =
+				error instanceof AuthError
+					? error.message
+					: "ឈ្មោះអ្នកប្រើប្រាស់ ឬពាក្យសម្ងាត់មិនត្រឹមត្រូវ";
 			toast.error("ចូលប្រើប្រាស់បរាជ័យ", {
-				description: "ឈ្មោះអ្នកប្រើប្រាស់ ឬពាក្យសម្ងាត់មិនត្រឹមត្រូវ",
+				description: message,
 			});
 		}
 	}
@@ -120,10 +143,12 @@ export default function LoginPage() {
 	async function onOAuthSignIn(provider: string) {
 		try {
 			setActiveOauthProvider(provider);
+			localStorage.setItem("oauthReturnUrl", returnUrl);
 			const authUrl = await getOAuthAuthorizationUrl(provider);
 			window.location.assign(authUrl);
 		} catch {
 			setActiveOauthProvider(null);
+			localStorage.removeItem("oauthReturnUrl");
 			toast.error("OAuth sign-in failed", {
 				description: "Unable to start OAuth login. Please try again.",
 			});
@@ -183,8 +208,12 @@ export default function LoginPage() {
 								</FormItem>
 							)}
 						/>
-						<Button type="submit" className="w-full">
-							Sign In
+						<Button
+							type="submit"
+							className="w-full"
+							disabled={form.formState.isSubmitting || loading}
+						>
+							{form.formState.isSubmitting || loading ? "Signing in..." : "Sign In"}
 						</Button>
 						{oauthProviders.length > 0 && (
 							<>
@@ -229,7 +258,7 @@ export default function LoginPage() {
 				<div className="text-center text-sm">
 					Don&apos;t have an account?{" "}
 					<Link
-						href="/register"
+						href={`/register?returnUrl=${encodeURIComponent(returnUrl)}`}
 						className="text-blue-600 hover:text-blue-800 underline"
 					>
 						Sign up

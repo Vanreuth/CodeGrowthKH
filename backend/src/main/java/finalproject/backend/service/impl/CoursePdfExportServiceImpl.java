@@ -16,6 +16,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.time.LocalDateTime;
 
 @Service
@@ -30,6 +35,47 @@ public class CoursePdfExportServiceImpl implements CoursePdfExportService {
     private final R2StorageService          r2StorageService;
 
     // ── GET ───────────────────────────────────────────────────────────────────
+
+    @Override
+    @Transactional(readOnly = true)
+    public ApiResponse<List<CoursePdfExportResponse>> getAllCoursePdfs() {
+        List<Course> courses = courseRepository.findAll()
+                .stream()
+                .sorted(Comparator.comparing(Course::getCreatedAt, Comparator.nullsLast(Comparator.reverseOrder())))
+                .toList();
+
+        Map<Long, CoursePdfExport> exportByCourseId = pdfExportRepository.findAll()
+                .stream()
+                .filter(export -> export.getCourse() != null && export.getCourse().getId() != null)
+                .collect(Collectors.toMap(
+                        export -> export.getCourse().getId(),
+                        Function.identity(),
+                        (left, right) -> left));
+
+        List<CoursePdfExportResponse> rows = courses.stream()
+                .map(course -> {
+                    CoursePdfExport export = exportByCourseId.get(course.getId());
+
+                    return CoursePdfExportResponse.builder()
+                            .id(export != null ? export.getId() : null)
+                            .pdfUrl(export != null ? export.getPdfUrl() : null)
+                            .pdfName(export != null ? export.getPdfName() : null)
+                            .pdfSizeKb(export != null ? export.getPdfSizeKb() : null)
+                            .totalPages(export != null && export.getTotalPages() != null ? export.getTotalPages() : 0)
+                            .totalLessonsIncluded(export != null && export.getTotalLessonsIncluded() != null ? export.getTotalLessonsIncluded() : 0)
+                            .downloadCount(export != null && export.getDownloadCount() != null ? export.getDownloadCount() : 0)
+                            .generatedAt(export != null ? export.getGeneratedAt() : null)
+                            .createdAt(export != null ? export.getCreatedAt() : null)
+                            .courseId(course.getId())
+                            .courseTitle(course.getTitle())
+                            .thumbnail(course.getThumbnail())
+                            .level(course.getLevel())
+                            .build();
+                })
+                .toList();
+
+        return ApiResponse.success(rows, "Course PDF list retrieved successfully");
+    }
 
     @Override
     @Transactional(readOnly = true)

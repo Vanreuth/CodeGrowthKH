@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { ThemeProvider } from "@/components/theme-provider";
-import { ReduxProvider } from "@/store/provide";
 import { Toaster } from "@/components/ui/sonner";
+import { AuthProvider } from "@/context/AuthContext";
 import "./globals.css";
 import { Noto_Sans_Khmer } from "next/font/google";
 
@@ -22,20 +22,19 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body
-        className={notoSansKhmer.className}
-      >
-        <ReduxProvider>
+      <body className={notoSansKhmer.className}>
+        <AuthProvider>
           <ThemeProvider
             attribute="class"
-            defaultTheme="system"
-            enableSystem
+            defaultTheme="light"
+            enableSystem={false}
+            themes={["light", "dark", "aurora", "sakura"]}
             disableTransitionOnChange
           >
             {children}
             <Toaster richColors position="top-center" />
           </ThemeProvider>
-        </ReduxProvider>
+        </AuthProvider>
       </body>
     </html>
   );

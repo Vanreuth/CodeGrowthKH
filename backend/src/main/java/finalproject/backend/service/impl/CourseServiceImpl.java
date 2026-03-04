@@ -99,8 +99,10 @@ public class CourseServiceImpl implements CourseService {
     @Override
     @Transactional(readOnly = true)
     public ApiResponse<CourseResponse> getCourseById(Long id) {
-        return ApiResponse.success(courseMapper.toResponse(findCourseOrThrow(id)),
-                "Course retrieved successfully");
+        Course course = findCourseOrThrow(id);
+        course.setViewCount(course.getViewCount() == null ? 1L : course.getViewCount() + 1);
+        courseRepository.save(course);
+        return ApiResponse.success(courseMapper.toResponse(course), "Course retrieved successfully");
     }
 
     @Override
@@ -110,27 +112,24 @@ public class CourseServiceImpl implements CourseService {
                 .orElseThrow(() -> new CustomMessageException(
                         "Course not found with slug: " + slug,
                         String.valueOf(HttpStatus.NOT_FOUND.value())));
-        return ApiResponse.success(courseMapper.toResponse(course), "Course retrieved successfully");
+
+        // Increment view count
+        course.setViewCount(course.getViewCount() == null ? 1L : course.getViewCount() + 1);
+        courseRepository.save(course);
+
+        // Include nested chapters + lessons for full course page rendering
+        CourseResponse response = courseMapper.toResponse(course);
+        response.setChapters(course.getChapters().stream()
+                .map(chapterMapper::toResponseWithLessons)
+                .collect(Collectors.toList()));
+
+        return ApiResponse.success(response, "Course retrieved successfully");
     }
 
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public ApiResponse<CourseResponse> getCourseWithChapters(String slug) {
-        Course course = courseRepository.findBySlug(slug)
-                .orElseThrow(() -> new CustomMessageException(
-                        "Course not found with slug: " + slug,
-                        String.valueOf(HttpStatus.NOT_FOUND.value())));
-
-        // Map base course fields
-        CourseResponse response = courseMapper.toResponse(course);
-
-        // Map chapters with nested lessons
-        List<ChapterResponse> chapters = course.getChapters().stream()
-                .map(chapterMapper::toResponseWithLessons)
-                .collect(Collectors.toList());
-        response.setChapters(chapters);
-
-        return ApiResponse.success(response, "Course with chapters retrieved successfully");
+        return getCourseBySlug(slug);
     }
 
     @Override
@@ -155,6 +154,22 @@ public class CourseServiceImpl implements CourseService {
     public PageResponse<CourseResponse> getCoursesByInstructor(Long instructorId, Pageable pageable) {
         return PageResponse.of(courseRepository.findByInstructorId(instructorId, pageable)
                 .map(courseMapper::toResponse));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PageResponse<CourseResponse> getFeaturedCourses(Pageable pageable) {
+        return PageResponse.of(
+                courseRepository.findByIsFeaturedTrueAndStatus("PUBLISHED", pageable)
+                        .map(courseMapper::toResponse));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PageResponse<CourseResponse> getComingSoonCourses(Pageable pageable) {
+        return PageResponse.of(
+                courseRepository.findByStatus("COMING_SOON", pageable)
+                        .map(courseMapper::toResponse));
     }
 
     @Override

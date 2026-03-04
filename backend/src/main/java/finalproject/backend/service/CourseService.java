@@ -13,6 +13,11 @@ public interface CourseService {
     ApiResponse<CourseResponse> createCourse(CourseRequest request, MultipartFile thumbnail);
     PageResponse<CourseResponse> getAllCourses(Pageable pageable);
     ApiResponse<CourseResponse> getCourseById(Long id);
+
+    /** Returns course detail by slug.
+     *
+     * For page views, this includes nested chapters + lessons in `chapters`.
+     */
     ApiResponse<CourseResponse> getCourseBySlug(String slug);
 
     /** Returns full course with all chapters + lessons nested. */
@@ -23,6 +28,13 @@ public interface CourseService {
 
     PageResponse<CourseResponse> getCoursesByCategory(int categoryId, Pageable pageable);
     PageResponse<CourseResponse> getCoursesByInstructor(Long instructorId, Pageable pageable);
+
+    /** Returns all featured (isFeatured=true) PUBLISHED courses. */
+    PageResponse<CourseResponse> getFeaturedCourses(Pageable pageable);
+
+    /** Returns all COMING_SOON courses ordered by launchDate ascending. */
+    PageResponse<CourseResponse> getComingSoonCourses(Pageable pageable);
+
     ApiResponse<CourseResponse> updateCourse(Long id, CourseRequest request, MultipartFile thumbnail);
     ApiResponse<Void> deleteCourse(Long id);
 }
