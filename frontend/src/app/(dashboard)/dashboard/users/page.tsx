@@ -51,8 +51,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useUsers } from "@/hooks/use-api";
-import type { UserDto } from "@/lib/types";
+import { useUsers } from "@/hooks/useUsers";
+import type { UserResponse } from "@/types/apiType";
 
 // ─── Stats Card ───────────────────────────────────────────────────────────────
 
@@ -171,7 +171,7 @@ export default function UsersPage() {
   const [statusFilter, setStatusFilter] = useState("All");
   const [selectedTab, setSelectedTab] = useState("all");
 
-  const { data, loading, error, refetch } = useUsers(page, pageSize);
+  const { data, loading, error, refetch } = useUsers({ page, size: pageSize });
 
   const users = data?.content || [];
   const totalElements = data?.totalElements || 0;

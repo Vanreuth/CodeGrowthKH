@@ -8,7 +8,7 @@ export default function AuthLayout({
 	children: React.ReactNode;
 }) {
 	return (
-		<div className="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-900">
+		<div className="min-h-screen flex flex-col bg-[#1a1a2e]">
 			<header className="sticky top-0 z-50">
 				<TopBar />
 			</header>
@@ -21,7 +21,7 @@ export default function AuthLayout({
 				</div>
 			</main>
 
-			<footer className="border-t border-slate-200 dark:border-slate-800">
+			<footer className="border-t border-white/10">
 				<Footer />
 			</footer>
 			<Toaster />

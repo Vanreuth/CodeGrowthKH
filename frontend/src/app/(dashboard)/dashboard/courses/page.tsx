@@ -55,8 +55,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
-import { useCourses, useCategories } from "@/hooks/use-api";
-import type { CourseDto } from "@/lib/types";
+import { useCourses } from "@/hooks/useCourses";
+import { useCategories } from "@/hooks/useCategories";
+import type { CourseResponse } from "@/types/apiType";
 
 // ─── Stats Card ───────────────────────────────────────────────────────────────
 
@@ -180,7 +181,7 @@ function StatusBadge({ status }: { status: string }) {
 
 // ─── Course Card (Grid View) ──────────────────────────────────────────────────
 
-function CourseCard({ course }: { course: CourseDto }) {
+function CourseCard({ course }: { course: CourseResponse }) {
   const gradients = [
     "from-violet-500 via-purple-500 to-indigo-500",
     "from-blue-500 via-cyan-500 to-teal-500",
@@ -198,7 +199,7 @@ function CourseCard({ course }: { course: CourseDto }) {
           <Badge className="bg-white/90 text-slate-900 hover:bg-white">
             {course.categoryName}
           </Badge>
-          <StatusBadge status={course.status} />
+          <StatusBadge status={course.status ?? 'DRAFT'} />
         </div>
       </div>
       <CardContent className="p-4 space-y-3">
@@ -207,7 +208,7 @@ function CourseCard({ course }: { course: CourseDto }) {
             {course.title}
           </h3>
           <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
-            {course.description}
+            {course.description ?? ''}
           </p>
         </div>
 
@@ -222,13 +223,13 @@ function CourseCard({ course }: { course: CourseDto }) {
               {course.enrolledCount}
             </span>
           </div>
-          <LevelBadge level={course.level} />
+          <LevelBadge level={course.level ?? 'BEGINNER'} />
         </div>
 
         <div className="flex items-center justify-between pt-2 border-t">
           <div className="flex items-center gap-1 text-amber-500">
             <Star className="h-4 w-4 fill-current" />
-            <span className="text-sm font-medium">{course.avgRating.toFixed(1)}</span>
+            <span className="text-sm font-medium">{(course.avgRating ?? 0).toFixed(1)}</span>
           </div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -272,8 +273,8 @@ export default function CoursesManagementPage() {
   const [viewMode, setViewMode] = useState<"list" | "grid">("list");
   const [selectedTab, setSelectedTab] = useState("all");
 
-  const { data, loading, refetch } = useCourses(page, pageSize, "createdAt", "desc");
-  const { data: categoriesData } = useCategories(0, 50);
+  const { data, loading, refetch } = useCourses({ page, size: pageSize, sortBy: "createdAt", sortDir: "desc" });
+  const { data: categoriesData } = useCategories({ page: 0, size: 50 });
 
   const courses = data?.content || [];
   const totalElements = data?.totalElements || 0;
@@ -286,7 +287,7 @@ export default function CoursesManagementPage() {
       const matchesSearch =
         searchTerm === "" ||
         course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        course.description.toLowerCase().includes(searchTerm.toLowerCase());
+        (course.description ?? '').toLowerCase().includes(searchTerm.toLowerCase());
 
       const matchesLevel = levelFilter === "All" || course.level === levelFilter;
       const matchesStatus = statusFilter === "All" || course.status === statusFilter;
@@ -308,10 +309,10 @@ export default function CoursesManagementPage() {
     return {
       total: totalElements,
       published: courses.filter((c) => c.status === "PUBLISHED").length,
-      totalEnrollments: courses.reduce((acc, c) => acc + c.enrolledCount, 0),
+      totalEnrollments: courses.reduce((acc, c) => acc + (c.enrolledCount ?? 0), 0),
       avgRating:
         courses.length > 0
-          ? (courses.reduce((acc, c) => acc + c.avgRating, 0) / courses.length).toFixed(1)
+          ? (courses.reduce((acc, c) => acc + (c.avgRating ?? 0), 0) / courses.length).toFixed(1)
           : "0.0",
     };
   }, [courses, totalElements]);
@@ -546,10 +547,10 @@ export default function CoursesManagementPage() {
                           <Badge variant="outline">{course.categoryName}</Badge>
                         </TableCell>
                         <TableCell>
-                          <LevelBadge level={course.level} />
+                          <LevelBadge level={course.level ?? 'BEGINNER'} />
                         </TableCell>
                         <TableCell>
-                          <StatusBadge status={course.status} />
+                          <StatusBadge status={course.status ?? 'DRAFT'} />
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2">

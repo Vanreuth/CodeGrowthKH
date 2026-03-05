@@ -1,344 +1,257 @@
+"use client"
 
-"use client";
+import { useState, ChangeEvent, useMemo } from "react"
+import Link from "next/link"
+import { useRouter } from "next/navigation"
+import { register } from "@/hooks/useAuth"
+import type { RegisterRequest } from "@/types/authType"
+import { Eye, EyeOff, Loader2, Check, X } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 
-import Link from "next/link";
-import { useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { toast } from "sonner";
-import { ImagePlus, Lock, Mail, Upload, User, UserPlus } from "lucide-react";
-
-import { useAuth } from "@/context/AuthContext";
-import { AuthError } from "@/lib/auth/auth";
-import { fetchOAuthProviders, getOAuthAuthorizationUrl } from "@/lib/auth/auth";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-
-const DEFAULT_RETURN_URL = "/";
-
-function resolveReturnUrl(rawReturnUrl: string | null): string {
-  if (!rawReturnUrl) return DEFAULT_RETURN_URL;
-  try {
-    const decoded = decodeURIComponent(rawReturnUrl);
-    return decoded.startsWith("/") ? decoded : DEFAULT_RETURN_URL;
-  } catch {
-    return DEFAULT_RETURN_URL;
-  }
+function PasswordRule({ met, label }: { met: boolean; label: string }) {
+  return (
+    <span className={`flex items-center gap-1.5 text-xs ${
+      met ? "text-green-400" : "text-slate-500"
+    }`}>
+      {met ? <Check className="h-3 w-3" /> : <X className="h-3 w-3" />}
+      {label}
+    </span>
+  )
 }
-
-function resolvePostAuthRedirect(roles?: string[]): string {
-  return roles?.includes("ADMIN") ? "/dashboard" : "/";
-}
-
-const formSchema = z
-  .object({
-    username: z
-      .string()
-      .min(3, { message: "Username must be at least 3 characters." })
-      .max(30, { message: "Username must be 30 characters or fewer." })
-      .regex(/^[a-zA-Z0-9_]+$/, {
-        message: "Only letters, numbers, and underscore are allowed.",
-      }),
-    email: z.string().email({ message: "Please enter a valid email address." }),
-    password: z
-      .string()
-      .min(8, { message: "Password must be at least 8 characters." }),
-    confirmPassword: z
-      .string()
-      .min(8, { message: "Confirm password must be at least 8 characters." }),
-  })
-  .refine((values) => values.password === values.confirmPassword, {
-    path: ["confirmPassword"],
-    message: "Passwords do not match.",
-  });
 
 export default function RegisterPage() {
-  const searchParams = useSearchParams();
-  const router = useRouter();
-  const { register, loading, user, initialized } = useAuth();
-  const returnUrl = resolveReturnUrl(searchParams.get("returnUrl"));
-  const [photo, setPhoto] = useState<File | undefined>();
-  const [oauthProviders, setOauthProviders] = useState<string[]>([]);
-  const [isOauthLoading, setIsOauthLoading] = useState(true);
-  const [activeOauthProvider, setActiveOauthProvider] = useState<string | null>(null);
+  const router = useRouter()
 
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      username: "",
-      email: "",
-      password: "",
-      confirmPassword: "",
-    },
-  });
+  const [form, setForm] = useState<RegisterRequest>({
+    username: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+  })
 
-  useEffect(() => {
-    if (initialized && user) {
-      router.replace(resolvePostAuthRedirect(user.roles));
-    }
-  }, [initialized, user, router]);
+  const [profilePicture, setProfilePicture] = useState<File | undefined>()
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirm, setShowConfirm] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    let isMounted = true;
-
-    async function loadProviders() {
-      try {
-        const providers = await fetchOAuthProviders();
-        if (isMounted) {
-          setOauthProviders(providers);
-        }
-      } catch {
-        if (isMounted) {
-          setOauthProviders([]);
-        }
-      } finally {
-        if (isMounted) {
-          setIsOauthLoading(false);
-        }
-      }
-    }
-
-    loadProviders();
-    return () => {
-      isMounted = false;
-    };
-  }, []);
-
-  async function onSubmit(values: z.infer<typeof formSchema>) {
-    try {
-      await register(
-        {
-          username: values.username,
-          email: values.email,
-          password: values.password,
-          confirmPassword: values.confirmPassword,
-        },
-        photo
-      );
-      toast.success("Account created successfully.", {
-        description: "You can now sign in to continue.",
-      });
-      const loginUrl = `/login?registered=true&returnUrl=${encodeURIComponent(returnUrl)}`;
-      router.push(loginUrl);
-    } catch (error) {
-      const message = error instanceof AuthError ? error.message : "Registration failed";
-      toast.error("Unable to create account", { description: message });
-    }
+  function handleChange(e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
+    const { name, value } = e.target
+    setForm((prev) => ({ ...prev, [name]: value }))
   }
 
-  function handlePhotoChange(event: React.ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
-    if (!file) {
-      setPhoto(undefined);
-      return;
-    }
-
-    if (!file.type.startsWith("image/")) {
-      toast.error("Please select an image file.");
-      event.target.value = "";
-      setPhoto(undefined);
-      return;
-    }
-
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error("Image size must be less than 5MB.");
-      event.target.value = "";
-      setPhoto(undefined);
-      return;
-    }
-
-    setPhoto(file);
+  function handleFileChange(e: ChangeEvent<HTMLInputElement>) {
+    if (e.target.files?.[0]) setProfilePicture(e.target.files[0])
   }
 
-  async function onOAuthSignIn(provider: string) {
+  const passwordRules = useMemo(() => ({
+    length: form.password.length >= 6,
+    uppercase: /[A-Z]/.test(form.password),
+    lowercase: /[a-z]/.test(form.password),
+    number: /[0-9]/.test(form.password),
+  }), [form.password])
+
+  const passwordValid = Object.values(passwordRules).every(Boolean)
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    setError(null)
+
+    if (form.password !== form.confirmPassword) {
+      setError("Passwords do not match")
+      return
+    }
+
+    setLoading(true)
     try {
-      setActiveOauthProvider(provider);
-      localStorage.setItem("oauthReturnUrl", returnUrl);
-      const authUrl = await getOAuthAuthorizationUrl(provider);
-      window.location.assign(authUrl);
+      await register({ ...form, profilePicture })
+      router.push("/login")
     } catch {
-      setActiveOauthProvider(null);
-      localStorage.removeItem("oauthReturnUrl");
-      toast.error("OAuth sign-up failed", {
-        description: "Unable to start OAuth flow. Please try again.",
-      });
+      setError("Registration failed. Please try again.")
+    } finally {
+      setLoading(false)
     }
   }
 
   return (
-    <Card className="w-full max-w-md border-border/70 shadow-lg">
-      <CardHeader className="text-center">
-        <div className="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-gradient-to-br from-primary to-accent text-primary-foreground shadow-md">
-          <UserPlus className="h-6 w-6" />
+    <div className="w-full max-w-sm">
+      <div className="bg-[#16213e] border border-white/10 rounded-2xl p-8 shadow-2xl">
+
+        {/* Header */}
+        <div className="text-center mb-8">
+          <h1 className="text-2xl font-bold text-white tracking-wide">
+            Create Account
+          </h1>
+          <p className="text-sm text-slate-400 mt-1.5">
+            Join our learning community
+          </p>
         </div>
-        <CardTitle className="mt-4 text-2xl">Create account</CardTitle>
-        <CardDescription>
-          Join ADUTI Learning and start your learning journey.
-        </CardDescription>
-      </CardHeader>
 
-      <CardContent>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
+        {/* Error */}
+        {error && (
+          <div className="mb-5 px-4 py-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-sm text-center">
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+
+          {/* Full Name hidden — username is the identity */}
+          <div className="space-y-1.5">
+            <Label htmlFor="username" className="text-slate-300 text-sm font-medium">
+              Username
+            </Label>
+            <Input
+              id="username"
               name="username"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Username</FormLabel>
-                  <FormControl>
-                    <div className="relative">
-                      <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                      <Input placeholder="your_username" className="pl-10" {...field} />
-                    </div>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+              type="text"
+              placeholder="Choose username"
+              value={form.username}
+              onChange={handleChange}
+              required
+              autoComplete="username"
+              className="bg-[#0f3460]/60 border-white/10 text-white placeholder:text-slate-500 focus-visible:ring-blue-500 focus-visible:border-blue-500 h-11"
             />
+          </div>
 
-            <FormField
-              control={form.control}
+          <div className="space-y-1.5">
+            <Label htmlFor="email" className="text-slate-300 text-sm font-medium">
+              Email
+            </Label>
+            <Input
+              id="email"
               name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Email</FormLabel>
-                  <FormControl>
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                      <Input type="email" placeholder="you@example.com" className="pl-10" {...field} />
-                    </div>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+              type="email"
+              placeholder="you@example.com"
+              value={form.email}
+              onChange={handleChange}
+              required
+              autoComplete="email"
+              className="bg-[#0f3460]/60 border-white/10 text-white placeholder:text-slate-500 focus-visible:ring-blue-500 focus-visible:border-blue-500 h-11"
             />
+          </div>
 
-            <FormField
-              control={form.control}
-              name="password"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Password</FormLabel>
-                  <FormControl>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                      <Input type="password" placeholder="At least 8 characters" className="pl-10" {...field} />
-                    </div>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+          {/* Password */}
+          <div className="space-y-1.5">
+            <Label htmlFor="password" className="text-slate-300 text-sm font-medium">
+              Password
+            </Label>
+            <div className="relative">
+              <Input
+                id="password"
+                name="password"
+                type={showPassword ? "text" : "password"}
+                placeholder="Min. 6 characters"
+                value={form.password}
+                onChange={handleChange}
+                required
+                autoComplete="new-password"
+                className="bg-[#0f3460]/60 border-white/10 text-white placeholder:text-slate-500 focus-visible:ring-blue-500 focus-visible:border-blue-500 h-11 pr-10"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((v) => !v)}
+                tabIndex={-1}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 transition-colors"
+              >
+                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            </div>
+          </div>
 
-            <FormField
-              control={form.control}
-              name="confirmPassword"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Confirm Password</FormLabel>
-                  <FormControl>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                      <Input type="password" placeholder="Re-enter your password" className="pl-10" {...field} />
-                    </div>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+          {/* Confirm Password */}
+          <div className="space-y-1.5">
+            <Label htmlFor="confirmPassword" className="text-slate-300 text-sm font-medium">
+              Confirm Password
+            </Label>
+            <div className="relative">
+              <Input
+                id="confirmPassword"
+                name="confirmPassword"
+                type={showConfirm ? "text" : "password"}
+                placeholder="Re-enter password"
+                value={form.confirmPassword}
+                onChange={handleChange}
+                required
+                autoComplete="new-password"
+                className="bg-[#0f3460]/60 border-white/10 text-white placeholder:text-slate-500 focus-visible:ring-blue-500 focus-visible:border-blue-500 h-11 pr-10"
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirm((v) => !v)}
+                tabIndex={-1}
+                aria-label={showConfirm ? "Hide password" : "Show password"}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 transition-colors"
+              >
+                {showConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            </div>
+          </div>
 
-            <FormItem>
-              <FormLabel className="flex items-center gap-2">
-                <ImagePlus className="h-4 w-4 text-muted-foreground" />
-                Profile picture (optional)
-              </FormLabel>
-              <FormControl>
-                <div className="flex items-center gap-2 rounded-md border border-dashed border-border px-3 py-2">
-                  <Upload className="h-4 w-4 text-muted-foreground" />
-                  <Input
-                    type="file"
-                    accept="image/*"
-                    className="cursor-pointer border-0 p-0 shadow-none file:mr-2 file:cursor-pointer file:rounded-md file:border-0 file:bg-primary/10 file:px-2 file:py-1 file:text-xs file:font-medium file:text-primary"
-                    onChange={handlePhotoChange}
-                  />
-                </div>
-              </FormControl>
-              {photo ? (
-                <p className="text-xs text-muted-foreground">{photo.name}</p>
-              ) : null}
-            </FormItem>
+          {/* Password rules */}
+          {form.password.length > 0 && (
+            <div className="rounded-lg bg-white/5 border border-white/10 p-3">
+              <p className="text-xs text-slate-400 font-medium mb-2">Password Requirements:</p>
+              <div className="grid grid-cols-2 gap-1.5">
+                <PasswordRule met={passwordRules.length} label="Min 6 chars" />
+                <PasswordRule met={passwordRules.uppercase} label="Uppercase" />
+                <PasswordRule met={passwordRules.lowercase} label="Lowercase" />
+                <PasswordRule met={passwordRules.number} label="Number" />
+              </div>
+            </div>
+          )}
 
-            <Button
-              type="submit"
-              className="w-full bg-gradient-to-r from-primary to-accent text-primary-foreground hover:brightness-110"
-              disabled={form.formState.isSubmitting || loading || activeOauthProvider !== null}
-            >
-              {form.formState.isSubmitting || loading ? "Creating account..." : "Create account"}
-            </Button>
+          {/* Profile picture */}
+          <div className="space-y-1.5">
+            <Label className="text-slate-400 text-sm">
+              Profile Picture{" "}<span className="text-slate-600">(optional)</span>
+            </Label>
+            <label className="flex items-center gap-3 cursor-pointer group">
+              <div className="flex-1 h-11 flex items-center px-3 rounded-lg bg-[#0f3460]/60 border border-white/10 border-dashed group-hover:border-blue-500/50 transition-colors">
+                <span className="text-sm text-slate-500 truncate">
+                  {profilePicture ? profilePicture.name : "Choose image…"}
+                </span>
+              </div>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleFileChange}
+                className="sr-only"
+              />
+            </label>
+          </div>
 
-            {oauthProviders.length > 0 && (
-              <>
-                <div className="relative py-2">
-                  <div className="absolute inset-0 flex items-center">
-                    <span className="w-full border-t" />
-                  </div>
-                  <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-background px-2 text-muted-foreground">or continue with</span>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  {oauthProviders.map((provider) => (
-                    <Button
-                      key={provider}
-                      type="button"
-                      variant="outline"
-                      className="w-full"
-                      disabled={isOauthLoading || activeOauthProvider !== null || form.formState.isSubmitting || loading}
-                      onClick={() => onOAuthSignIn(provider)}
-                    >
-                      {activeOauthProvider === provider
-                        ? "Redirecting..."
-                        : `Continue with ${provider.charAt(0).toUpperCase()}${provider.slice(1)}`}
-                    </Button>
-                  ))}
-                </div>
-              </>
+          {/* Submit */}
+          <Button
+            type="submit"
+            disabled={loading || !passwordValid}
+            className="w-full h-11 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-lg transition-colors disabled:opacity-60 mt-2"
+          >
+            {loading ? (
+              <span className="flex items-center gap-2">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Creating account...
+              </span>
+            ) : (
+              "Create Account"
             )}
-          </form>
-        </Form>
-      </CardContent>
+          </Button>
+        </form>
 
-      <CardFooter className="flex flex-col gap-3">
-        <p className="text-center text-sm text-muted-foreground">
+        {/* Sign in link */}
+        <p className="text-center text-sm text-slate-500 mt-6">
           Already have an account?{" "}
           <Link
-            href={`/login?returnUrl=${encodeURIComponent(returnUrl)}`}
-            className="font-medium text-primary hover:underline"
+            href="/login"
+            className="text-blue-400 hover:text-blue-300 font-medium transition-colors"
           >
             Sign in
           </Link>
         </p>
-      </CardFooter>
-    </Card>
-  );
+      </div>
+    </div>
+  )
 }

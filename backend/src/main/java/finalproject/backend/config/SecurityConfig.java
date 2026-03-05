@@ -74,7 +74,8 @@ public class SecurityConfig {
                 )
                 // ── Session management ────────────────────────────────────────────
                 .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                )
 
                 // ── Exception handling ────────────────────────────────────────────
                 .exceptionHandling(exception -> exception

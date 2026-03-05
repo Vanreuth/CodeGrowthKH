@@ -1,162 +1,128 @@
-// context/AuthContext.tsx
-"use client";
+'use client'
 
 import {
   createContext,
   useContext,
-  useState,
   useEffect,
+  useState,
   useCallback,
   ReactNode,
-} from "react";
+} from 'react'
+import { authService }                      from '../services/authService'
+import {hasAdminRole } from '@/types/apiType'
+import type {
+  AuthResponse,
+  UpdateProfileRequest,
+} from '../types/authType'
+import { setRoleCookie, clearRoleCookie }   from '../lib/Cookies'
 
-import { AuthResponse, LoginRequest, RegisterRequest, UpdateProfileRequest } from "@/lib/auth/types";
-import {
-  apiLogin,
-  apiLogout,
-  apiRegister,
-  apiGetMe,
-  apiUpdateProfile,
-  apiRefresh,
-} from "@/lib/auth/auth";
-
-import { ApiError } from "@/lib/types"; 
-
-// ─── Context shape ────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────
+//  Context shape
+// ─────────────────────────────────────────────────────────────
 
 interface AuthContextValue {
-  /** Currently authenticated user, or null */
-  user: AuthResponse | null;
-  /** True while any auth request is in-flight */
-  loading: boolean;
-  /** True once the initial /me check has completed */
-  initialized: boolean;
-
-  login:         (data: LoginRequest)          => Promise<AuthResponse>;
-  register:      (data: RegisterRequest, profilePicture?: File) => Promise<void>;
-  logout:        ()                            => Promise<void>;
-  updateProfile: (data: UpdateProfileRequest, photo?: File) => Promise<void>;
-  refreshToken:  ()                            => Promise<void>;
-  syncSession:   ()                            => Promise<AuthResponse | null>;
+  user           : AuthResponse | null
+  loading        : boolean
+  /** true once /me has resolved (success or fail) */
+  initialized    : boolean
+  isAdmin        : boolean
+  isAuthenticated: boolean
+  login          : (username: string, password: string) => Promise<AuthResponse>
+  logout         : () => Promise<void>
+  updateProfile  : (payload: UpdateProfileRequest, photo?: File) => Promise<void>
 }
 
-// ─── Context + hook ───────────────────────────────────────────────────────────
+const AuthContext = createContext<AuthContextValue | null>(null)
 
-const AuthContext = createContext<AuthContextValue | null>(null);
-
-export function useAuth(): AuthContextValue {
-  const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error("useAuth must be used inside <AuthProvider>");
-  return ctx;
-}
-
-// ─── Provider ─────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────
+//  Provider
+// ─────────────────────────────────────────────────────────────
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user,        setUser]        = useState<AuthResponse | null>(null);
-  const [loading,     setLoading]     = useState(false);
-  const [initialized, setInitialized] = useState(false);
+  const [user,    setUser]    = useState<AuthResponse | null>(null)
+  const [loading, setLoading] = useState<boolean>(true)
 
-  const syncSession = useCallback(async (): Promise<AuthResponse | null> => {
-    try {
-      const me = await apiGetMe();
-      if (me.data) {
-        setUser(me.data);
-        return me.data;
-      }
-    } catch {
-      // Try silent refresh (browser sends refresh_token HttpOnly cookie)
-      try {
-        const res = await apiRefresh();
-        if (res.data) {
-          setUser(res.data);
-          return res.data;
-        }
-      } catch {
-        // No valid session — stay logged out
-      }
-    }
-
-    return null;
-  }, []);
-
-  // ── On mount: restore session ──────────────────────────────────────────────
+  // ── On mount: restore session from /me ───────────────────
   useEffect(() => {
-    async function restoreSession() {
-      try {
-        await syncSession();
-      } finally {
-        setInitialized(true);
-      }
-    }
+    authService.me()
+      .then((userData) => {
+        setUser(userData)
+        // Re-sync role cookie on hard refresh / new tab
+        setRoleCookie(hasAdminRole(userData.roles))
+      })
+      .catch(() => {
+        setUser(null)
+        clearRoleCookie()
+      })
+      .finally(() => setLoading(false))
+  }, [])
 
-    restoreSession();
-  }, [syncSession]);
+  // ── Login ─────────────────────────────────────────────────
+  const login = useCallback(async (
+    username: string,
+    password: string
+  ): Promise<AuthResponse> => {
+    const userData = await authService.login({ username, password })
+    setUser(userData)
 
-  // ── login ──────────────────────────────────────────────────────────────────
-  const login = useCallback(async (data: LoginRequest) => {
-    setLoading(true);
-    try {
-      const res = await apiLogin(data);
-      if (!res.data) throw new ApiError(401, res.message);
+    // ✅ roles is array: ["ADMIN", "USER"]
+    const admin = hasAdminRole(userData.roles)
 
-      setUser(res.data);
-      return res.data;
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+    // ✅ write plain cookie — middleware reads this to gate /dashboard
+    setRoleCookie(admin)
 
-  // ── register ───────────────────────────────────────────────────────────────
-  const register = useCallback(async (data: RegisterRequest, profilePicture?: File) => {
-    setLoading(true);
-    try {
-      const res = await apiRegister(data, profilePicture);
-      if (!res.success) throw new ApiError(400, res.message);
-      // Registration doesn't log in automatically — redirect to /login
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+    // ✅ role-based redirect
+    window.location.href = admin ? '/dashboard' : '/account'
 
-  // ── logout ─────────────────────────────────────────────────────────────────
-  const logout = useCallback(async () => {
-    setLoading(true);
-    try {
-      await apiLogout();
-    } finally {
-      setUser(null);
-      setLoading(false);
-    }
-  }, []);
+    return userData
+  }, [])
 
-  // ── updateProfile ──────────────────────────────────────────────────────────
-  const updateProfile = useCallback(async (data: UpdateProfileRequest, photo?: File) => {
-    setLoading(true);
-    try {
-      const res = await apiUpdateProfile(data, photo);
-      if (!res.data) throw new ApiError(400, res.message);
+  // ── Logout ────────────────────────────────────────────────
+  const logout = useCallback(async (): Promise<void> => {
+    await authService.logout() // authService redirects to /login
+    setUser(null)
+    clearRoleCookie()
+  }, [])
 
-      setUser(res.data);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  // ── Update profile ────────────────────────────────────────
+  const updateProfile = useCallback(async (
+    payload: UpdateProfileRequest,
+    photo?: File
+  ): Promise<void> => {
+    const updated = await authService.updateProfile(payload, photo)
+    setUser(updated)
+    setRoleCookie(hasAdminRole(updated.roles))
+  }, [])
 
-  // ── refreshToken ───────────────────────────────────────────────────────────
-  const refreshToken = useCallback(async () => {
-    const res = await apiRefresh();
-    if (res.data) {
-      setUser(res.data);
-    }
-  }, []);
+  // ── Derived state ─────────────────────────────────────────
+  const isAdmin        = hasAdminRole(user?.roles)
+  const isAuthenticated = !!user
+  const initialized    = !loading
 
-  // ── Context value ──────────────────────────────────────────────────────────
   return (
     <AuthContext.Provider
-      value={{ user, loading, initialized, login, register, logout, updateProfile, refreshToken, syncSession }}
+      value={{
+        user,
+        loading,
+        initialized,
+        isAdmin,
+        isAuthenticated,
+        login,
+        logout,
+        updateProfile,
+      }}
     >
       {children}
     </AuthContext.Provider>
-  );
+  )
+}
+
+// ─────────────────────────────────────────────────────────────
+//  Hook
+// ─────────────────────────────────────────────────────────────
+
+export function useAuthContext(): AuthContextValue {
+  const ctx = useContext(AuthContext)
+  if (!ctx) throw new Error('useAuthContext must be used within <AuthProvider>')
+  return ctx
 }

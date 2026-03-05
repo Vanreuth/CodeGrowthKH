@@ -30,6 +30,11 @@ import {
 	GraduationCap,
 	Target,
 	TrendingUp,
+	CheckCircle2,
+	CircleDot,
+	Timer,
+	BarChart3,
+	Layers,
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -62,8 +67,8 @@ import {
 	AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
-import { useAuth } from "@/context/AuthContext";
-import { AuthError } from "@/lib/auth/auth";
+import { useAuth } from "@/hooks/useAuth";
+import { useMyProgress } from "@/hooks/useLessonProgress";
 
 const profileFormSchema = z.object({
 	username: z
@@ -80,26 +85,46 @@ const profileFormSchema = z.object({
 
 type ProfileFormValues = z.infer<typeof profileFormSchema>;
 
-// Mock stats - replace with real data from API
-const userStats = {
-	coursesEnrolled: 5,
-	coursesCompleted: 2,
-	lessonsCompleted: 47,
-	totalHours: 28,
-	streak: 7,
-	certificates: 2,
-};
 
-const recentActivity = [
-	{ id: 1, type: "lesson", title: "Introduction to React Hooks", course: "React Fundamentals", time: "2 hours ago" },
-	{ id: 2, type: "course", title: "Started TypeScript Basics", course: "TypeScript Mastery", time: "1 day ago" },
-	{ id: 3, type: "achievement", title: "Completed 50 Lessons", course: "", time: "3 days ago" },
-	{ id: 4, type: "lesson", title: "State Management with Redux", course: "React Advanced", time: "5 days ago" },
-];
 
 export default function AccountPage() {
 	const router = useRouter();
 	const { user, initialized, updateProfile, logout } = useAuth();
+
+	const { data: progressData, loading: progressLoading } = useMyProgress();
+
+	// Real stats derived from API
+	const lessonsCompleted = progressData?.filter((p) => p.completed).length ?? 0;
+	const totalLessonsTracked = progressData?.length ?? 0;
+	const lessonsProgressPct =
+		totalLessonsTracked > 0 ? Math.round((lessonsCompleted / totalLessonsTracked) * 100) : 0;
+	const distinctCourses = progressData
+		? new Set(progressData.map((p) => p.courseId).filter(Boolean)).size
+		: 0;
+	const totalReadSeconds = progressData?.reduce((s, p) => s + (p.readTimeSeconds ?? 0), 0) ?? 0;
+	const readTimeLabel =
+		totalReadSeconds >= 3600
+			? `${Math.round(totalReadSeconds / 3600)}h`
+			: totalReadSeconds >= 60
+				? `${Math.round(totalReadSeconds / 60)}m`
+				: totalReadSeconds > 0
+					? `${totalReadSeconds}s`
+					: "--";
+
+	// Group progress by course for activity tab
+	const progressByCourse = progressData
+		? [...progressData]
+				.sort((a, b) =>
+					new Date(b.completedAt ?? b.createdAt ?? 0).getTime() -
+					new Date(a.completedAt ?? a.createdAt ?? 0).getTime()
+				)
+				.reduce<Record<string, typeof progressData>>((acc, p) => {
+					const key = p.courseTitle ?? `Course ${p.courseId ?? p.lessonId}`;
+					if (!acc[key]) acc[key] = [];
+					acc[key].push(p);
+					return acc;
+				}, {})
+		: {};
 
 	const [isLoading, setIsLoading] = useState(false);
 	const [isEditing, setIsEditing] = useState(false);
@@ -128,9 +153,19 @@ export default function AccountPage() {
 	const isFetching = !initialized;
 
 	// Redirect if not authenticated once auth state is initialized
+	// If user is ADMIN, redirect to dashboard
 	useEffect(() => {
-		if (initialized && !user) {
+		if (!initialized) return;
+		if (!user) {
 			router.replace("/login?returnUrl=/account");
+			return;
+		}
+		const isAdmin =
+			user.roles?.includes("ADMIN") ||
+			user.roles?.includes("ROLE_ADMIN") ||
+			user.role === "ROLE_ADMIN";
+		if (isAdmin) {
+			router.replace("/dashboard");
 		}
 	}, [initialized, user, router]);
 
@@ -203,11 +238,9 @@ export default function AccountPage() {
 		} catch (error) {
 			console.error("Failed to update profile:", error);
 			const message =
-				error instanceof AuthError
+				error instanceof Error
 					? error.message
-					: error instanceof Error
-						? error.message
-						: "បរាជ័យក្នុងការធ្វើបច្ចុប្បន្នភាពព័ត៌មាន";
+					: "បរាជ័យក្នុងការធ្វើបច្ចុប្បន្នភាពព័ត៌មាន";
 			toast.error(message);
 		} finally {
 			setIsLoading(false);
@@ -352,8 +385,10 @@ export default function AccountPage() {
 									<BookOpen className="h-5 w-5 text-violet-600 dark:text-violet-400" />
 								</div>
 								<div>
-									<p className="text-lg font-bold text-slate-900 dark:text-white">{userStats.coursesEnrolled}</p>
-									<p className="text-xs text-slate-500">វគ្គសិក្សា</p>
+									<p className="text-lg font-bold text-slate-900 dark:text-white">
+										{progressLoading ? <span className="inline-block h-5 w-8 animate-pulse rounded bg-slate-200 dark:bg-slate-700" /> : totalLessonsTracked}
+									</p>
+									<p className="text-xs text-slate-500">មេរៀន</p>
 								</div>
 							</div>
 							<div className="flex items-center gap-3 rounded-xl bg-white/80 p-3 shadow-sm dark:bg-white/5">
@@ -361,7 +396,9 @@ export default function AccountPage() {
 									<GraduationCap className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
 								</div>
 								<div>
-									<p className="text-lg font-bold text-slate-900 dark:text-white">{userStats.coursesCompleted}</p>
+									<p className="text-lg font-bold text-slate-900 dark:text-white">
+										{progressLoading ? <span className="inline-block h-5 w-8 animate-pulse rounded bg-slate-200 dark:bg-slate-700" /> : lessonsCompleted}
+									</p>
 									<p className="text-xs text-slate-500">បានបញ្ចប់</p>
 								</div>
 							</div>
@@ -370,7 +407,7 @@ export default function AccountPage() {
 									<Clock className="h-5 w-5 text-blue-600 dark:text-blue-400" />
 								</div>
 								<div>
-									<p className="text-lg font-bold text-slate-900 dark:text-white">{userStats.totalHours}h</p>
+									<p className="text-lg font-bold text-slate-900 dark:text-white">--</p>
 									<p className="text-xs text-slate-500">ម៉ោងសិក្សា</p>
 								</div>
 							</div>
@@ -379,7 +416,7 @@ export default function AccountPage() {
 									<Award className="h-5 w-5 text-amber-600 dark:text-amber-400" />
 								</div>
 								<div>
-									<p className="text-lg font-bold text-slate-900 dark:text-white">{userStats.certificates}</p>
+									<p className="text-lg font-bold text-slate-900 dark:text-white">0</p>
 									<p className="text-xs text-slate-500">វិញ្ញាបនបត្រ</p>
 								</div>
 							</div>
@@ -570,16 +607,16 @@ export default function AccountPage() {
 									<div>
 										<div className="mb-2 flex justify-between text-sm">
 											<span className="text-muted-foreground">មេរៀនបានបញ្ចប់</span>
-											<span className="font-medium">{userStats.lessonsCompleted} មេរៀន</span>
+												<span className="font-medium">{lessonsCompleted}/{totalLessonsTracked} មេរៀន</span>
+											</div>
+											<Progress value={lessonsProgressPct} className="h-2" />
 										</div>
-										<Progress value={65} className="h-2" />
-									</div>
-									<div>
-										<div className="mb-2 flex justify-between text-sm">
-											<span className="text-muted-foreground">វគ្គសិក្សាបានបញ្ចប់</span>
-											<span className="font-medium">{userStats.coursesCompleted}/{userStats.coursesEnrolled}</span>
-										</div>
-										<Progress value={40} className="h-2" />
+										<div>
+											<div className="mb-2 flex justify-between text-sm">
+												<span className="text-muted-foreground">វគ្គសិក្សាបានបញ្ចប់</span>
+												<span className="font-medium">--</span>
+											</div>
+											<Progress value={0} className="h-2" />
 									</div>
 									<Separator />
 									<div className="flex items-center justify-between rounded-lg bg-gradient-to-r from-orange-50 to-amber-50 p-3 dark:from-orange-950/20 dark:to-amber-950/20">
@@ -590,7 +627,7 @@ export default function AccountPage() {
 												<p className="text-xs text-muted-foreground">រៀនជារៀងរាល់ថ្ងៃ</p>
 											</div>
 										</div>
-										<span className="text-2xl font-bold text-orange-600">{userStats.streak}</span>
+										<span className="text-2xl font-bold text-orange-600">--</span>
 									</div>
 								</CardContent>
 							</Card>
@@ -605,12 +642,12 @@ export default function AccountPage() {
 								<CardContent>
 									<div className="grid grid-cols-3 gap-2">
 										{[
-											{ icon: "🏆", label: "First Course", unlocked: true },
-											{ icon: "🎯", label: "10 Lessons", unlocked: true },
-											{ icon: "⭐", label: "50 Lessons", unlocked: true },
-											{ icon: "🔥", label: "7-Day Streak", unlocked: true },
-											{ icon: "💎", label: "Expert", unlocked: false },
-											{ icon: "👑", label: "Master", unlocked: false },
+											{ icon: "🏆", label: "First Lesson", unlocked: lessonsCompleted >= 1 },
+											{ icon: "🎯", label: "10 Lessons", unlocked: lessonsCompleted >= 10 },
+											{ icon: "⭐", label: "25 Lessons", unlocked: lessonsCompleted >= 25 },
+											{ icon: "🔥", label: "50 Lessons", unlocked: lessonsCompleted >= 50 },
+											{ icon: "💎", label: "100 Lessons", unlocked: lessonsCompleted >= 100 },
+											{ icon: "👑", label: "200 Lessons", unlocked: lessonsCompleted >= 200 },
 										].map((achievement, i) => (
 											<div
 												key={i}
@@ -633,60 +670,224 @@ export default function AccountPage() {
 
 				{/* Activity Tab */}
 				<TabsContent value="activity" className="space-y-6">
-					<Card>
-						<CardHeader>
-							<CardTitle className="flex items-center gap-2">
-								<Clock className="h-5 w-5 text-blue-600" />
-								សកម្មភាពថ្មីៗ
-							</CardTitle>
-							<CardDescription>
-								មើលសកម្មភាពសិក្សារបស់អ្នកថ្មីៗនេះ
-							</CardDescription>
-						</CardHeader>
-						<CardContent>
-							<div className="space-y-4">
-								{recentActivity.map((activity) => (
-									<div
-										key={activity.id}
-										className="flex items-start gap-4 rounded-lg border border-slate-100 p-4 transition-colors hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800/50"
-									>
-										<div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${
-											activity.type === "lesson"
-												? "bg-blue-100 dark:bg-blue-900/30"
-												: activity.type === "course"
-												? "bg-violet-100 dark:bg-violet-900/30"
-												: "bg-amber-100 dark:bg-amber-900/30"
-										}`}>
-											{activity.type === "lesson" ? (
-												<BookOpen className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-											) : activity.type === "course" ? (
-												<GraduationCap className="h-5 w-5 text-violet-600 dark:text-violet-400" />
-											) : (
-												<Award className="h-5 w-5 text-amber-600 dark:text-amber-400" />
-											)}
-										</div>
-										<div className="flex-1 min-w-0">
-											<p className="font-medium text-slate-900 dark:text-white truncate">
-												{activity.title}
-											</p>
-											{activity.course && (
-												<p className="text-sm text-muted-foreground truncate">
-													{activity.course}
-												</p>
-											)}
-										</div>
-										<span className="shrink-0 text-xs text-muted-foreground">
-											{activity.time}
-										</span>
-									</div>
-								))}
+
+				{/* ── Summary Stats ── */}
+				<div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+					<div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
+						<div className="flex items-center gap-2 mb-2">
+							<div className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-100 dark:bg-violet-900/30">
+								<BookOpen className="h-4 w-4 text-violet-600 dark:text-violet-400" />
 							</div>
-							<Button variant="outline" className="mt-4 w-full">
-								មើលសកម្មភាពទាំងអស់
-								<ChevronRight className="ml-2 h-4 w-4" />
+							<span className="text-xs text-muted-foreground">មេរៀនសរុប</span>
+						</div>
+						<p className="text-2xl font-bold text-slate-900 dark:text-white">
+							{progressLoading ? <span className="inline-block h-7 w-10 animate-pulse rounded bg-slate-200 dark:bg-slate-700" /> : totalLessonsTracked}
+						</p>
+					</div>
+					<div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
+						<div className="flex items-center gap-2 mb-2">
+							<div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-100 dark:bg-emerald-900/30">
+								<CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+							</div>
+							<span className="text-xs text-muted-foreground">បានបញ្ចប់</span>
+						</div>
+						<p className="text-2xl font-bold text-slate-900 dark:text-white">
+							{progressLoading ? <span className="inline-block h-7 w-10 animate-pulse rounded bg-slate-200 dark:bg-slate-700" /> : lessonsCompleted}
+						</p>
+					</div>
+					<div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
+						<div className="flex items-center gap-2 mb-2">
+							<div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900/30">
+								<Layers className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+							</div>
+							<span className="text-xs text-muted-foreground">វគ្គសិក្សា</span>
+						</div>
+						<p className="text-2xl font-bold text-slate-900 dark:text-white">
+							{progressLoading ? <span className="inline-block h-7 w-10 animate-pulse rounded bg-slate-200 dark:bg-slate-700" /> : distinctCourses}
+						</p>
+					</div>
+					<div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
+						<div className="flex items-center gap-2 mb-2">
+							<div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-100 dark:bg-amber-900/30">
+								<BarChart3 className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+							</div>
+							<span className="text-xs text-muted-foreground">វឌ្ឍនភាព</span>
+						</div>
+						<p className="text-2xl font-bold text-slate-900 dark:text-white">
+							{progressLoading ? <span className="inline-block h-7 w-10 animate-pulse rounded bg-slate-200 dark:bg-slate-700" /> : `${lessonsProgressPct}%`}
+						</p>
+					</div>
+				</div>
+
+				{/* ── Overall progress bar ── */}
+				{!progressLoading && totalLessonsTracked > 0 && (
+					<div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
+						<div className="flex items-center justify-between mb-3">
+							<div className="flex items-center gap-2">
+								<TrendingUp className="h-4 w-4 text-violet-600" />
+								<span className="text-sm font-medium text-slate-700 dark:text-slate-300">វឌ្ឍនភាពសរុប</span>
+							</div>
+							<span className="text-sm font-semibold text-violet-600">{lessonsCompleted}/{totalLessonsTracked} មេរៀន</span>
+						</div>
+						<div className="h-2.5 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+							<div
+								className="h-full rounded-full bg-gradient-to-r from-violet-500 to-emerald-500 transition-all duration-700"
+								style={{ width: `${lessonsProgressPct}%` }}
+							/>
+						</div>
+					</div>
+				)}
+
+				{/* ── Course-grouped lesson list ── */}
+				{progressLoading ? (
+					<div className="space-y-4">
+						{[1, 2, 3].map((i) => (
+							<div key={i} className="rounded-2xl border border-slate-100 bg-white p-5 dark:border-slate-800 dark:bg-slate-900/60">
+								<div className="h-4 w-40 animate-pulse rounded bg-slate-200 dark:bg-slate-700 mb-4" />
+								<div className="space-y-3">
+									{[1, 2].map((j) => (
+										<div key={j} className="flex items-center gap-3">
+											<div className="h-9 w-9 animate-pulse rounded-lg bg-slate-200 dark:bg-slate-700" />
+											<div className="flex-1 space-y-1.5">
+												<div className="h-3.5 w-48 animate-pulse rounded bg-slate-200 dark:bg-slate-700" />
+												<div className="h-2.5 w-24 animate-pulse rounded bg-slate-200 dark:bg-slate-700" />
+											</div>
+										</div>
+									))}
+								</div>
+							</div>
+						))}
+					</div>
+				) : Object.keys(progressByCourse).length > 0 ? (
+					<div className="space-y-4">
+						{Object.entries(progressByCourse).map(([courseTitle, lessons]) => {
+							const doneCount = lessons.filter((l) => l.completed).length;
+							const coursePct = Math.round((doneCount / lessons.length) * 100);
+							return (
+								<div
+									key={courseTitle}
+									className="overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900/60"
+								>
+									{/* Course header */}
+									<div className="flex items-center justify-between gap-3 border-b border-slate-100 bg-gradient-to-r from-violet-50 to-blue-50 px-5 py-4 dark:border-slate-800 dark:from-violet-950/30 dark:to-blue-950/30">
+										<div className="flex items-center gap-3">
+											<div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-violet-100 dark:bg-violet-900/40">
+												<Layers className="h-4 w-4 text-violet-600 dark:text-violet-400" />
+											</div>
+											<div>
+												<p className="font-semibold text-sm text-slate-900 dark:text-white leading-tight">{courseTitle}</p>
+												<p className="text-xs text-muted-foreground mt-0.5">{doneCount}/{lessons.length} មេរៀន · {coursePct}%</p>
+											</div>
+										</div>
+										{/* Mini progress bar */}
+										<div className="hidden sm:flex items-center gap-2 shrink-0">
+											<div className="h-1.5 w-24 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
+												<div
+													className="h-full rounded-full bg-gradient-to-r from-violet-500 to-emerald-500"
+													style={{ width: `${coursePct}%` }}
+												/>
+											</div>
+											<span className={`text-xs font-semibold ${
+												coursePct === 100 ? "text-emerald-600" : "text-violet-600"
+											}`}>{coursePct}%</span>
+										</div>
+									</div>
+
+									{/* Lesson rows */}
+									<div className="divide-y divide-slate-100 dark:divide-slate-800">
+										{lessons.map((p) => {
+											const scrollPct = p.scrollPct ?? 0;
+											const readSec = p.readTimeSeconds ?? 0;
+											const readLabel = readSec >= 60
+												? `${Math.round(readSec / 60)}m`
+												: readSec > 0 ? `${readSec}s` : null;
+											const dateStr = p.completedAt ?? p.createdAt;
+											return (
+												<div
+													key={p.id ?? p.lessonId}
+													className="flex items-start gap-3 px-5 py-3.5 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/40"
+												>
+													{/* Status icon */}
+													<div className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${
+														p.completed
+															? "bg-emerald-100 dark:bg-emerald-900/30"
+															: "bg-blue-100 dark:bg-blue-900/30"
+													}`}>
+														{p.completed
+															? <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+															: <CircleDot className="h-4 w-4 text-blue-500 dark:text-blue-400" />}
+													</div>
+
+													{/* Content */}
+													<div className="flex-1 min-w-0">
+														<div className="flex items-start justify-between gap-2">
+															<p className="font-medium text-sm text-slate-900 dark:text-white leading-snug truncate">
+																{p.lessonTitle ?? `មេរៀនទី ${p.lessonId}`}
+															</p>
+															<span className="shrink-0 text-[11px] text-muted-foreground whitespace-nowrap">
+																{dateStr ? new Date(dateStr).toLocaleDateString("km-KH") : "--"}
+															</span>
+														</div>
+														<div className="mt-1.5 flex items-center gap-3 flex-wrap">
+															{/* Status badge */}
+															<span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+																p.completed
+																	? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+																	: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+															}`}>
+																{p.completed ? "✓ បានបញ្ចប់" : "● កំពុងរៀន"}
+															</span>
+															{/* Scroll progress (only if not 100) */}
+															{scrollPct > 0 && scrollPct < 100 && (
+																<div className="flex items-center gap-1.5">
+																	<div className="h-1 w-16 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
+																		<div
+																			className="h-full rounded-full bg-violet-400"
+																			style={{ width: `${scrollPct}%` }}
+																		/>
+																	</div>
+																	<span className="text-[10px] text-muted-foreground">{scrollPct}%</span>
+																</div>
+															)}
+															{/* Read time */}
+															{readLabel && (
+																<span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground">
+																	<Timer className="h-3 w-3" />{readLabel}
+																</span>
+															)}
+															{/* PDF badge */}
+															{p.pdfDownloaded && (
+																<span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+																	PDF
+																</span>
+															)}
+														</div>
+													</div>
+												</div>
+											);
+										})}
+									</div>
+								</div>
+							);
+						})}
+					</div>
+				) : (
+					<div className="flex flex-col items-center justify-center gap-4 rounded-2xl border border-dashed border-slate-200 bg-white py-16 text-center dark:border-slate-700 dark:bg-slate-900/40">
+						<div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100 dark:bg-slate-800">
+							<BookOpen className="h-8 w-8 text-muted-foreground/40" />
+						</div>
+						<div>
+							<p className="font-medium text-slate-700 dark:text-slate-300">មិនទាន់មានសកម្មភាពនៅឡើយ</p>
+							<p className="mt-1 text-sm text-muted-foreground">ចាប់ផ្តើមរៀនមេរៀនដំបូងរបស់អ្នក!</p>
+						</div>
+						<Link href="/courses">
+							<Button className="gap-2 mt-1">
+								<BookOpen className="h-4 w-4" />
+								រុករកវគ្គសិក្សា
 							</Button>
-						</CardContent>
-					</Card>
+						</Link>
+					</div>
+				)}
 				</TabsContent>
 
 				{/* Settings Tab */}

@@ -16,9 +16,9 @@ import {
   BookOpen,
   Eye,
   EyeOff,
-  GripVertical,
   Check,
   X,
+  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -58,8 +58,21 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import { useCategories } from "@/hooks/use-api";
-import type { CategoryDto } from "@/lib/types";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { useCategories } from "@/hooks/useCategories";
+import type { CategoryResponse } from "@/types/apiType";
+import { toast } from "sonner";
+
+const EMPTY_CATEGORIES: CategoryResponse[] = [];
 
 // ─── Stats Card ───────────────────────────────────────────────────────────────
 
@@ -140,7 +153,14 @@ export default function CategoriesPage() {
   const [statusFilter, setStatusFilter] = useState("All");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<"add" | "edit">("add");
-  const [selectedCategory, setSelectedCategory] = useState<CategoryDto | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<CategoryResponse | null>(null);
+  const [slugManuallyEdited, setSlugManuallyEdited] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [statusUpdatingId, setStatusUpdatingId] = useState<number | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<CategoryResponse | null>(null);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
   const [formData, setFormData] = useState({
     name: "",
     slug: "",
@@ -149,11 +169,13 @@ export default function CategoriesPage() {
     orderIndex: 0,
   });
 
-  const { data, loading, refetch } = useCategories(page, pageSize);
+  const { data, loading, refetch, create, update, remove } = useCategories({ page, size: pageSize });
 
-  const categories = data?.content || [];
+  const categories = data?.content ?? EMPTY_CATEGORIES;
   const totalElements = data?.totalElements || 0;
   const totalPages = data?.totalPages || 1;
+  const startItem = totalElements === 0 ? 0 : page * pageSize + 1;
+  const endItem = Math.min((page + 1) * pageSize, totalElements);
 
   // Filter categories
   const filteredCategories = useMemo(() => {
@@ -161,7 +183,8 @@ export default function CategoriesPage() {
       const matchesSearch =
         searchTerm === "" ||
         cat.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        cat.slug.toLowerCase().includes(searchTerm.toLowerCase());
+        cat.slug.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (cat.description ?? "").toLowerCase().includes(searchTerm.toLowerCase());
 
       const matchesStatus =
         statusFilter === "All" ||
@@ -177,25 +200,66 @@ export default function CategoriesPage() {
     return {
       total: totalElements,
       active: categories.filter((c) => c.isActive).length,
-      totalCourses: categories.reduce((acc, c) => acc + c.courseCount, 0),
+      totalCourses: categories.reduce((acc, c) => acc + (c.courseCount ?? 0), 0),
     };
   }, [categories, totalElements]);
 
+  const getErrorMessage = (error: unknown, fallback: string) => {
+    if (error instanceof Error && error.message.trim().length > 0) {
+      return error.message;
+    }
+    return fallback;
+  };
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      await refetch();
+      toast.success("Categories refreshed");
+    } catch (error) {
+      toast.error(getErrorMessage(error, "Failed to refresh categories"));
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
+  const validateForm = () => {
+    const name = formData.name.trim();
+    const slug = formData.slug.trim();
+
+    if (!name) {
+      return "Category name is required.";
+    }
+    if (!slug) {
+      return "Slug is required.";
+    }
+    if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) {
+      return "Slug must use lowercase letters, numbers, and hyphens only.";
+    }
+
+    return null;
+  };
+
   const openAddModal = () => {
     setModalMode("add");
+    setSelectedCategory(null);
+    setFormError(null);
+    setSlugManuallyEdited(false);
     setFormData({
       name: "",
       slug: "",
       description: "",
       isActive: true,
-      orderIndex: categories.length + 1,
+      orderIndex: totalElements + 1,
     });
     setIsModalOpen(true);
   };
 
-  const openEditModal = (category: CategoryDto) => {
+  const openEditModal = (category: CategoryResponse) => {
     setModalMode("edit");
     setSelectedCategory(category);
+    setFormError(null);
+    setSlugManuallyEdited(true);
     setFormData({
       name: category.name,
       slug: category.slug,
@@ -208,9 +272,90 @@ export default function CategoriesPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Here you would call the API to create/update the category
-    setIsModalOpen(false);
-    refetch();
+
+    const validationError = validateForm();
+    if (validationError) {
+      setFormError(validationError);
+      return;
+    }
+
+    setIsSubmitting(true);
+    setFormError(null);
+
+    const payload = {
+      name: formData.name.trim(),
+      slug: formData.slug.trim(),
+      description: formData.description.trim() || undefined,
+      isActive: formData.isActive,
+      orderIndex: formData.orderIndex,
+    };
+
+    try {
+      if (modalMode === "add") {
+        await create(payload);
+        toast.success("Category created successfully");
+      } else if (selectedCategory) {
+        await update(selectedCategory.id, payload);
+        toast.success("Category updated successfully");
+      }
+
+      setIsModalOpen(false);
+      await refetch();
+    } catch (error) {
+      const message = getErrorMessage(
+        error,
+        modalMode === "add" ? "Failed to create category" : "Failed to update category",
+      );
+      setFormError(message);
+      toast.error(message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleToggleStatus = async (category: CategoryResponse) => {
+    setStatusUpdatingId(category.id);
+    try {
+      await update(category.id, {
+        name: category.name,
+        slug: category.slug,
+        description: category.description || undefined,
+        isActive: !category.isActive,
+        orderIndex: category.orderIndex,
+      });
+      toast.success(
+        `Category ${category.isActive ? "deactivated" : "activated"} successfully`,
+      );
+      await refetch();
+    } catch (error) {
+      toast.error(getErrorMessage(error, "Failed to update category status"));
+    } finally {
+      setStatusUpdatingId(null);
+    }
+  };
+
+  const handleDeleteCategory = async (event?: React.MouseEvent<HTMLButtonElement>) => {
+    event?.preventDefault();
+    if (!deleteTarget) {
+      return;
+    }
+
+    setDeletingId(deleteTarget.id);
+    try {
+      await remove(deleteTarget.id);
+      toast.success("Category deleted successfully");
+
+      if (categories.length === 1 && page > 0) {
+        setPage((prev) => Math.max(0, prev - 1));
+      } else {
+        await refetch();
+      }
+      setDeleteTarget(null);
+    } catch (error) {
+      toast.error(getErrorMessage(error, "Failed to delete category"));
+    } finally {
+      setDeletingId(null);
+    }
   };
 
   const generateSlug = (name: string) => {
@@ -242,10 +387,10 @@ export default function CategoriesPage() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => refetch()}
-            disabled={loading}
+            onClick={handleRefresh}
+            disabled={loading || isRefreshing}
           >
-            <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} />
+            <RefreshCw className={`h-4 w-4 mr-2 ${(loading || isRefreshing) ? "animate-spin" : ""}`} />
             Refresh
           </Button>
           <Button size="sm" className="gap-2" onClick={openAddModal}>
@@ -331,7 +476,7 @@ export default function CategoriesPage() {
                 {loading ? (
                   Array.from({ length: 5 }).map((_, i) => <CategoryRowSkeleton key={i} />)
                 ) : filteredCategories.length > 0 ? (
-                  filteredCategories.map((category, index) => {
+                  filteredCategories.map((category) => {
                     const gradient = colors[category.id % colors.length];
                     return (
                       <TableRow key={category.id} className="group hover:bg-muted/30">
@@ -389,7 +534,7 @@ export default function CategoriesPage() {
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                                className="h-8 w-8 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
                               >
                                 <MoreHorizontal className="h-4 w-4" />
                               </Button>
@@ -402,8 +547,17 @@ export default function CategoriesPage() {
                                 <Edit className="h-4 w-4" />
                                 Edit Category
                               </DropdownMenuItem>
-                              <DropdownMenuItem className="gap-2">
-                                {category.isActive ? (
+                              <DropdownMenuItem
+                                className="gap-2"
+                                onClick={() => handleToggleStatus(category)}
+                                disabled={statusUpdatingId === category.id || deletingId === category.id}
+                              >
+                                {statusUpdatingId === category.id ? (
+                                  <>
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                    Updating...
+                                  </>
+                                ) : category.isActive ? (
                                   <>
                                     <EyeOff className="h-4 w-4" />
                                     Deactivate
@@ -416,7 +570,11 @@ export default function CategoriesPage() {
                                 )}
                               </DropdownMenuItem>
                               <DropdownMenuSeparator />
-                              <DropdownMenuItem className="text-destructive gap-2">
+                              <DropdownMenuItem
+                                className="text-destructive gap-2"
+                                onClick={() => setDeleteTarget(category)}
+                                disabled={statusUpdatingId === category.id || deletingId === category.id}
+                              >
                                 <Trash2 className="h-4 w-4" />
                                 Delete Category
                               </DropdownMenuItem>
@@ -444,9 +602,25 @@ export default function CategoriesPage() {
           {/* Pagination */}
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="text-sm text-muted-foreground">
-              Showing {filteredCategories.length} of {totalElements} categories
+              Showing {startItem} to {endItem} of {totalElements} categories
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
+              <Select
+                value={String(pageSize)}
+                onValueChange={(value) => {
+                  setPage(0);
+                  setPageSize(Number(value));
+                }}
+              >
+                <SelectTrigger className="h-8 w-[96px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="10">10 / page</SelectItem>
+                  <SelectItem value="20">20 / page</SelectItem>
+                  <SelectItem value="50">50 / page</SelectItem>
+                </SelectContent>
+              </Select>
               <Button
                 variant="outline"
                 size="icon"
@@ -492,7 +666,17 @@ export default function CategoriesPage() {
       </Card>
 
       {/* Add/Edit Modal */}
-      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+      <Dialog
+        open={isModalOpen}
+        onOpenChange={(open) => {
+          setIsModalOpen(open);
+          if (!open) {
+            setFormError(null);
+            setSlugManuallyEdited(false);
+            setSelectedCategory(null);
+          }
+        }}
+      >
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle>
@@ -512,12 +696,13 @@ export default function CategoriesPage() {
                   id="name"
                   placeholder="e.g., Web Development"
                   value={formData.name}
+                  disabled={isSubmitting}
                   onChange={(e) => {
                     const name = e.target.value;
                     setFormData({
                       ...formData,
                       name,
-                      slug: modalMode === "add" ? generateSlug(name) : formData.slug,
+                      slug: modalMode === "add" && !slugManuallyEdited ? generateSlug(name) : formData.slug,
                     });
                   }}
                 />
@@ -528,7 +713,14 @@ export default function CategoriesPage() {
                   id="slug"
                   placeholder="web-development"
                   value={formData.slug}
-                  onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
+                  disabled={isSubmitting}
+                  onChange={(e) => {
+                    setSlugManuallyEdited(true);
+                    setFormData({
+                      ...formData,
+                      slug: e.target.value.toLowerCase().replace(/\s+/g, "-"),
+                    });
+                  }}
                 />
                 <p className="text-xs text-muted-foreground">
                   Used in URLs: /courses/category/{formData.slug || "slug"}
@@ -540,6 +732,7 @@ export default function CategoriesPage() {
                   id="description"
                   placeholder="Brief description of this category..."
                   value={formData.description}
+                  disabled={isSubmitting}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   rows={3}
                 />
@@ -552,6 +745,7 @@ export default function CategoriesPage() {
                     type="number"
                     min="0"
                     value={formData.orderIndex}
+                    disabled={isSubmitting}
                     onChange={(e) =>
                       setFormData({ ...formData, orderIndex: parseInt(e.target.value) || 0 })
                     }
@@ -562,6 +756,7 @@ export default function CategoriesPage() {
                   <div className="flex items-center gap-3 h-10">
                     <Switch
                       checked={formData.isActive}
+                      disabled={isSubmitting}
                       onCheckedChange={(checked) =>
                         setFormData({ ...formData, isActive: checked })
                       }
@@ -572,18 +767,56 @@ export default function CategoriesPage() {
                   </div>
                 </div>
               </div>
+              {formError && (
+                <p className="text-sm text-destructive">{formError}</p>
+              )}
             </div>
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsModalOpen(false)}
+                disabled={isSubmitting}
+              >
                 Cancel
               </Button>
-              <Button type="submit">
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 {modalMode === "add" ? "Create Category" : "Save Changes"}
               </Button>
             </DialogFooter>
           </form>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete category?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone.{" "}
+              <span className="font-medium text-foreground">{deleteTarget?.name}</span> will be permanently removed.
+              {(deleteTarget?.courseCount ?? 0) > 0 && (
+                <>
+                  {" "}
+                  This category currently has {deleteTarget?.courseCount} course(s).
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deletingId !== null}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteCategory}
+              disabled={deletingId !== null}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {deletingId !== null && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

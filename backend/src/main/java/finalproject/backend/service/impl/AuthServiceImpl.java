@@ -139,7 +139,7 @@ public class AuthServiceImpl implements AuthService {
         User user = refreshToken.getUser();
 
         // 3. Generate new access token
-        String newAccessToken = jwtService.generateRefreshToken(user.getUsername());
+        String newAccessToken = jwtService.generateAccessToken(user);
 
         // 4. Set new access token cookie via CookieUtil ←───────────────────────
         CookieUtil.addCookie(response,

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import {
   AlertTriangle,
   BookOpen,
@@ -12,8 +12,8 @@ import {
   Users,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { fetchCourses } from "@/lib/course/course";
-import type { CourseDto } from "@/lib/course/types";
+import { useFeaturedCourses } from "@/hooks/useCourses";
+import type { CourseResponse } from "@/types/courseType";
 
 type HomeCourse = {
   id: number;
@@ -27,6 +27,7 @@ type HomeCourse = {
   totalLessons: number;
   enrolledCount: number;
   viewCount: number;
+  avgRating: number;
 };
 
 const levelBadge: Record<string, string> = {
@@ -73,7 +74,7 @@ function formatKmNumber(value: number): string {
   return new Intl.NumberFormat("km-KH").format(value);
 }
 
-function mapCourse(course: CourseDto): HomeCourse {
+function mapCourse(course: CourseResponse): HomeCourse {
   return {
     id: course.id,
     slug: course.slug,
@@ -81,48 +82,24 @@ function mapCourse(course: CourseDto): HomeCourse {
     description: course.description ?? "",
     categoryName: course.categoryName ?? "ទូទៅ",
     levelLabel: toLevelLabel(course.level),
-    isFree: course.isFree || course.price === 0,
-    thumbnail: course.thumbnail,
+    isFree: course.isFree === true || course.price === 0,
+    thumbnail: course.thumbnail ?? null,
     totalLessons: course.totalLessons ?? 0,
     enrolledCount: course.enrolledCount ?? 0,
     viewCount: course.viewCount ?? 0,
+    avgRating: course.avgRating ?? 0,
   };
 }
 
 export function FeaturedCoursesSection() {
-  const [courses, setCourses] = useState<HomeCourse[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { data, loading, error, refetch } = useFeaturedCourses({ page: 0, size: 60 });
   const [query, setQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("ទាំងអស់");
 
-  const loadData = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const page = await fetchCourses({
-        page: 0,
-        size: 60,
-        sortBy: "createdAt",
-        sortDir: "desc",
-      });
-
-      const featuredOnly = page.content
-        .filter((course) => Boolean(course.isFeatured))
-        .map(mapCourse);
-
-      setCourses(featuredOnly);
-    } catch {
-      setCourses([]);
-      setError("មិនអាចទាញយកវគ្គសិក្សាពេញនិយមបានទេ។");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    void loadData();
-  }, [loadData]);
+  const courses = useMemo(
+    () => (data?.content ?? []).map(mapCourse),
+    [data]
+  );
 
   const categories = useMemo(() => {
     const set = new Set<string>();
@@ -197,11 +174,11 @@ export function FeaturedCoursesSection() {
         <div className="mx-auto mt-10 max-w-3xl rounded-2xl border border-red-200 bg-red-50 p-6 text-center dark:border-red-500/30 dark:bg-red-500/10">
           <AlertTriangle className="mx-auto h-6 w-6 text-red-500" />
           <p className="mt-2 text-sm font-medium text-red-700 dark:text-red-300">
-            {error}
+            {error?.message ?? "មិនអាចទាញយកវគ្គសិក្សាពេញនិយមបានទេ។"}
           </p>
           <button
             type="button"
-            onClick={() => void loadData()}
+            onClick={() => void refetch()}
             className="mt-3 rounded-full bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-500"
           >
             សាកល្បងម្ដងទៀត

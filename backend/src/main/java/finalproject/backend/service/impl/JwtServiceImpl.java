@@ -55,6 +55,24 @@ public class JwtServiceImpl implements JwtService {
                 .compact();
     }
 
+    @Override
+    public String generateAccessToken(User user) {
+        List<String> roles = user.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .collect(Collectors.toList());
+
+        return Jwts.builder()
+                .setSubject(user.getUsername())
+                .claim("id",    user.getId())
+                .claim("email", user.getEmail())
+                .claim("roles", roles)              // ✅ roles included
+                .setIssuedAt(new Date())
+                .setExpiration(new Date(
+                        System.currentTimeMillis() + jwtProperties.getExpiration()))
+                .signWith(signingKey(), SignatureAlgorithm.HS256)
+                .compact();
+    }
+
 
     @Override
     public String extractUsername(String token) {
@@ -86,14 +104,4 @@ public class JwtServiceImpl implements JwtService {
         return extractClaim(token, Claims::getExpiration).before(new Date());
     }
 
-    @Override
-    public String generateRefreshToken(String username) {
-        return Jwts.builder()
-                .setSubject(username)
-                .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis()
-                        + jwtProperties.getRefreshExpiration()))
-                .signWith(signingKey())
-                .compact();
-    }
 }

@@ -1,5 +1,5 @@
 "use client";
-import { Bell, Search, Command, SunIcon, MoonIcon } from "lucide-react";
+import { Bell, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,7 +14,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { AppSwitcher } from "./shared/app-switcher";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Badge } from "@/components/ui/badge";
-import { ThemeSwitcher } from "./theme-switcher";
 
 export function Topbar() {
   return (
@@ -35,9 +34,6 @@ export function Topbar() {
       <div className="flex items-center gap-3">
         {/* App Switcher */}
         <AppSwitcher />
-
-        {/* Theme Switcher */}
-        <ThemeSwitcher />
 
         {/* Theme Toggle */}
         <ThemeToggle />

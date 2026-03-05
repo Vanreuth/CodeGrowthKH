@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/context/AuthContext";
+import { QueryProvider } from "@/components/providers/QueryProvider";
 import "./globals.css";
 import { Noto_Sans_Khmer } from "next/font/google";
 
@@ -23,6 +24,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={notoSansKhmer.className}>
+        <QueryProvider>
         <AuthProvider>
           <ThemeProvider
             attribute="class"
@@ -35,6 +37,7 @@ export default function RootLayout({
             <Toaster richColors position="top-center" />
           </ThemeProvider>
         </AuthProvider>
+        </QueryProvider>
       </body>
     </html>
   );

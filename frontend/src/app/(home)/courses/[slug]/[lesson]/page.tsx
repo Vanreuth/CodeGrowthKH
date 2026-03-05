@@ -3,8 +3,7 @@
 import { usePathname, useRouter, useParams, useSearchParams } from "next/navigation";
 import { useEffect, useMemo } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { CourseLearningContent } from "../page";
-
+import { CourseLearningContent } from "@/app/(home)/courses/[slug]/page";
 interface LessonRouteParams {
   [key: string]: string | string[] | undefined;
   slug?: string;

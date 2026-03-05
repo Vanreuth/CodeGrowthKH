@@ -23,13 +23,11 @@ import {
   AlertCircle,
 } from "lucide-react";
 import Link from "next/link";
-import {
-  useDashboardStats,
-  useCourses,
-  useCategories,
-  useUsers,
-} from "@/hooks/use-api";
-import type { CourseDto, UserDto, CategoryDto } from "@/lib/types";
+import { useDashboardStats } from "@/hooks/useDashboardStats";
+import { useCourses } from "@/hooks/useCourses";
+import { useCategories } from "@/hooks/useCategories";
+import { useUsers } from "@/hooks/useUsers";
+import type { CourseResponse, UserResponse, CategoryResponse } from "@/types/apiType";
 
 // ─── Stats Card Component ─────────────────────────────────────────────────────
 
@@ -98,7 +96,7 @@ function StatCard({ title, value, description, icon, trend, loading, color }: St
 
 // ─── Course Card Component ────────────────────────────────────────────────────
 
-function CourseCard({ course, loading }: { course?: CourseDto; loading?: boolean }) {
+function CourseCard({ course, loading }: { course?: CourseResponse; loading?: boolean }) {
   if (loading || !course) {
     return (
       <div className="flex items-start gap-4 p-4 rounded-xl border bg-card hover:bg-muted/30 transition-colors">
@@ -165,7 +163,7 @@ function CourseCard({ course, loading }: { course?: CourseDto; loading?: boolean
 
 // ─── User Row Component ───────────────────────────────────────────────────────
 
-function UserRow({ user, loading }: { user?: UserDto; loading?: boolean }) {
+function UserRow({ user, loading }: { user?: UserResponse; loading?: boolean }) {
   if (loading || !user) {
     return (
       <div className="flex items-center gap-3 py-3">
@@ -211,7 +209,7 @@ function UserRow({ user, loading }: { user?: UserDto; loading?: boolean }) {
 
 // ─── Category Item Component ──────────────────────────────────────────────────
 
-function CategoryItem({ category, loading }: { category?: CategoryDto; loading?: boolean }) {
+function CategoryItem({ category, loading }: { category?: CategoryResponse; loading?: boolean }) {
   if (loading || !category) {
     return (
       <div className="flex items-center justify-between py-2">
@@ -256,9 +254,9 @@ function CategoryItem({ category, loading }: { category?: CategoryDto; loading?:
 
 export default function DashboardPage() {
   const { data: stats, loading: statsLoading, error: statsError, refetch: refetchStats } = useDashboardStats();
-  const { data: coursesData, loading: coursesLoading } = useCourses(0, 5);
-  const { data: categoriesData, loading: categoriesLoading } = useCategories(0, 10);
-  const { data: usersData, loading: usersLoading } = useUsers(0, 5);
+  const { data: coursesData, loading: coursesLoading } = useCourses({ page: 0, size: 5 });
+  const { data: categoriesData, loading: categoriesLoading } = useCategories({ page: 0, size: 10 });
+  const { data: usersData, loading: usersLoading } = useUsers({ page: 0, size: 5 });
 
   const courses = coursesData?.content || [];
   const categories = categoriesData?.content || [];

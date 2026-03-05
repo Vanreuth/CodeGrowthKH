@@ -11,12 +11,8 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import type { CoursePdfExportDto } from "@/lib/coursePDF/types";
-import {
-  getAllCoursePdf,
-  generatePdfExport,
-  incrementPdfDownload,
-} from "@/lib/coursePDF/coursePDF";
+import type { CoursePdfExportResponse } from "@/types/apiType";
+import { pdfService } from "@/services/pdfService";
 import { toast } from "sonner";
 
 type BusyAction = "loading" | "generating" | "downloading" | "viewing";
@@ -75,20 +71,20 @@ function normalizeLevel(level?: string | null): (typeof levelOptions)[number] {
 }
 
 export default function CourseDownloadPdfPage() {
-  const [rows, setRows] = useState<CoursePdfExportDto[]>([]);
+  const [rows, setRows] = useState<CoursePdfExportResponse[]>([]);
   const [loadingRows, setLoadingRows] = useState(true);
   const [query, setQuery] = useState("");
   const [selectedLevel, setSelectedLevel] = useState<(typeof levelOptions)[number]>("All");
   const [busyByCourse, setBusyByCourse] = useState<Record<number, BusyAction | undefined>>({});
 
-  const mergeRow = useCallback((row: CoursePdfExportDto) => {
+  const mergeRow = useCallback((row: CoursePdfExportResponse) => {
     setRows((prev) => prev.map((item) => (item.courseId === row.courseId ? { ...item, ...row } : item)));
   }, []);
 
   const ensurePdf = useCallback(async (courseId: number) => {
     const existing = rows.find((item) => item.courseId === courseId);
-    if (existing?.pdfUrl) return existing;
-    const generated = await generatePdfExport(courseId);
+    if (existing?.pdfUrl ?? existing?.fileUrl) return existing;
+    const generated = await pdfService.generate(courseId);
     mergeRow(generated);
     return generated;
   }, [rows, mergeRow]);
@@ -96,7 +92,7 @@ export default function CourseDownloadPdfPage() {
   const loadRows = useCallback(async () => {
     setLoadingRows(true);
     try {
-      const data = await getAllCoursePdf();
+      const data = await pdfService.getAll();
       setRows(data);
     } catch (error) {
       toast.error(toErrorMessage(error, "មិនអាចផ្ទុកបញ្ជី Course PDF"));
@@ -137,7 +133,7 @@ export default function CourseDownloadPdfPage() {
   const handleGenerate = useCallback(async (courseId: number) => {
     setBusy(courseId, "generating");
     try {
-      const generated = await generatePdfExport(courseId);
+      const generated = await pdfService.generate(courseId);
       mergeRow(generated);
       toast.success("បានបង្កើត PDF ជោគជ័យ");
     } catch (error) {
@@ -147,23 +143,24 @@ export default function CourseDownloadPdfPage() {
     }
   }, [setBusy, mergeRow]);
 
-  const handleDownload = useCallback(async (row: CoursePdfExportDto) => {
+  const handleDownload = useCallback(async (row: CoursePdfExportResponse) => {
     const courseId = row.courseId;
     setBusy(courseId, "downloading");
 
     try {
       const current = await ensurePdf(courseId);
-      if (!current?.pdfUrl) {
+      const downloadUrl = current?.pdfUrl ?? current?.fileUrl;
+      if (!downloadUrl) {
         toast.error("មិនមាន URL សម្រាប់ទាញយក PDF");
         return;
       }
-      if (!row.pdfUrl) {
+      if (!(row.pdfUrl ?? row.fileUrl)) {
         toast.success("បានបង្កើត PDF រួចរាល់, កំពុងទាញយក...");
       }
-      window.open(current.pdfUrl, "_blank", "noopener,noreferrer");
+      window.open(downloadUrl, "_blank", "noopener,noreferrer");
 
       try {
-        const updated = await incrementPdfDownload(courseId);
+        const updated = await pdfService.incrementDownload(courseId);
         mergeRow(updated);
       } catch {
         // Download already opened.
@@ -175,16 +172,17 @@ export default function CourseDownloadPdfPage() {
     }
   }, [setBusy, ensurePdf, mergeRow]);
 
-  const handleView = useCallback(async (row: CoursePdfExportDto) => {
+  const handleView = useCallback(async (row: CoursePdfExportResponse) => {
     const courseId = row.courseId;
     setBusy(courseId, "viewing");
     try {
       const current = await ensurePdf(courseId);
-      if (!current?.pdfUrl) {
+      const viewUrl = current?.pdfUrl ?? current?.fileUrl;
+      if (!viewUrl) {
         toast.error("មិនមាន URL សម្រាប់មើល PDF");
         return;
       }
-      window.open(current.pdfUrl, "_blank", "noopener,noreferrer");
+      window.open(viewUrl, "_blank", "noopener,noreferrer");
     } catch (error) {
       toast.error(toErrorMessage(error, `មិនអាចមើល PDF សម្រាប់ ${row.courseTitle}`));
     } finally {
@@ -259,7 +257,7 @@ export default function CourseDownloadPdfPage() {
             const visual = getCourseVisual(row.courseTitle);
             const busyAction = busyByCourse[row.courseId];
             const busy = Boolean(busyAction);
-            const hasPdf = Boolean(row.pdfUrl);
+            const hasPdf = Boolean(row.pdfUrl ?? row.fileUrl);
             const level = normalizeLevel(row.level);
 
             return (
@@ -345,8 +343,8 @@ export default function CourseDownloadPdfPage() {
                     </button>
                     <button
                       type="button"
-                      onClick={() => window.open(row.pdfUrl || "", "_blank", "noopener,noreferrer")}
-                      disabled={busy || !row.pdfUrl}
+                      onClick={() => window.open(row.pdfUrl ?? row.fileUrl ?? '', "_blank", "noopener,noreferrer")}
+                      disabled={busy || !(row.pdfUrl ?? row.fileUrl)}
                       className="text-slate-500 hover:text-indigo-600 disabled:opacity-50 dark:text-slate-400 dark:hover:text-indigo-300"
                     >
                       មើល PDF

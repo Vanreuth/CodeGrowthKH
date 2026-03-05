@@ -5,10 +5,10 @@ import { useEffect, useMemo, useState } from "react";
 import { BookOpen, Eye, Loader2, Search, Star, Users, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import type { CourseDto } from "@/lib/course/types";
-import type { CategoryDto } from "@/lib/category/types";
-import { fetchCourses } from "@/lib/course/course";
-import { fetchCategories } from "@/lib/category/category";
+import type {CategoryResponse } from "@/types/category";
+import type { CourseResponse } from "@/types/courseType";
+import { courseService } from "@/services/courseService";
+import { categoryService } from "@/services/categoryService";
 // ─── Level helpers ────────────────────────────────────────────────────────────
 
 const levelColors: Record<string, string> = {
@@ -43,16 +43,16 @@ export default function CoursesPage() {
 	const [selectedCategory, setSelectedCategory] = useState("All");
 
 	// API state
-	const [apiCourses, setApiCourses] = useState<CourseDto[]>([]);
-	const [apiCategories, setApiCategories] = useState<CategoryDto[]>([]);
+	const [apiCourses, setApiCourses] = useState<CourseResponse[]>([]);
+	const [apiCategories, setApiCategories] = useState<CategoryResponse[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [apiError, setApiError] = useState(false);
 
 	useEffect(() => {
 		let cancelled = false;
 		Promise.all([
-			fetchCourses({ page: 0, size: 50 }),
-			fetchCategories({ page: 0, size: 50 }),
+			courseService.getAll({ page: 0, size: 50 }),
+			categoryService.getAll({ page: 0, size: 50 }),
 		])
 			.then(([coursesPage, categoriesPage]) => {
 				if (!cancelled) {
@@ -90,7 +90,7 @@ export default function CoursesPage() {
 	const filteredCourses = useMemo(() => {
 		const keyword = query.trim().toLowerCase();
 		return allCourses.filter((course) => {
-			const matchesLevel = selectedLevel === "All" || course.level.toUpperCase() === selectedLevel;
+			const matchesLevel = selectedLevel === "All" || (course.level ?? "").toUpperCase() === selectedLevel;
 			const matchesCategory = selectedCategory === "All" || course.categoryName === selectedCategory;
 			const matchesQuery =
 				keyword.length === 0 ||
@@ -258,8 +258,8 @@ export default function CoursesPage() {
 									{/* Body */}
 									<div className="p-4">
 										<div className="mb-2.5 flex items-center justify-between gap-2">
-											<span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${levelColors[course.level] ?? levelColors["BEGINNER"]}`}>
-												{course.level === "BEGINNER" ? "ចាប់ផ្តើម" : course.level === "INTERMEDIATE" ? "មធ្យម" : course.level === "ADVANCED" ? "ខ្ពស់" : course.level}
+									<span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${levelColors[course.level ?? ""] ?? levelColors["BEGINNER"]}`}>
+										{course.level === "BEGINNER" ? "ចាប់ផ្តើម" : course.level === "INTERMEDIATE" ? "មធ្យម" : course.level === "ADVANCED" ? "ខ្ពស់" : (course.level ?? "")}
 											</span>
 											<span className="text-sm font-bold text-violet-700 dark:text-violet-300">
 												{isFree ? "ឥតគិតថ្លៃ" : `$${course.price}`}
@@ -283,10 +283,10 @@ export default function CoursesPage() {
 												<Eye className="h-3.5 w-3.5" />
 												{(course.viewCount || 0).toLocaleString()}
 											</span>
-											{(course.avgRating || 0) > 0 && (
-												<span className="flex items-center gap-1 text-amber-500">
-													<Star className="h-3.5 w-3.5 fill-amber-400" />
-													{course.avgRating.toFixed(1)}
+									{(course.avgRating ?? 0) > 0 && (
+										<span className="flex items-center gap-1 text-amber-500">
+											<Star className="h-3.5 w-3.5 fill-amber-400" />
+											{(course.avgRating ?? 0).toFixed(1)}
 												</span>
 											)}
 										</div>
