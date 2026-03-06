@@ -35,18 +35,20 @@ public class Course {
     private String requirements;
 
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     @Builder.Default
-    private String level = "BEGINNER";  // BEGINNER / INTERMEDIATE / ADVANCED
+    private CourseLevel level = CourseLevel.BEGINNER;
 
 
     @Column(nullable = false)
     @Builder.Default
     private String language = "Khmer";
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     @Builder.Default
-    private String status = "DRAFT";  // DRAFT / PUBLISHED / ARCHIVED / COMING_SOON
+    private CourseStatus status = CourseStatus.DRAFT;
 
     @Column(name = "is_featured")
     @Builder.Default
@@ -75,8 +77,6 @@ public class Course {
 
     @Column(name = "pdf_updated_at")
     private LocalDateTime pdfUpdatedAt; // when PDF was last regenerated
-
-
 
     @Column(name = "avg_rating", precision = 3, scale = 2)
     @Builder.Default
@@ -111,8 +111,8 @@ public class Course {
     @PrePersist
     protected void onCreate() {
         if (createdAt    == null) createdAt    = LocalDateTime.now();
-        if (status       == null) status       = "DRAFT";
-        if (level        == null) level        = "BEGINNER";
+        if (status       == null) status       = CourseStatus.DRAFT;
+        if (level        == null) level        = CourseLevel.BEGINNER;
         if (isFeatured   == null) isFeatured   = false;
         if (isFree       == null) isFree       = false;
         if (totalLessons == null) totalLessons = 0;
@@ -122,7 +122,7 @@ public class Course {
     @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
-        if ("PUBLISHED".equals(status) && publishedAt == null)
+        if (CourseStatus.PUBLISHED == status && publishedAt == null)
             publishedAt = LocalDateTime.now();
     }
 }

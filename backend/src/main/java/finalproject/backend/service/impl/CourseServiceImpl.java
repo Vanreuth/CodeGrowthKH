@@ -6,6 +6,8 @@ import finalproject.backend.mapper.CourseMapper;
 import finalproject.backend.mapper.LessonMapper;
 import finalproject.backend.modal.Category;
 import finalproject.backend.modal.Course;
+import finalproject.backend.modal.CourseLevel;
+import finalproject.backend.modal.CourseStatus;
 import finalproject.backend.modal.Lesson;
 import finalproject.backend.modal.User;
 import finalproject.backend.repository.CategoryRepository;
@@ -24,12 +26,14 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -91,9 +95,41 @@ public class CourseServiceImpl implements CourseService {
 
     @Override
     @Transactional(readOnly = true)
-    public PageResponse<CourseResponse> getAllCourses(Pageable pageable) {
-        Page<Course> page = courseRepository.findAll(pageable);
+    public PageResponse<CourseResponse> getAllCourses(
+            Pageable pageable,
+            Integer categoryId,
+            CourseStatus status,
+            CourseLevel level,
+            String search
+    ) {
+        Specification<Course> spec = buildSpec(categoryId, status, level, search);
+        Page<Course> page = courseRepository.findAll(spec, pageable);
         return PageResponse.of(page.map(courseMapper::toResponse));
+    }
+
+    /** Build a JPA Specification from optional filter parameters. */
+    private Specification<Course> buildSpec(
+            Integer categoryId, CourseStatus status, CourseLevel level, String search) {
+        List<Specification<Course>> specs = new ArrayList<>();
+        if (categoryId != null)
+            specs.add((root, q, cb) -> cb.equal(root.get("category").get("id"), categoryId));
+        if (status != null)
+            specs.add((root, q, cb) -> cb.equal(root.get("status"), status));
+        if (level != null)
+            specs.add((root, q, cb) -> cb.equal(root.get("level"), level));
+        if (search != null && !search.isBlank()) {
+            String pattern = "%" + search.toLowerCase() + "%";
+            specs.add((root, q, cb) -> cb.or(
+                    cb.like(cb.lower(root.get("title")), pattern),
+                    cb.like(cb.lower(root.get("description")), pattern)
+            ));
+        }
+        if (specs.isEmpty()) {
+            return (root, query, cb) -> cb.conjunction();
+        }
+
+        return specs.stream()
+                .reduce((root, query, cb) -> cb.conjunction(), Specification::and);
     }
 
     @Override
@@ -160,7 +196,7 @@ public class CourseServiceImpl implements CourseService {
     @Transactional(readOnly = true)
     public PageResponse<CourseResponse> getFeaturedCourses(Pageable pageable) {
         return PageResponse.of(
-                courseRepository.findByIsFeaturedTrueAndStatus("PUBLISHED", pageable)
+                courseRepository.findByIsFeaturedTrueAndStatus(CourseStatus.PUBLISHED, pageable)
                         .map(courseMapper::toResponse));
     }
 
@@ -168,7 +204,7 @@ public class CourseServiceImpl implements CourseService {
     @Transactional(readOnly = true)
     public PageResponse<CourseResponse> getComingSoonCourses(Pageable pageable) {
         return PageResponse.of(
-                courseRepository.findByStatus("COMING_SOON", pageable)
+                courseRepository.findByStatus(CourseStatus.COMING_SOON, pageable)
                         .map(courseMapper::toResponse));
     }
 

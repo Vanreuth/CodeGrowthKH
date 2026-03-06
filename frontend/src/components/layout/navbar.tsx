@@ -1,49 +1,38 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
-import {
-  BookOpenCheck,
-  ChevronRight,
-  GraduationCap,
-  Mail,
-  Menu,
-  Phone,
-  Sparkles,
-  X,
-  User,
-  LogIn,
-} from "lucide-react";
+import { ChevronRight, Menu, X, User, LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
 
 const navItems = [
-  { href: "/",        label: "ទំព័រដើម",     english: "Home",     emoji: "🏠" },
-  { href: "/courses", label: "វគ្គសិក្សា",   english: "Courses",  emoji: "📚" },
-  { href: "/roadmap", label: "ផែនទីសិក្សា", english: "Roadmap",  emoji: "🗺️" },
-  { href: "/about",   label: "អំពីយើង",     english: "About",    emoji: "✨" },
-  { href: "/contact", label: "ទំនាក់ទំនង",   english: "Contact",  emoji: "💬" },
+  { href: "/", label: "ទំព័រដើម" },
+  { href: "/courses", label: "វគ្គសិក្សា" },
+  { href: "/roadmap", label: "ផែនទីសិក្សា" },
+  { href: "/about", label: "អំពីយើង" },
+  { href: "/contact", label: "ទំនាក់ទំនង" },
 ];
 
 export default function Navbar() {
-  const { user }   = useAuth();
-  const pathname   = usePathname();
-  const [open, setOpen]       = useState(false);
+  const { user } = useAuth();
+  const pathname = usePathname();
+
+  const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const authHref  = user ? "/account" : "/login";
+
+  const authHref = user ? "/account" : "/login";
   const authLabel = user ? "គណនីរបស់ខ្ញុំ" : "ចូលគណនី";
 
   useEffect(() => {
-    const handler = () => setScrolled(window.scrollY > 12);
-    window.addEventListener("scroll", handler, { passive: true });
+    const handler = () => setScrolled(window.scrollY > 10);
+    window.addEventListener("scroll", handler);
     return () => window.removeEventListener("scroll", handler);
   }, []);
-
-  // Close mobile menu on route change
-  useEffect(() => { setOpen(false); }, [pathname]);
 
   const isActive = (href: string) =>
     href === "/" ? pathname === "/" : pathname.startsWith(href);
@@ -51,211 +40,161 @@ export default function Navbar() {
   return (
     <header className="sticky top-0 z-50">
 
-      {/* ── Announcement bar ─────────────────────────────────────────────── */}
-      <div className="hidden md:block overflow-hidden">
-        <div className="bg-gradient-to-r from-blue-700 via-indigo-700 to-violet-700 text-white">
-          <div className="container-app flex h-9 items-center justify-between text-xs">
-            <p className="flex items-center gap-2 font-medium">
-              <BookOpenCheck className="h-3 w-3 shrink-0 opacity-80" />
-              <span className="opacity-90">ស្វាគមន៍មកកាន់ ADUTI Learning — Learn to Code in Khmer</span>
-              <span className="inline-flex items-center gap-1 rounded-full bg-white/20 px-2 py-0.5 text-[10px] font-semibold">
-                <Sparkles className="h-2.5 w-2.5" />
-                New courses added
-              </span>
-            </p>
-            <div className="flex items-center divide-x divide-white/20 text-white/75">
-              <span className="inline-flex items-center gap-1.5 pr-4 transition-colors hover:text-white">
-                <Phone className="h-3 w-3" />+855 12 345 678
-              </span>
-              <span className="inline-flex items-center gap-1.5 pl-4 transition-colors hover:text-white">
-                <Mail className="h-3 w-3" />hello@adutilearning.com
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* ── Main nav ─────────────────────────────────────────────────────── */}
+      {/* NAVBAR */}
       <div
         className={cn(
-          "border-b border-border bg-background/90 backdrop-blur-2xl transition-all duration-300",
+          "border-b transition-all duration-300",
           scrolled
-            ? "border-border/80 shadow-[0_4px_24px_-4px_rgba(0,0,0,0.08)]"
-            : "border-border/60"
+            ? "bg-white/90 dark:bg-gray-950/90 backdrop-blur-xl shadow-lg"
+            : "bg-background/80 backdrop-blur"
         )}
       >
-        <div className="container-app flex h-[62px] items-center justify-between">
+        <div className="container-app flex h-[70px] items-center justify-between">
 
-          {/* ── Logo ── */}
+          {/* LOGO */}
           <Link
             href="/"
-            className="group inline-flex items-center gap-3 shrink-0"
+            className="group inline-flex items-center gap-3"
           >
-            {/* Logo mark */}
             <div className="relative">
-              <div className="grid h-10 w-10 place-items-center rounded-[11px] bg-gradient-to-br from-blue-600 to-violet-600 text-white shadow-lg shadow-blue-500/30 transition-all duration-300 group-hover:scale-105 group-hover:shadow-blue-500/40 group-hover:shadow-xl">
-                <GraduationCap className="h-5 w-5 drop-shadow-sm" />
+
+              {/* glow */}
+              <div className="absolute -inset-[4px] rounded-xl bg-gradient-to-br from-green-400 via-emerald-400 to-blue-500 opacity-0 blur-md transition group-hover:opacity-40" />
+
+              <div className="relative h-12 w-12 rounded-xl  p-[4px] ">
+                <Image
+                  src="/growth.png"
+                  alt="GrowCodeKhmer"
+                  width={120}
+                  height={120}
+                  className="h-full w-full object-contain transition-transform duration-300 group-hover:scale-110"
+                />
               </div>
-              {/* Online indicator dot */}
-              <span className="absolute -right-0.5 -top-0.5 flex h-3 w-3 items-center justify-center">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-50" />
-                <span className="relative h-2 w-2 rounded-full bg-emerald-400 ring-2 ring-background" />
-              </span>
             </div>
 
-            {/* Logo text */}
             <div className="leading-none">
-              <p className="text-[15px] font-bold tracking-[-0.02em] text-foreground">
-                ADUTI Learning
+              <p className="text-[17px] font-bold tracking-tight bg-gradient-to-r from-green-600 via-emerald-600 to-blue-600 bg-clip-text text-transparent">
+                GrowCodeKhmer
               </p>
-              <p className="mt-0.5 text-[11px] font-medium text-muted-foreground transition-colors group-hover:text-primary">
+
+              <p className="text-[11px] text-muted-foreground group-hover:text-emerald-500 transition">
                 រៀនកូដជាភាសាខ្មែរ
               </p>
             </div>
           </Link>
 
-          {/* ── Desktop nav links ── */}
-          <nav className="hidden lg:flex items-center gap-0.5">
+          {/* DESKTOP NAV */}
+          <nav className="hidden lg:flex items-center gap-6">
             {navItems.map((item) => {
               const active = isActive(item.href);
+
               return (
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={cn(
-                    "relative flex items-center gap-1.5 rounded-full px-4 py-2 text-[13.5px] font-medium transition-all duration-200 select-none",
-                    active
-                      ? "bg-gradient-to-r from-blue-600 to-violet-600 text-white shadow-md shadow-blue-500/20"
-                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                  )}
+                  className="group relative text-[14px] font-medium transition"
                 >
-                  {item.label}
-                  {/* Active underline indicator */}
-                  {!active && (
-                    <span className="absolute bottom-0 left-1/2 h-0.5 w-0 -translate-x-1/2 rounded-full bg-blue-500 transition-all duration-300 group-hover:w-4/5" />
-                  )}
+                  <span
+                    className={cn(
+                      active
+                        ? "text-emerald-600 dark:text-emerald-400"
+                        : "text-muted-foreground hover:text-emerald-600 dark:hover:text-emerald-400"
+                    )}
+                  >
+                    {item.label}
+                  </span>
+
+                  {/* active underline */}
+                  <span
+                    className={cn(
+                      "absolute left-0 -bottom-[6px] h-[2px] w-full rounded-full transition-all",
+                      active
+                        ? "bg-gradient-to-r from-green-500 via-emerald-500 to-blue-500"
+                        : "opacity-0 group-hover:opacity-40 bg-emerald-400"
+                    )}
+                  />
                 </Link>
               );
             })}
           </nav>
 
-          {/* ── Right side ── */}
-          <div className="flex items-center gap-1 shrink-0">
+          {/* RIGHT SIDE */}
+          <div className="flex items-center gap-2">
+
             <ThemeToggle />
 
-            {/* Auth link — desktop */}
+            {/* AUTH */}
             <Link
               href={authHref}
-              className="hidden sm:inline-flex items-center gap-1.5 rounded-full px-3.5 py-2 text-[13px] font-medium text-muted-foreground transition-all duration-200 hover:bg-muted hover:text-foreground"
+              className="hidden sm:flex items-center gap-1 text-sm text-muted-foreground hover:text-emerald-600 transition"
             >
-              {user
-                ? <><User className="h-3.5 w-3.5" />{authLabel}</>
-                : <><LogIn className="h-3.5 w-3.5" />{authLabel}</>}
+              {user ? (
+                <>
+                  <User className="h-4 w-4" />
+                  {authLabel}
+                </>
+              ) : (
+                <>
+                  <LogIn className="h-4 w-4" />
+                  {authLabel}
+                </>
+              )}
             </Link>
 
-            {/* CTA button */}
+            {/* CTA */}
             <Button
               asChild
-              size="sm"
-              className="hidden sm:inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-blue-600 to-violet-600 px-4 py-2 text-[13px] font-semibold text-white shadow-md shadow-blue-500/25 transition-all duration-200 hover:scale-[1.02] hover:from-blue-500 hover:to-violet-500 hover:shadow-blue-500/35 hover:shadow-lg"
+              className="hidden sm:flex rounded-full bg-gradient-to-r from-green-500 via-emerald-500 to-blue-500 text-white"
             >
               <Link href="/courses">
                 ចាប់ផ្តើមរៀន
-                <ChevronRight className="h-3.5 w-3.5" />
+                <ChevronRight className="ml-1 h-4 w-4" />
               </Link>
             </Button>
 
-            {/* Mobile hamburger */}
+            {/* MOBILE BUTTON */}
             <button
-              type="button"
-              aria-label={open ? "Close menu" : "Open menu"}
-              onClick={() => setOpen((v) => !v)}
-              className={cn(
-                "relative ml-1 flex h-9 w-9 items-center justify-center rounded-xl transition-all duration-200 lg:hidden",
-                open
-                  ? "bg-muted text-foreground"
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
-              )}
+              onClick={() => setOpen(!open)}
+              className="lg:hidden flex h-9 w-9 items-center justify-center rounded-lg hover:bg-muted"
             >
-              <span className={cn("absolute transition-all duration-200", open ? "opacity-100 rotate-0" : "opacity-0 rotate-90")}>
-                <X className="h-5 w-5" />
-              </span>
-              <span className={cn("absolute transition-all duration-200", open ? "opacity-0 -rotate-90" : "opacity-100 rotate-0")}>
-                <Menu className="h-5 w-5" />
-              </span>
+              {open ? <X /> : <Menu />}
             </button>
+
           </div>
         </div>
       </div>
 
-      {/* ── Mobile menu ──────────────────────────────────────────────────── */}
+      {/* MOBILE MENU */}
       <div
         className={cn(
-          "overflow-hidden border-b border-border/70 bg-background/98 backdrop-blur-2xl transition-all duration-300 lg:hidden",
-          open ? "max-h-[600px] opacity-100" : "max-h-0 opacity-0"
+          "lg:hidden overflow-hidden transition-all",
+          open ? "max-h-[400px]" : "max-h-0"
         )}
       >
-        <div className="container-app pb-6 pt-3 space-y-1.5">
+        <div className="container-app py-4 space-y-2">
 
-          {/* Nav links */}
-          {navItems.map((item) => {
-            const active = isActive(item.href);
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={cn(
-                  "flex items-center justify-between rounded-2xl px-4 py-3 text-sm font-medium transition-all duration-150",
-                  active
-                    ? "bg-gradient-to-r from-blue-600 to-violet-600 text-white shadow-md shadow-blue-500/20"
-                    : "text-foreground hover:bg-muted hover:text-primary"
-                )}
-              >
-                <div className="flex items-center gap-3">
-                  <span className="text-base leading-none">{item.emoji}</span>
-                  <span>{item.label}</span>
-                </div>
-                <span className={cn("text-xs", active ? "text-white/70" : "text-muted-foreground")}>
-                  {item.english}
-                </span>
-              </Link>
-            );
-          })}
-
-          {/* Divider */}
-          <div className="!my-3 h-px bg-border" />
-
-          {/* CTA row */}
-          <div className="grid grid-cols-2 gap-2 !mt-2">
-            <Button asChild variant="outline" className="rounded-2xl border-border font-medium">
-              <Link href={authHref}>
-                {user ? <User className="mr-2 h-3.5 w-3.5" /> : <LogIn className="mr-2 h-3.5 w-3.5" />}
-                {authLabel}
-              </Link>
-            </Button>
-            <Button
-              asChild
-              className="rounded-2xl bg-gradient-to-r from-blue-600 to-violet-600 font-semibold text-white shadow-md shadow-blue-500/20 hover:from-blue-500 hover:to-violet-500"
+          {navItems.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className="block rounded-lg px-4 py-3 text-sm hover:bg-muted"
             >
-              <Link href="/courses">
-                ចាប់ផ្តើម Free
-                <ChevronRight className="ml-1 h-3.5 w-3.5" />
-              </Link>
-            </Button>
-          </div>
+              {item.label}
+            </Link>
+          ))}
 
-          {/* Contact strip */}
-          <div className="!mt-3 flex items-center justify-center gap-5 rounded-2xl bg-muted/50 px-4 py-2.5">
-              <a href="tel:+85512345678" className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary">
-              <Phone className="h-3 w-3" />+855 12 345 678
-            </a>
-              <span className="h-3 w-px bg-border" />
-              <a href="mailto:hello@adutilearning.com" className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary">
-              <Mail className="h-3 w-3" />hello@adutilearning.com
-            </a>
-          </div>
+          <Button
+            asChild
+            className="w-full rounded-full bg-gradient-to-r from-green-500 via-emerald-500 to-blue-500"
+          >
+            <Link href="/courses">
+              ចាប់ផ្តើមរៀន
+            </Link>
+          </Button>
+
         </div>
       </div>
+
     </header>
   );
 }

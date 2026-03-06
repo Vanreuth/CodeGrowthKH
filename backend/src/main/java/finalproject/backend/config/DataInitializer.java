@@ -7344,11 +7344,23 @@ public class DataInitializer implements CommandLineRunner {
 
     private Course course(String title, String slug, String desc,
                           String level, boolean featured, User ins, Category cat) {
+        
+        CourseLevel parsedLevel = CourseLevel.BEGINNER; // default
+        try {
+            parsedLevel = CourseLevel.valueOf(level);
+        } catch (IllegalArgumentException e) {
+            if (level.contains("ADVANCED")) parsedLevel = CourseLevel.ADVANCED;
+            else if (level.contains("INTERMEDIATE")) parsedLevel = CourseLevel.INTERMEDIATE;
+            else parsedLevel = CourseLevel.BEGINNER;
+        }
+
+        final CourseLevel finalLevel = parsedLevel;
+
         return courseRepository.findBySlug(slug).orElseGet(() -> {
             log.info("Course: {}", title);
             return courseRepository.save(Course.builder()
                     .title(title).slug(slug).description(desc)
-                    .level(level).language("Khmer").status("PUBLISHED")
+                    .level(finalLevel).language("Khmer").status(CourseStatus.PUBLISHED)
                     .isFeatured(featured).isFree(true)
                     .instructor(ins).category(cat)
                     .createdAt(now()).publishedAt(now()).build());

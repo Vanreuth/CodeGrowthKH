@@ -69,7 +69,7 @@ public class CoursePdfExportServiceImpl implements CoursePdfExportService {
                             .courseId(course.getId())
                             .courseTitle(course.getTitle())
                             .thumbnail(course.getThumbnail())
-                            .level(course.getLevel())
+                            .level(course.getLevel() != null ? course.getLevel().name() : null)
                             .build();
                 })
                 .toList();

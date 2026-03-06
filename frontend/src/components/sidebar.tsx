@@ -24,6 +24,9 @@ import {
   BookOpen,
   Layers,
   GraduationCap,
+  TableOfContents,
+  ChevronsDownUp,
+  ChartBarBig
 } from "lucide-react";
 import {
   Sidebar,
@@ -45,6 +48,7 @@ import {
   SidebarRail,
   SidebarSeparator,
   SidebarTrigger,
+ 
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -57,6 +61,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
+
 
 const sidebarGroups = [
   {
@@ -84,14 +89,20 @@ const sidebarGroups = [
     ],
   },
   {
-    title: "Content Management",
+    title: "User Management",
     items: [
       {
-        title: "Courses",
-        href: "/dashboard/courses",
-        icon: BookOpen,
+        title: "Users",
+        href: "/dashboard/users",
+        icon: Users,
         badge: null,
       },
+    
+    ],
+  },
+  {
+    title: "Content Management",
+    items: [
       {
         title: "Categories",
         href: "/dashboard/categories",
@@ -99,59 +110,30 @@ const sidebarGroups = [
         badge: null,
       },
       {
-        title: "Lessons",
-        href: "/dashboard/lessons",
-        icon: GraduationCap,
+        title: "Courses",
+        href: "/dashboard/courses",
+        icon: BookOpen,
         badge: null,
       },
       {
         title: "Chapters",
         href: "/dashboard/chapters",
-        icon: GraduationCap,
+        icon: TableOfContents,
         badge: null,
       },
       {
-        title: "Users",
-        href: "/dashboard/users",
-        icon: Users,
+        title: "Lessons",
+        href: "/dashboard/lessons",
+        icon: ChartBarBig,
         badge: null,
       },
-    ],
-  },
-  {
-    title: "Pages",
-    items: [
-      {
-        title: "Projects",
-        href: "/dashboard/projects",
-        icon: FolderKanban,
-        badge: null,
-      },
-      {
+       {
         title: "Documents",
         href: "/dashboard/documents",
         icon: FileText,
         badge: null,
       },
-      {
-        title: "Calendar",
-        href: "/dashboard/calendar",
-        icon: Calendar,
-        badge: "3",
-        badgeVariant: "secondary" as const,
-      },
-      {
-        title: "Auth Pages",
-        href: "/dashboard/auth",
-        icon: LogIn,
-        badge: null,
-      },
-      {
-        title: "Error Pages",
-        href: "/dashboard/errors",
-        icon: AlertCircle,
-        badge: null,
-      },
+      
     ],
   },
   {
@@ -163,12 +145,6 @@ const sidebarGroups = [
         icon: MessageSquare,
         badge: "5",
         badgeVariant: "secondary" as const,
-      },
-      {
-        title: "Database",
-        href: "/dashboard/database",
-        icon: Database,
-        badge: null,
       },
       {
         title: "Security",

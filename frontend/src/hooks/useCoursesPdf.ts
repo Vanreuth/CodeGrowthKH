@@ -97,3 +97,4 @@ export function useCoursePdfAdmin() {
       removeMutation.mutateAsync(courseId).then(() => true as const).catch(() => false as const),
   }
 }
+

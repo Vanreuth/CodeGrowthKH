@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { useMemo } from "react";
-import { CalendarDays, Clock3, Rocket } from "lucide-react";
+import { CalendarDays, Clock3 } from "lucide-react";
 import { useComingSoonCourses } from "@/hooks/useCourses";
+import { getCourseVisual } from "@/components/course/courseCard";
 import type { CourseResponse } from "@/types/courseType";
 
 type ComingCourse = {
@@ -120,7 +121,7 @@ export function CommingCourseSection() {
               key={course.id}
               className="group overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
             >
-              <div className="relative h-40 bg-gradient-to-br from-slate-700 via-slate-800 to-slate-900">
+              <div className={`relative h-40 ${getCourseVisual(course.title).bg} flex items-center justify-center overflow-hidden`}>
                 {course.thumbnail ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
@@ -129,9 +130,7 @@ export function CommingCourseSection() {
                     className="h-full w-full object-cover opacity-85"
                   />
                 ) : (
-                  <div className="flex h-full items-center justify-center">
-                    <Rocket className="h-14 w-14 text-white/75" />
-                  </div>
+                  <span className="text-6xl drop-shadow-lg">{getCourseVisual(course.title).icon}</span>
                 )}
                 <span className="absolute top-4 left-4 rotate-[-10deg] rounded-md bg-red-600 px-3 py-1 text-xs font-bold text-white shadow">
                   មកដល់ឆាប់ៗ

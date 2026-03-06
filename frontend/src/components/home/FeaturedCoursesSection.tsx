@@ -2,109 +2,26 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import {
-  AlertTriangle,
-  BookOpen,
-  ChevronRight,
-  Eye,
-  Loader2,
-  Search,
-  Users,
-} from "lucide-react";
+import { AlertTriangle, ChevronRight, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useFeaturedCourses } from "@/hooks/useCourses";
+import { CourseCard } from "@/components/course/courseCard";
 import type { CourseResponse } from "@/types/courseType";
-
-type HomeCourse = {
-  id: number;
-  slug: string;
-  title: string;
-  description: string;
-  categoryName: string;
-  levelLabel: string;
-  isFree: boolean;
-  thumbnail: string | null;
-  totalLessons: number;
-  enrolledCount: number;
-  viewCount: number;
-  avgRating: number;
-};
-
-const levelBadge: Record<string, string> = {
-  "ចាប់ផ្តើម":
-    "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300",
-  "មធ្យម":
-    "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300",
-  "កម្រិតខ្ពស់":
-    "bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300",
-};
-
-function toLevelLabel(level?: string): string {
-  if (!level) return "ចាប់ផ្តើម";
-  const normalized = level.toUpperCase();
-  if (normalized === "INTERMEDIATE") return "មធ្យម";
-  if (normalized === "ADVANCED") return "កម្រិតខ្ពស់";
-  return "ចាប់ផ្តើម";
-}
-
-function getCourseVisual(title: string): { bg: string; icon: string } {
-  const t = title.toLowerCase();
-  if (t.includes("html"))
-    return { bg: "from-orange-500 via-red-400 to-pink-500", icon: "🌐" };
-  if (t.includes("css"))
-    return { bg: "from-blue-500 via-cyan-400 to-teal-400", icon: "🎨" };
-  if (t.includes("javascript") || t.includes("js"))
-    return { bg: "from-yellow-400 via-amber-400 to-orange-400", icon: "⚡" };
-  if (t.includes("next"))
-    return { bg: "from-slate-700 via-slate-600 to-slate-500", icon: "▲" };
-  if (t.includes("react"))
-    return { bg: "from-sky-500 via-blue-400 to-indigo-500", icon: "⚛️" };
-  if (t.includes("spring") || t.includes("java"))
-    return { bg: "from-green-500 via-emerald-400 to-teal-500", icon: "🍃" };
-  if (t.includes("docker") || t.includes("devops"))
-    return { bg: "from-blue-600 via-blue-500 to-cyan-500", icon: "🐳" };
-  if (t.includes("python"))
-    return { bg: "from-yellow-500 via-blue-500 to-blue-600", icon: "🐍" };
-  if (t.includes("git"))
-    return { bg: "from-orange-500 via-red-500 to-orange-700", icon: "🧩" };
-  return { bg: "from-violet-500 via-purple-400 to-indigo-500", icon: "📚" };
-}
-
-function formatKmNumber(value: number): string {
-  return new Intl.NumberFormat("km-KH").format(value);
-}
-
-function mapCourse(course: CourseResponse): HomeCourse {
-  return {
-    id: course.id,
-    slug: course.slug,
-    title: course.title,
-    description: course.description ?? "",
-    categoryName: course.categoryName ?? "ទូទៅ",
-    levelLabel: toLevelLabel(course.level),
-    isFree: course.isFree === true || course.price === 0,
-    thumbnail: course.thumbnail ?? null,
-    totalLessons: course.totalLessons ?? 0,
-    enrolledCount: course.enrolledCount ?? 0,
-    viewCount: course.viewCount ?? 0,
-    avgRating: course.avgRating ?? 0,
-  };
-}
 
 export function FeaturedCoursesSection() {
   const { data, loading, error, refetch } = useFeaturedCourses({ page: 0, size: 60 });
   const [query, setQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("ទាំងអស់");
 
-  const courses = useMemo(
-    () => (data?.content ?? []).map(mapCourse),
+  const courses = useMemo<CourseResponse[]>(
+    () => data?.content ?? [],
     [data]
   );
 
   const categories = useMemo(() => {
     const set = new Set<string>();
     for (const course of courses) {
-      if (course.categoryName.trim()) set.add(course.categoryName);
+      if (course.categoryName?.trim()) set.add(course.categoryName);
     }
     return ["ទាំងអស់", ...[...set].sort((a, b) => a.localeCompare(b, "km"))];
   }, [courses]);
@@ -117,8 +34,8 @@ export function FeaturedCoursesSection() {
       const matchKeyword =
         keyword.length === 0 ||
         course.title.toLowerCase().includes(keyword) ||
-        course.description.toLowerCase().includes(keyword) ||
-        course.categoryName.toLowerCase().includes(keyword);
+        (course.description ?? "").toLowerCase().includes(keyword) ||
+        (course.categoryName ?? "").toLowerCase().includes(keyword);
       return matchCategory && matchKeyword;
     });
   }, [courses, query, selectedCategory]);
@@ -152,7 +69,7 @@ export function FeaturedCoursesSection() {
               type="button"
               onClick={() => setSelectedCategory(category)}
               className={`rounded-full border px-3 py-1.5 text-xs font-medium transition ${
-                  selectedCategory === category
+                selectedCategory === category
                   ? "border-blue-600 bg-blue-600 text-white"
                   : "border-border bg-card text-foreground hover:border-primary/50 hover:text-primary"
               }`}
@@ -203,7 +120,7 @@ export function FeaturedCoursesSection() {
       {!loading && !error && filteredCourses.length > 0 && (
         <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {filteredCourses.slice(0, 6).map((course) => (
-            <CourseCard key={course.id} course={course} />
+            <CourseCard key={course.id} course={course} badge="ពេញនិយម" />
           ))}
         </div>
       )}
@@ -224,84 +141,5 @@ export function FeaturedCoursesSection() {
         </Link>
       </div>
     </section>
-  );
-}
-
-function CourseCard({ course }: { course: HomeCourse }) {
-  const visual = getCourseVisual(course.title);
-
-  return (
-    <Link
-      href={`/${course.slug}`}
-      className="group overflow-hidden rounded-2xl border border-border bg-card shadow-md transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
-    >
-      <div
-        className={`relative flex h-44 items-center justify-center bg-gradient-to-br ${visual.bg} p-6`}
-      >
-        {course.thumbnail ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={course.thumbnail}
-            alt={course.title}
-            className="h-full w-full object-cover"
-          />
-        ) : (
-          <span className="text-6xl drop-shadow-lg">{visual.icon}</span>
-        )}
-
-        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/10 to-transparent" />
-
-        <span className="absolute top-4 left-4 rotate-[-10deg] rounded-md bg-red-600 px-3 py-1 text-[11px] font-bold tracking-wide text-white shadow-lg">
-          ពេញនិយម
-        </span>
-
-        {course.isFree && (
-          <span className="absolute right-3 top-3 rounded-full bg-emerald-500 px-2.5 py-1 text-xs font-semibold text-white">
-            FREE
-          </span>
-        )}
-
-        <span className="absolute bottom-3 left-3 rounded-full bg-black/35 px-2.5 py-0.5 text-xs font-medium text-white backdrop-blur-sm">
-          {course.categoryName}
-        </span>
-      </div>
-
-      <div className="p-5">
-        <span
-          className={`mb-2 inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold ${
-            levelBadge[course.levelLabel] ?? levelBadge["ចាប់ផ្តើម"]
-          }`}
-        >
-          {course.levelLabel}
-        </span>
-
-        <h4 className="mb-1.5 line-clamp-1 text-2xl font-bold text-foreground transition-colors group-hover:text-primary">
-          {course.title}
-        </h4>
-        <p className="line-clamp-3 text-sm leading-relaxed text-muted-foreground">
-          {course.description}
-        </p>
-
-        <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-          <span className="inline-flex items-center gap-1">
-            <BookOpen className="h-3.5 w-3.5" />
-            {formatKmNumber(course.totalLessons)} មេរៀន
-          </span>
-          <span className="inline-flex items-center gap-1">
-            <Users className="h-3.5 w-3.5" />
-            {formatKmNumber(course.enrolledCount)}
-          </span>
-          <span className="inline-flex items-center gap-1">
-            <Eye className="h-3.5 w-3.5" />
-            {formatKmNumber(course.viewCount)}
-          </span>
-        </div>
-
-        <div className="mt-4 inline-flex w-full items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-3 py-2 text-sm font-semibold text-white transition group-hover:from-blue-500 group-hover:to-indigo-500">
-          ចូលរៀនឥឡូវ
-          <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-        </div>
-      </div>
-    </Link>
   );
 }

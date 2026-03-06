@@ -21,7 +21,7 @@ public class CoursePdfExportMapper {
                 .courseId(export.getCourse() != null ? export.getCourse().getId() : null)
                 .courseTitle(export.getCourse() != null ? export.getCourse().getTitle() : null)
                 .thumbnail(export.getCourse() != null ? export.getCourse().getThumbnail() : null)
-                .level(export.getCourse() != null ? export.getCourse().getLevel() : null)
+                .level(export.getCourse() != null && export.getCourse().getLevel() != null ? export.getCourse().getLevel().name() : null)
                 .build();
     }
 }

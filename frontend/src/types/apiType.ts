@@ -39,3 +39,10 @@ export interface PaginationParams {
   sortBy?: string
   sortDir?: 'asc' | 'desc'
 }
+
+export interface CourseFilterParams extends PaginationParams {
+  categoryId?: number
+  status?: import('./courseType').CourseStatus
+  level?: import('./courseType').CourseLevel
+  search?: string
+}

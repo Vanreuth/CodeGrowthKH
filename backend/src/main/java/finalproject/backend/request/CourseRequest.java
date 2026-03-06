@@ -1,5 +1,7 @@
 package finalproject.backend.request;
 
+import finalproject.backend.modal.CourseLevel;
+import finalproject.backend.modal.CourseStatus;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -24,11 +26,11 @@ public class CourseRequest {
 
     private String requirements;
 
-    private String level = "BEGINNER";      // BEGINNER / INTERMEDIATE / ADVANCED
+    private CourseLevel level = CourseLevel.BEGINNER;
 
     private String language = "Khmer";
 
-    private String status = "DRAFT";        // DRAFT / PUBLISHED / ARCHIVED / COMING_SOON
+    private CourseStatus status = CourseStatus.DRAFT;
 
     private Boolean featured = false;
     private Boolean free = false;

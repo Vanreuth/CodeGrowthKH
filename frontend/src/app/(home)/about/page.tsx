@@ -4,34 +4,36 @@ import {
   BookOpen,
   CheckCircle2,
   ExternalLink,
-  Handshake,
-  Layers3,
   Quote,
   ShieldCheck,
   Sparkles,
-  Target,
   Trophy,
   Users,
 } from "lucide-react";
+
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
 export default function AboutPage() {
   return (
-    <div className="space-y-10 pb-16 mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 mt-10">
-      {/* ── Hero ────────────────────────────────────────────────────────────── */}
-      <section className="relative overflow-hidden rounded-3xl border border-slate-200 bg-white/80 p-7 shadow-sm md:p-12 dark:border-white/10 dark:bg-slate-900/70">
-        {/* Decorative blobs */}
+    <div className="space-y-14 pb-20 mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 mt-10">
+
+      {/* HERO */}
+      <section className="overflow-hidden  md:p-12 lg:grid lg:grid-cols-2 lg:gap-12 ">
+
+        {/* blobs */}
         <div className="pointer-events-none absolute -right-32 -top-32 h-80 w-80 rounded-full bg-gradient-to-br from-blue-400/10 via-violet-400/10 to-pink-300/10 blur-3xl" />
         <div className="pointer-events-none absolute -bottom-20 left-10 h-60 w-60 rounded-full bg-gradient-to-tr from-emerald-400/8 to-cyan-300/8 blur-2xl" />
 
-        <div className="relative max-w-3xl">
-          <Badge className="mb-4 border-violet-200/60 bg-violet-50 text-violet-700 dark:border-violet-500/30 dark:bg-violet-500/10 dark:text-violet-300">
+        {/* left content */}
+        <div className="relative max-w-xl">
+
+          <Badge className="mb-4 border-violet-200 bg-violet-50 text-violet-700 dark:bg-violet-500/10 dark:text-violet-300">
             <Sparkles className="mr-1.5 h-3 w-3" />
             អំពី ADUTI Learning
           </Badge>
 
-          <h1 className="text-3xl font-extrabold leading-tight tracking-tight text-slate-900 md:text-5xl dark:text-white">
+          <h1 className="text-3xl font-extrabold leading-tight md:text-5xl dark:text-white">
             យើងជួយអ្នករៀន ក្លាយជា{" "}
             <span className="bg-gradient-to-r from-blue-600 via-indigo-500 to-violet-600 bg-clip-text text-transparent">
               Software Engineer
@@ -39,279 +41,264 @@ export default function AboutPage() {
             ពិតប្រាកដ
           </h1>
 
-          <p className="mt-4 text-base leading-relaxed text-slate-600 md:text-lg dark:text-slate-300">
+          <p className="mt-4 text-base text-slate-600 dark:text-slate-300">
             ADUTI Learning គឺជាវេទិកា ed-tech ជាភាសាខ្មែរ ដែលបំពេញចន្លោះរវាង
-            &ldquo;tutorial follower&rdquo; និង &ldquo;real developer&rdquo; — ដោយ courses
-            ច្បាស់លាស់, roadmap ជាជំហាន, mentor support, និង project ពិតប្រាកដ។
+            tutorial follower និង real developer។
           </p>
 
-          {/* Pull quote */}
-          <div className="mt-6 flex items-start gap-3 rounded-2xl border border-slate-100 bg-slate-50 p-4 dark:border-white/8 dark:bg-white/5">
-            <Quote className="mt-0.5 h-5 w-5 shrink-0 text-violet-400" />
-            <p className="text-sm italic leading-relaxed text-slate-600 dark:text-slate-300">
-              &ldquo;We don&apos;t just teach syntax — we build engineers who think in systems,
-              ship production code, and grow with their teams.&rdquo;
+          {/* quote */}
+          <div className="mt-6 flex gap-3 rounded-xl border bg-slate-50 p-4 dark:bg-white/5">
+            <Quote className="h-5 w-5 text-violet-400" />
+            <p className="text-sm italic">
+              “We don’t just teach syntax — we build engineers.”
             </p>
           </div>
+
         </div>
+
+        {/* right visual */}
+        <div className="mt-10 lg:mt-0">
+
+          <div className="rounded-2xl border bg-slate-50 p-6 shadow-inner dark:bg-white/5">
+
+            <p className="text-sm font-semibold text-slate-500 mb-4">
+              Developer Learning Path
+            </p>
+
+            <div className="space-y-4 text-sm">
+
+              <div className="flex items-center gap-3">
+                <div className="h-3 w-3 rounded-full bg-blue-500"></div>
+                HTML → CSS → JavaScript
+              </div>
+
+              <div className="flex items-center gap-3">
+                <div className="h-3 w-3 rounded-full bg-violet-500"></div>
+                React → Next.js
+              </div>
+
+              <div className="flex items-center gap-3">
+                <div className="h-3 w-3 rounded-full bg-emerald-500"></div>
+                APIs → Databases
+              </div>
+
+              <div className="flex items-center gap-3">
+                <div className="h-3 w-3 rounded-full bg-orange-500"></div>
+                Production Deployment
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
       </section>
 
-      {/* ── Stats ───────────────────────────────────────────────────────────── */}
+      {/* STATS */}
       <section className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         {platformStats.map((stat) => (
           <div
             key={stat.label}
-            className="flex flex-col items-center gap-2 rounded-2xl border border-slate-100 bg-white p-6 text-center shadow-sm dark:border-white/10 dark:bg-slate-900/70"
+            className="group flex flex-col items-center gap-2 rounded-2xl border bg-white p-6 text-center shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg dark:bg-slate-900/70"
           >
-            <span className="text-3xl leading-none">{stat.icon}</span>
-            <span className="bg-gradient-to-r from-blue-600 to-violet-600 bg-clip-text text-2xl font-extrabold text-transparent md:text-3xl">
+
+            <span className="text-3xl transition-transform group-hover:scale-110">
+              {stat.icon}
+            </span>
+
+            <span className="bg-gradient-to-r from-blue-600 to-violet-600 bg-clip-text text-2xl font-extrabold text-transparent">
               {stat.value}
             </span>
-            <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-              {stat.label}
-            </span>
-            <span className="text-xs text-slate-400 dark:text-slate-500">{stat.labelEn}</span>
+
+            <span className="text-sm font-semibold">{stat.label}</span>
+
+            <span className="text-xs text-slate-400">{stat.labelEn}</span>
+
           </div>
         ))}
       </section>
 
-      {/* ── Mission + Timeline ─────────────────────────────────────────────── */}
-      <section className="grid gap-6 md:grid-cols-2">
-        {/* Mission */}
-        <div className="flex flex-col justify-between rounded-2xl border border-slate-100 bg-white p-7 shadow-sm dark:border-white/10 dark:bg-slate-900/70">
-          <div>
-            <div className="mb-4 inline-flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-indigo-500 text-2xl shadow-md shadow-blue-500/20">
-              🎯
-            </div>
-            <h2 className="text-xl font-bold text-slate-900 dark:text-white">
-              បេសកកម្មរបស់យើង
-            </h2>
-            <p className="mt-2 text-xs font-medium uppercase tracking-widest text-slate-400">
-              Our Mission
-            </p>
-            <p className="mt-3 text-sm leading-relaxed text-slate-600 dark:text-slate-400">
-              ធ្វើឲ្យការអប់រំ software engineering ជាភាសាខ្មែរ{" "}
-              <strong className="text-slate-800 dark:text-slate-200">
-                មានគុណភាព, ចូលប្រើបានដោយសេរី
-              </strong>{" "}
-              ហើយត្រូវនឹងតម្រូវការ industry ពិត — ដើម្បីជួយ developer ជំនាន់ក្រោយ
-              របស់កម្ពុជាឡើងដល់ global standard។
-            </p>
-          </div>
-          <div className="mt-6 flex flex-wrap gap-2">
-            {["ភាសាខ្មែរ", "Project-Based", "Industry-Ready", "Community"].map((tag) => (
-              <span
-                key={tag}
-                className="rounded-full border border-blue-200/60 bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700 dark:border-blue-500/30 dark:bg-blue-500/10 dark:text-blue-300"
-              >
-                {tag}
-              </span>
-            ))}
-          </div>
+      {/* TIMELINE */}
+      <section className="rounded-2xl border bg-white p-8 dark:bg-slate-900/70">
+
+        <div className="flex items-center gap-2 mb-6">
+          <Trophy className="h-4 w-4 text-amber-500" />
+          <h2 className="text-xl font-bold">ADUTI Journey</h2>
         </div>
 
-        {/* Timeline */}
-        <div className="rounded-2xl border border-slate-100 bg-white p-7 shadow-sm dark:border-white/10 dark:bg-slate-900/70">
-          <div className="mb-5 flex items-center gap-2">
-            <Trophy className="h-4 w-4 text-amber-500" />
-            <h2 className="text-xl font-bold text-slate-900 dark:text-white">
-              ដំណើររបស់ ADUTI
-            </h2>
-          </div>
-          <div className="relative space-y-4">
-            {/* Vertical line */}
-            <div className="absolute left-[11px] top-2 h-[calc(100%-8px)] w-px bg-gradient-to-b from-slate-200 to-transparent dark:from-white/10" />
-            {milestones.map((m, i) => (
-              <div key={m.year} className="relative flex items-start gap-4 pl-7">
-                <div className="absolute left-0 top-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-violet-500 text-[9px] font-bold text-white">
-                  {i + 1}
-                </div>
-                <div>
-                  <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-bold text-slate-600 dark:bg-white/10 dark:text-slate-300">
-                    {m.year}
-                  </span>
-                  <p className="mt-1 text-sm text-slate-700 dark:text-slate-300">{m.event}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+        <div className="relative space-y-6">
 
-      {/* ── Values ──────────────────────────────────────────────────────────── */}
-      <section>
-        <div className="mb-6 text-center">
-          <Badge className="mb-3 border-amber-200/60 bg-amber-50 text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300">
-            <ShieldCheck className="mr-1.5 h-3 w-3" />
-            គុណតម្លៃ / Our Values
-          </Badge>
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-white md:text-3xl">
-            អ្វីដែល{" "}
-            <span className="bg-gradient-to-r from-amber-500 to-orange-500 bg-clip-text text-transparent">
-              យើងជឿជាក់
-            </span>
-          </h2>
-        </div>
-        <div className="grid gap-5 sm:grid-cols-2">
-          {values.map((v) => (
+          <div className="absolute left-[11px] top-2 h-full w-[2px] bg-gradient-to-b from-blue-400 via-violet-400 to-transparent opacity-60" />
+
+          {milestones.map((m, i) => (
             <div
-              key={v.title}
-              className="group relative overflow-hidden rounded-2xl border border-slate-100 bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg dark:border-white/10 dark:bg-slate-900/70"
+              key={m.year}
+              className="relative flex gap-4 pl-7 hover:translate-x-1 transition"
             >
-              <div
-                className={`mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br ${v.color} text-2xl shadow-md ${v.shadow}`}
-              >
-                {v.icon}
+
+              <div className="absolute left-0 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-violet-500 text-[9px] text-white">
+                {i + 1}
               </div>
-              <h3 className="font-bold text-slate-900 dark:text-white">{v.titleKh}</h3>
-              <p className="text-xs font-medium text-slate-400 dark:text-slate-500">{v.title}</p>
-              <p className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-400">
-                {v.descKh}
-              </p>
-              {/* Accent line */}
-              <div
-                className={`absolute bottom-0 left-0 h-0.5 w-0 bg-gradient-to-r ${v.color} transition-all duration-500 group-hover:w-full`}
-              />
+
+              <div>
+
+                <span className="text-xs font-bold bg-slate-100 px-2 py-0.5 rounded">
+                  {m.year}
+                </span>
+
+                <p className="text-sm mt-1">{m.event}</p>
+
+              </div>
+
             </div>
           ))}
         </div>
+
       </section>
 
-      {/* ── Team ────────────────────────────────────────────────────────────── */}
+      {/* VALUES */}
       <section>
-        <div className="mb-6">
-          <Badge className="mb-3 border-emerald-200/60 bg-emerald-50 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300">
-            <Users className="mr-1.5 h-3 w-3" />
-            Mentor Team
+
+        <div className="text-center mb-8">
+
+          <Badge className="mb-3">
+            <ShieldCheck className="mr-1 h-3 w-3" />
+            Our Values
           </Badge>
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-white md:text-3xl">
-            អ្នកណែនាំ{" "}
-            <span className="bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
-              ដំណើរសិក្សា
-            </span>
-            របស់អ្នក
+
+          <h2 className="text-3xl font-bold">
+            What We Believe
           </h2>
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-            People guiding your learning journey — active practitioners, not just teachers.
-          </p>
+
         </div>
 
-        <div className="grid gap-5 md:grid-cols-3">
-          {teamHighlights.map((member) => (
+        <div className="grid gap-6 md:grid-cols-2">
+
+          {values.map((v) => (
+
             <div
-              key={member.name}
-              className="group flex flex-col overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl dark:border-white/10 dark:bg-slate-900/70"
+              key={v.title}
+              className="rounded-2xl border bg-white/80 backdrop-blur p-6 shadow-sm hover:shadow-lg transition dark:bg-slate-900/60"
             >
-              {/* Gradient header */}
-              <div className={`flex items-center gap-4 bg-gradient-to-r ${member.gradient} p-5`}>
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border-2 border-white/30 bg-white/20 text-base font-bold text-white backdrop-blur-sm">
-                  {member.avatar}
-                </div>
-                <div>
-                  <p className="font-bold text-white">{member.name}</p>
-                  <p className="text-xs text-white/80">{member.roleKh}</p>
-                </div>
+
+              <div className={`mb-4 h-12 w-12 flex items-center justify-center rounded-xl bg-gradient-to-br ${v.color}`}>
+                {v.icon}
               </div>
 
-              {/* Body */}
-              <div className="flex flex-1 flex-col p-5">
-                <p className="flex-1 text-sm leading-relaxed text-slate-600 dark:text-slate-400">
+              <h3 className="font-bold">{v.titleKh}</h3>
+
+              <p className="text-sm text-slate-500">{v.descKh}</p>
+
+            </div>
+
+          ))}
+
+        </div>
+
+      </section>
+
+      {/* TEAM */}
+      <section>
+
+        <div className="mb-6">
+
+          <Badge className="mb-3">
+            <Users className="mr-1 h-3 w-3" />
+            Mentor Team
+          </Badge>
+
+          <h2 className="text-3xl font-bold">
+            Our Mentors
+          </h2>
+
+        </div>
+
+        <div className="grid gap-6 md:grid-cols-3">
+
+          {teamHighlights.map((member) => (
+
+            <div
+              key={member.name}
+              className="flex flex-col overflow-hidden rounded-2xl border bg-white shadow-sm hover:shadow-xl transition dark:bg-slate-900/70"
+            >
+
+              <div className={`bg-gradient-to-r ${member.gradient} p-5 text-white`}>
+
+                <p className="font-bold">{member.name}</p>
+                <p className="text-xs">{member.roleKh}</p>
+
+              </div>
+
+              <div className="p-5 flex flex-col flex-1">
+
+                <p className="text-sm text-slate-600 flex-1">
                   {member.summaryKh}
                 </p>
 
-                {/* Topic chips */}
-                <div className="mt-4 flex flex-wrap gap-1.5">
+                <div className="mt-4 flex flex-wrap gap-2">
                   {member.topics.map((t) => (
                     <span
                       key={t}
-                      className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-0.5 text-xs font-medium text-slate-600 dark:border-white/10 dark:bg-white/5 dark:text-slate-400"
+                      className="text-xs bg-slate-100 px-2 py-1 rounded-full"
                     >
                       {t}
                     </span>
                   ))}
                 </div>
+
+                <a
+                  href={member.linkedin}
+                  className="mt-4 inline-flex items-center text-xs text-blue-600 hover:underline"
+                >
+                  LinkedIn
+                  <ExternalLink className="ml-1 h-3 w-3" />
+                </a>
+
               </div>
+
             </div>
+
           ))}
+
         </div>
+
       </section>
 
-      {/* ── Why different ───────────────────────────────────────────────────── */}
-      <section className="rounded-2xl border border-slate-100 bg-white p-7 shadow-sm dark:border-white/10 dark:bg-slate-900/70 md:p-10">
-        <div className="mb-6 flex items-center gap-2">
-          <BookOpen className="h-4 w-4 text-blue-500" />
-          <h2 className="text-xl font-bold text-slate-900 dark:text-white">
-            ហេតុអ្វី ADUTI ខុសពីការ YouTube ឬ bootcamp ធម្មតា?
-          </h2>
-        </div>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {[
-            { point: "ភាសាខ្មែរ 100%", sub: "ពន្យល់ concepts ពិបាកៗ ជាភាសាខ្មែរ" },
-            { point: "Roadmap ជាជំហាន", sub: "ដឹងច្បាស់ថារៀនអ្វីមុន អ្វីក្រោយ" },
-            { point: "Project Portfolio", sub: "គ្រប់ phase មាន real project" },
-            { point: "Mentor Feedback", sub: "Code review weekly ពី practitioners" },
-            { point: "Community", sub: "ចូលរួមមួយជាមួយ 2,400+ learners" },
-            { point: "Certificate", sub: "Completion certificate ទទួលស្គាល់" },
-          ].map((item) => (
-            <div
-              key={item.point}
-              className="flex items-start gap-3 rounded-xl border border-slate-100 bg-slate-50 p-4 dark:border-white/8 dark:bg-white/5"
-            >
-              <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-500" />
-              <div>
-                <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">
-                  {item.point}
-                </p>
-                <p className="text-xs text-slate-500 dark:text-slate-400">{item.sub}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
+      {/* CTA */}
+      <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-600 via-indigo-600 to-violet-700 p-12 text-center text-white">
 
-      {/* ── CTA ─────────────────────────────────────────────────────────────── */}
-      <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-600 via-indigo-600 to-violet-700 px-7 py-12 text-center text-white shadow-2xl shadow-blue-600/20 md:px-12 md:py-16">
-        <div className="pointer-events-none absolute -left-20 -top-20 h-64 w-64 rounded-full bg-white/5 blur-3xl" />
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/25 to-transparent" />
+        <div className="space-y-4">
 
-        <div className="relative space-y-4">
-          <Badge className="border-white/30 bg-white/15 text-white">
-            <Sparkles className="mr-1.5 h-3 w-3" />
-            ចូលរួមមួយជាមួយ 2,400+ learners
-          </Badge>
-          <h2 className="text-2xl font-extrabold md:text-4xl">
-            ត្រៀមចាប់ផ្តើម
-            <br />
-            <span className="text-yellow-300">ដំណើររបស់អ្នក</span> ហើយ?
+          <h2 className="text-3xl font-extrabold">
+            Ready to start your journey?
           </h2>
-          <p className="mx-auto max-w-md text-blue-100">
-            ចូលរៀន Free ថ្ងៃនេះ — courses, roadmap, mentor support ជាភាសាខ្មែរ
+
+          <p className="text-blue-100">
+            Join thousands of learners learning software engineering in Khmer
           </p>
-          <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
-            <Button
-              asChild
-              size="lg"
-              className="rounded-full bg-white px-8 text-blue-700 shadow-xl hover:scale-[1.02] hover:bg-blue-50"
-            >
+
+          <div className="flex justify-center gap-4">
+
+            <Button asChild size="lg" className="bg-white text-blue-700">
               <Link href="/register">
-                ចុះឈ្មោះ Free
+                Register Free
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>
-            <Button
-              asChild
-              size="lg"
-              variant="ghost"
-              className="rounded-full text-white hover:bg-white/15"
-            >
+
+            <Button asChild size="lg" variant="ghost">
               <Link href="/roadmap">
-                មើល Roadmap
-                <ArrowRight className="ml-2 h-4 w-4" />
+                View Roadmap
               </Link>
             </Button>
+
           </div>
+
         </div>
+
       </section>
+
     </div>
   );
 }

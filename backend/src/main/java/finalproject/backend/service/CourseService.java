@@ -1,5 +1,7 @@
 package finalproject.backend.service;
 
+import finalproject.backend.modal.CourseLevel;
+import finalproject.backend.modal.CourseStatus;
 import finalproject.backend.request.CourseRequest;
 import finalproject.backend.response.ApiResponse;
 import finalproject.backend.response.CourseResponse;
@@ -11,7 +13,14 @@ import org.springframework.web.multipart.MultipartFile;
 public interface CourseService {
 
     ApiResponse<CourseResponse> createCourse(CourseRequest request, MultipartFile thumbnail);
-    PageResponse<CourseResponse> getAllCourses(Pageable pageable);
+
+    PageResponse<CourseResponse> getAllCourses(
+            Pageable pageable,
+            Integer categoryId,
+            CourseStatus status,
+            CourseLevel level,
+            String search
+    );
     ApiResponse<CourseResponse> getCourseById(Long id);
 
     /** Returns course detail by slug.

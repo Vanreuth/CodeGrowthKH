@@ -12,8 +12,14 @@ const notoSansKhmer = Noto_Sans_Khmer({
 });
 
 export const metadata: Metadata = {
-  title: "ADUTI Learning — Practical IT Education",
-  description: "Learn software engineering with a roadmap built for real product work. Frontend, Backend, DevOps, and more.",
+  title: "GrowCodeKhmer — Practical IT Education",
+  description: "Learn programming lanaguage with a roadmap built for real product work. Frontend, Backend, DevOps, and more.",
+  icons: {
+    icon: "/growth.png",
+    shortcut: "/growth.png",
+    apple: "/growth.png",
+  },
+   themeColor: "#10b981",
 };
 
 export default function RootLayout({
@@ -34,7 +40,7 @@ export default function RootLayout({
             disableTransitionOnChange
           >
             {children}
-            <Toaster richColors position="top-center" />
+            <Toaster richColors position="top-right" />
           </ThemeProvider>
         </AuthProvider>
         </QueryProvider>

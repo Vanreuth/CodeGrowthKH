@@ -1,5 +1,7 @@
 package finalproject.backend.controller;
 
+import finalproject.backend.modal.CourseLevel;
+import finalproject.backend.modal.CourseStatus;
 import finalproject.backend.request.CourseRequest;
 import finalproject.backend.response.ApiResponse;
 import finalproject.backend.response.CourseResponse;
@@ -28,13 +30,17 @@ public class CourseController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "createdAt") String sortBy,
-            @RequestParam(defaultValue = "desc") String sortDir
+            @RequestParam(defaultValue = "desc") String sortDir,
+            @RequestParam(required = false) Integer categoryId,
+            @RequestParam(required = false) CourseStatus status,
+            @RequestParam(required = false) CourseLevel level,
+            @RequestParam(required = false) String search
     ) {
         Sort sort = sortDir.equalsIgnoreCase("desc")
                 ? Sort.by(sortBy).descending()
                 : Sort.by(sortBy).ascending();
         Pageable pageable = PageRequest.of(page, size, sort);
-        PageResponse<CourseResponse> courses = courseService.getAllCourses(pageable);
+        PageResponse<CourseResponse> courses = courseService.getAllCourses(pageable, categoryId, status, level, search);
         return ResponseEntity.ok(ApiResponse.success(courses, "Courses retrieved successfully"));
     }
 

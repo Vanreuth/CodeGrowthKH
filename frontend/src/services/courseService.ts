@@ -1,12 +1,15 @@
 import { get, post, put, del, buildFormData } from '../lib/BaseApi' // Adjust path to your new functional utilities
 import type {
-  CourseResponse,
-  CourseRequest,
-  LessonResponse,
   PageResponse,
   PaginationParams,
+  CourseFilterParams,
 } from '../types/apiType'
 
+import type {
+  LessonResponse
+} from '../types/lessonType'
+
+import type { CourseStatus, CourseLevel ,CourseRequest,CourseResponse} from '../types/courseType'
 
 
 // ═════════════════════════════════════════════════════════════
@@ -16,10 +19,15 @@ import type {
 const COURSE_PATH = '/api/v1/courses'
 
 export const courseService = {
-  /** GET / — paginated courses */
-  getAll: (params: PaginationParams = {}): Promise<PageResponse<CourseResponse>> => {
-    const { page = 0, size = 10, sortBy = 'createdAt', sortDir = 'desc' } = params
-    return get<PageResponse<CourseResponse>>(COURSE_PATH, { params: { page, size, sortBy, sortDir } })
+  /** GET / — paginated courses with optional filters */
+  getAll: (params: CourseFilterParams = {}): Promise<PageResponse<CourseResponse>> => {
+    const { page = 0, size = 10, sortBy = 'createdAt', sortDir = 'desc', categoryId, status, level, search } = params
+    const queryParams: Record<string, unknown> = { page, size, sortBy, sortDir }
+    if (categoryId !== undefined) queryParams.categoryId = categoryId
+    if (status)   queryParams.status = status
+    if (level)    queryParams.level = level
+    if (search)   queryParams.search = search
+    return get<PageResponse<CourseResponse>>(COURSE_PATH, { params: queryParams })
   },
 
   /** GET /:id */

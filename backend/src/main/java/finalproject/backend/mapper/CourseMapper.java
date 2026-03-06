@@ -2,6 +2,8 @@ package finalproject.backend.mapper;
 
 import finalproject.backend.modal.Category;
 import finalproject.backend.modal.Course;
+import finalproject.backend.modal.CourseLevel;
+import finalproject.backend.modal.CourseStatus;
 import finalproject.backend.modal.User;
 import finalproject.backend.repository.LessonProgressRepository;
 import finalproject.backend.request.CourseRequest;
@@ -28,9 +30,9 @@ public class CourseMapper {
                 .description(course.getDescription())
                 .thumbnail(course.getThumbnail())
                 .requirements(course.getRequirements())
-                .level(course.getLevel())
+                .level(course.getLevel() != null ? course.getLevel().name() : null)
                 .language(course.getLanguage())
-                .status(course.getStatus())
+                .status(course.getStatus() != null ? course.getStatus().name() : null)
                 .isFeatured(course.getIsFeatured())
                 .isFree(course.getIsFree())
                 .totalLessons(course.getTotalLessons())
@@ -82,13 +84,13 @@ public class CourseMapper {
         if (request.getRequirements() != null)
             course.setRequirements(request.getRequirements());
 
-        if (request.getLevel() != null && !request.getLevel().isBlank())
+        if (request.getLevel() != null)
             course.setLevel(request.getLevel());
 
         if (request.getLanguage() != null && !request.getLanguage().isBlank())
             course.setLanguage(request.getLanguage());
 
-        if (request.getStatus() != null && !request.getStatus().isBlank())
+        if (request.getStatus() != null)
             course.setStatus(request.getStatus());
 
         course.setIsFeatured(request.getFeatured());

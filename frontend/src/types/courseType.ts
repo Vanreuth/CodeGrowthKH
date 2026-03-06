@@ -2,6 +2,9 @@ import type {
   ChapterResponse,
 } from '@/types/chapterType'
 
+export type CourseStatus = 'DRAFT' | 'PUBLISHED' | 'FEATURED' | 'COMING_SOON'
+export type CourseLevel  = 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED'
+
 export interface CourseResponse {
   id: number
   title: string
@@ -16,8 +19,8 @@ export interface CourseResponse {
   categoryName?: string
   instructorId?: number
   instructorName?: string
-  level?: string
-  status?: string
+  level?: CourseLevel
+  status?: CourseStatus
   language?: string
   price?: number
   isFree?: boolean
@@ -36,9 +39,14 @@ export interface CourseResponse {
 export interface CourseRequest {
   title: string
   description?: string
+  level?: CourseLevel
+  status?: CourseStatus
+  language?: string
+  categoryId?: number
   featured?: boolean
   comingSoon?: boolean
   launchDate?: string
-  categoryId?: number
-  instructorId?: number
+  isFree?: boolean
+  price?: number
+  requirements?: string
 }

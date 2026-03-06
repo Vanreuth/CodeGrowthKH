@@ -14,7 +14,6 @@ const TRUST_BADGES = [
   "ចាប់ផ្តើមដោយឥតគិតថ្លៃ",
   "មិនត្រូវការបទពិសោធន៍",
   "ភាសាខ្មែរ",
-  "Certificate បញ្ចប់",
 ];
 
 export function HeroSection() {
@@ -27,7 +26,8 @@ export function HeroSection() {
         marginRight: "calc(50% - 50vw)",
       }}
     >
-      {/* ── Theme-aware full-bleed background ── */}
+    
+      {/* ── Top bar ── */}
       <div className="pointer-events-none absolute inset-0 -z-10">
         {/* Base — inherits the active theme's --background */}
         <div className="absolute inset-0 bg-background transition-colors duration-300" />
@@ -178,9 +178,9 @@ export function HeroSection() {
               className="rounded-full border-border bg-secondary/40 px-8 text-secondary-foreground
                          backdrop-blur-sm transition-all hover:scale-[1.02] hover:bg-secondary/70"
             >
-              <Link href="/roadmap">
+              <Link href="/courses/download_pdf">
                 <Play className="mr-2 h-4 w-4 fill-current" />
-                មើល Roadmap
+                ទាញយក​សៀវភៅ​ Free
               </Link>
             </Button>
           </div>
@@ -191,7 +191,7 @@ export function HeroSection() {
               <span key={item} className="inline-flex items-center gap-1.5">
                 <CheckCircle2
                   className="h-3.5 w-3.5 shrink-0"
-                  style={{ color: "var(--accent)" }}
+                  style={{ color: "var(--chart-2)" }}
                 />
                 {item}
               </span>
