@@ -41,7 +41,11 @@ public class LessonServiceImpl implements LessonService {
             throw new CustomMessageException("Lesson title already exists in this chapter",
                     String.valueOf(HttpStatus.CONFLICT.value()));
 
-        Lesson saved = lessonRepository.save(lessonMapper.toEntity(request, chapter, course));
+        Lesson entity = lessonMapper.toEntity(request, chapter, course);
+        // Pre-generate a unique slug so @PrePersist won't produce a duplicate
+        entity.setSlug(uniqueSlugForCourse(course.getId(), request.getTitle()));
+
+        Lesson saved = lessonRepository.save(entity);
         syncCourseTotalLessons(course);
         log.info("Created lesson id={} for chapter id={}", saved.getId(), chapter.getId());
         return ApiResponse.success(lessonMapper.toSimpleResponse(saved), "Lesson created successfully");
@@ -105,6 +109,13 @@ public class LessonServiceImpl implements LessonService {
                     String.valueOf(HttpStatus.CONFLICT.value()));
 
         lessonMapper.updateEntity(request, lesson, chapter, course);
+
+        // Regenerate unique slug if the title changed
+        Long targetCourseId = course != null ? course.getId() : lesson.getCourse().getId();
+        if (request.getTitle() != null && !request.getTitle().isBlank()) {
+            lesson.setSlug(uniqueSlugForCourse(targetCourseId, request.getTitle()));
+        }
+
         Lesson saved = lessonRepository.save(lesson);
         log.info("Updated lesson id={}", id);
         return ApiResponse.success(lessonMapper.toSimpleResponse(saved), "Lesson updated successfully");
@@ -147,6 +158,31 @@ public class LessonServiceImpl implements LessonService {
     private void syncCourseTotalLessons(Course course) {
         course.setTotalLessons(lessonRepository.countByCourseId(course.getId()));
         courseRepository.save(course);
+    }
+
+    /**
+     * Generate a slug from the title that is unique within the given course.
+     * If "docker" already exists, tries "docker-2", "docker-3", etc.
+     */
+    private String uniqueSlugForCourse(Long courseId, String title) {
+        String base = toSlug(title);
+        if (base.isBlank()) base = "lesson";
+
+        String candidate = base;
+        int suffix = 2;
+        while (lessonRepository.existsByCourseIdAndSlug(courseId, candidate)) {
+            candidate = base + "-" + suffix++;
+        }
+        return candidate;
+    }
+
+    private String toSlug(String title) {
+        if (title == null) return "";
+        return title.toLowerCase().trim()
+                .replaceAll("[^a-z0-9\\s-]", "")
+                .replaceAll("\\s+", "-")
+                .replaceAll("-{2,}", "-")
+                .replaceAll("^-|-$", "");
     }
 }
 

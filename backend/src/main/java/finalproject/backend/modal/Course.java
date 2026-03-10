@@ -26,7 +26,6 @@ public class Course {
     @Column(nullable = false, unique = true)
     private String slug;
 
-    @Column(nullable = false)
     private String description;
 
     private String thumbnail;

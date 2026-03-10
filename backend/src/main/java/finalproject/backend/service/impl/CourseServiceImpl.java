@@ -28,6 +28,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -35,6 +36,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -57,14 +59,18 @@ public class CourseServiceImpl implements CourseService {
         // Manual validation (replaces @Valid on multipart endpoint)
         if (request.getTitle() == null || request.getTitle().isBlank())
             throw new CustomMessageException("Course title is required", "400");
-        if (request.getSlug() == null || request.getSlug().isBlank())
-            throw new CustomMessageException("Slug is required", "400");
-        if (request.getDescription() == null || request.getDescription().isBlank())
-            throw new CustomMessageException("Description is required", "400");
         if (request.getCategoryId() == null)
             throw new CustomMessageException("Category ID is required", "400");
-        if (request.getInstructorId() == null)
-            throw new CustomMessageException("Instructor ID is required", "400");
+
+        // Auto-set instructor from the logged-in user if not provided
+        if (request.getInstructorId() == null) {
+            request.setInstructorId(getCurrentUserId());
+        }
+
+        // Auto-generate slug from title if not provided
+        if (request.getSlug() == null || request.getSlug().isBlank()) {
+            request.setSlug(generateSlug(request.getTitle()));
+        }
 
         if (courseRepository.existsByTitle(request.getTitle()))
             throw new CustomMessageException("Course title already exists",
@@ -213,6 +219,12 @@ public class CourseServiceImpl implements CourseService {
     public ApiResponse<CourseResponse> updateCourse(Long id, CourseRequest request, MultipartFile thumbnail) {
         Course course = findCourseOrThrow(id);
 
+        // Auto-generate slug from title if slug is not provided but title changed
+        if ((request.getSlug() == null || request.getSlug().isBlank())
+                && request.getTitle() != null && !request.getTitle().isBlank()) {
+            request.setSlug(generateSlug(request.getTitle()));
+        }
+
         if (request.getTitle() != null && !request.getTitle().equals(course.getTitle())
                 && courseRepository.existsByTitle(request.getTitle()))
             throw new CustomMessageException("Course title already exists",
@@ -263,6 +275,19 @@ public class CourseServiceImpl implements CourseService {
 
     // ── helpers ───────────────────────────────────────────────────────────────
 
+    /**
+     * Resolve the current authenticated user's ID from the security context.
+     */
+    private Long getCurrentUserId() {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = userRepository.findByUsername(username)
+                .or(() -> userRepository.findByEmail(username))
+                .orElseThrow(() -> new CustomMessageException(
+                        "Authenticated user not found",
+                        String.valueOf(HttpStatus.UNAUTHORIZED.value())));
+        return user.getId();
+    }
+
     private Course findCourseOrThrow(Long id) {
         return courseRepository.findById(id)
                 .orElseThrow(() -> new CustomMessageException(
@@ -282,5 +307,31 @@ public class CourseServiceImpl implements CourseService {
                 .orElseThrow(() -> new CustomMessageException(
                         "Category not found with id: " + categoryId,
                         String.valueOf(HttpStatus.NOT_FOUND.value())));
+    }
+
+
+    private String generateSlug(String title) {
+        String slug = title
+                .toLowerCase()
+                .trim()
+                .replaceAll("[^a-z0-9\\s-]", "")  // ✅ strips Khmer → keeps only "java"
+                .replaceAll("\\s+", "-")
+                .replaceAll("-+", "-")
+                .replaceAll("^-|-$", "");          // trim leading/trailing hyphens
+
+        // Fallback if title is all Khmer (no latin at all)
+        if (slug.isBlank()) {
+            slug = "course-" + UUID.randomUUID().toString().substring(0, 8);
+        }
+
+        return ensureUniqueSlug(slug);
+    }
+    private String ensureUniqueSlug(String baseSlug) {
+        String slug = baseSlug;
+        int counter = 1;
+        while (courseRepository.existsBySlug(slug)) {
+            slug = baseSlug + "-" + counter++;
+        }
+        return slug;
     }
 }

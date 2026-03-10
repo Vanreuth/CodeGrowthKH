@@ -9,7 +9,12 @@ import org.springframework.data.domain.Pageable;
 public interface CategoryService {
 
     ApiResponse<CategoryResponse> createCategory(CategoryRequest request);
-    PageResponse<CategoryResponse> getAllCategories(Pageable pageable);
+    PageResponse<CategoryResponse> getAllCategories(
+            Pageable pageable,
+            String search,
+            String status,
+            Boolean hasCourses
+    );
     ApiResponse<CategoryResponse> getCategoryById(int id);
     ApiResponse<CategoryResponse> getCategoryBySlug(String slug);
     ApiResponse<CategoryResponse> updateCategory(int id, CategoryRequest request);

@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -48,17 +49,32 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     private void seedAdmin() {
-        if (userRepository.existsByUsername("admin")) return;
-        userRepository.save(User.builder()
-                .username("admin")
-                .email("admin@codekhmerlearning.site")
-                .password(passwordEncoder.encode(""))
-                .status("ACTIVE")
-                .roles(Set.of(
-                        roleRepository.findByName("ADMIN").orElseThrow(),
-                        roleRepository.findByName("USER").orElseThrow()))
-                .build());
-        log.info("✅ Admin seeded → admin / Admin@1234");
+        String encodedPassword = passwordEncoder.encode("Admin@1234");
+
+        // ✅ Mutable HashSet — Hibernate can modify it
+        Set<Role> adminRoles = new HashSet<>();
+        adminRoles.add(roleRepository.findByName("ADMIN").orElseThrow());
+        adminRoles.add(roleRepository.findByName("USER").orElseThrow());
+
+        userRepository.findByUsername("admin").ifPresentOrElse(
+                admin -> {
+                    admin.setPassword(encodedPassword);
+                    admin.setStatus("ACTIVE");
+                    admin.setRoles(adminRoles);  // ✅ mutable set
+                    userRepository.save(admin);
+                    log.info("✅ Admin password updated → admin / Admin@1234");
+                },
+                () -> {
+                    userRepository.save(User.builder()
+                            .username("admin")
+                            .email("admin@codekhmerlearning.site")
+                            .password(encodedPassword)
+                            .status("ACTIVE")
+                            .roles(adminRoles)       // ✅ mutable set
+                            .build());
+                    log.info("✅ Admin seeded → admin / Admin@1234");
+                }
+        );
     }
 
     // ══════════════════════════════════════════════════════════════════════════

@@ -17,6 +17,8 @@ public interface LessonRepository extends JpaRepository<Lesson, Long> {
     int countByChapterId(Long chapterId);
     Optional<Lesson> findByChapterIdAndTitle(Long chapterId, String title);
 
+    boolean existsByCourseIdAndSlug(Long courseId, String slug);
+
     // For getLessonBySlug: find lesson by its slug scoped to a course slug
     Optional<Lesson> findByCourse_SlugAndSlug(String courseSlug, String lessonSlug);
 }

@@ -18,11 +18,9 @@ public class CourseRequest {
     @NotBlank(message = "Course title is required")
     private String title;
 
-    @NotBlank(message = "Slug is required")
-    private String slug;
+    private String slug;  // optional — auto-generated from title if blank
 
-    @NotBlank(message = "Description is required")
-    private String description;
+    private String description;  // optional
 
     private String requirements;
 
@@ -41,6 +39,5 @@ public class CourseRequest {
     @NotNull(message = "Category ID is required")
     private Integer categoryId;
 
-    @NotNull(message = "Instructor ID is required")
-    private Long instructorId;
+    private Long instructorId;  // optional — auto-set from logged-in user if blank
 }

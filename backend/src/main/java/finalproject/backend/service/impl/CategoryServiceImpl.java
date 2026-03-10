@@ -13,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -44,9 +45,50 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     @Transactional(readOnly = true)
-    public PageResponse<CategoryResponse> getAllCategories(Pageable pageable) {
-        Page<Category> page = categoryRepository.findAll(pageable);
+    public PageResponse<CategoryResponse> getAllCategories(
+            Pageable pageable,
+            String search,
+            String status,
+            Boolean hasCourses) {
+
+        // ✅ Build spec from CategoryRepository directly
+        Specification<Category> spec = Specification
+                .where(searchByTitleOrSlug(search))
+                .and(hasStatus(status))
+                .and(hasCourses(hasCourses));
+
+        Page<Category> page = categoryRepository.findAll(spec, pageable); // ✅ works because of JpaSpecificationExecutor
         return PageResponse.of(page.map(categoryMapper::toResponse));
+    }
+
+    // ── Specs defined inline — no need for separate CategorySpec.java ─────────
+
+    private Specification<Category> searchByTitleOrSlug(String search) {
+        return (root, query, cb) -> {
+            if (search == null || search.isBlank()) return null;
+            String like = "%" + search.toLowerCase() + "%";
+            return cb.or(
+                    cb.like(cb.lower(root.get("name")), like),  // ✅ "name" not "title"
+                    cb.like(cb.lower(root.get("slug")), like)
+            );
+        };
+    }
+
+    private Specification<Category> hasStatus(String status) {
+        return (root, query, cb) -> {
+            if (status == null || status.isBlank()) return null;
+            return cb.equal(root.get("status"), status.toUpperCase());
+        };
+    }
+
+    private Specification<Category> hasCourses(Boolean hasCourses) {
+        return (root, query, cb) -> {
+            if (hasCourses == null) return null;
+            var size = cb.size(root.get("courses"));
+            return hasCourses
+                    ? cb.greaterThan(size, 0)
+                    : cb.equal(size, 0);
+        };
     }
 
     @Override

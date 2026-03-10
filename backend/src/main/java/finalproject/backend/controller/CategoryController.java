@@ -23,17 +23,25 @@ public class CategoryController {
 
     @GetMapping
     public ResponseEntity<ApiResponse<PageResponse<CategoryResponse>>> getAllCategories(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "0")   int     page,
+            @RequestParam(defaultValue = "10")  int     size,
             @RequestParam(defaultValue = "orderIndex") String sortBy,
-            @RequestParam(defaultValue = "asc") String sortDir
+            @RequestParam(defaultValue = "asc") String  sortDir,
+            @RequestParam(required = false)     String  search,
+            @RequestParam(required = false)     String  status,
+            @RequestParam(required = false)     Boolean hasCourses
     ) {
         Sort sort = sortDir.equalsIgnoreCase("desc")
                 ? Sort.by(sortBy).descending()
                 : Sort.by(sortBy).ascending();
+
         Pageable pageable = PageRequest.of(page, size, sort);
-        PageResponse<CategoryResponse> categories = categoryService.getAllCategories(pageable);
-        return ResponseEntity.ok(ApiResponse.success(categories, "Categories retrieved successfully"));
+
+        PageResponse<CategoryResponse> categories =
+                categoryService.getAllCategories(pageable, search, status, hasCourses);
+
+        return ResponseEntity.ok(
+                ApiResponse.success(categories, "Categories retrieved successfully"));
     }
 
     @GetMapping("/{id}")

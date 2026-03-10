@@ -39,12 +39,16 @@ import java.util.List;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    private final UserDetailsService userDetailsService;
-    private final JwtAuthenticationFilter jwtFilter;
-    private final CustomOAuth2UserService customOAuth2UserService;
-    private final OAuth2SuccessHandler oAuth2SuccessHandler;
-    private final OAuth2FailureHandler oAuth2FailureHandler;
+    private final UserDetailsService          userDetailsService;
+    private final JwtAuthenticationFilter     jwtFilter;
+    private final CustomOAuth2UserService     customOAuth2UserService;
+    private final OAuth2SuccessHandler        oAuth2SuccessHandler;
+    private final OAuth2FailureHandler        oAuth2FailureHandler;
     private final ClientRegistrationRepository clientRegistrationRepository;
+
+    // ✅ Cookie-based OAuth2 state — eliminates JSESSIONID
+    private final HttpCookieOAuth2AuthorizationRequestRepository
+            cookieAuthorizationRequestRepository;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -53,6 +57,12 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .formLogin(AbstractHttpConfigurer::disable)
                 .httpBasic(AbstractHttpConfigurer::disable)
+
+                // ✅ STATELESS — no server-side session at all
+                .sessionManagement(s -> s
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                )
+
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/oauth2/**", "/login/oauth2/**").permitAll()
                         .requestMatchers("/api/v1/auth/me").authenticated()
@@ -74,9 +84,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/enrollments/**").authenticated()
                         .anyRequest().authenticated()
                 )
-                .sessionManagement(s -> s
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                )
+
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint((req, res, e) -> {
                             res.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
@@ -91,22 +99,35 @@ public class SecurityConfig {
                                     "{\"success\":false,\"message\":\"Access denied\"}");
                         })
                 )
+
                 .authenticationProvider(authenticationProvider())
+
                 .oauth2Login(oauth -> oauth
                         .authorizationEndpoint(e -> e
                                 .authorizationRequestResolver(
                                         noPkceResolver(clientRegistrationRepository)
                                 )
+                                // ✅ Store OAuth2 state in cookie — kills JSESSIONID
+                                .authorizationRequestRepository(
+                                        cookieAuthorizationRequestRepository
+                                )
                         )
-                        .userInfoEndpoint(u -> u.userService(customOAuth2UserService))
+                        .redirectionEndpoint(r -> r
+                                .baseUri("/login/oauth2/code/*")
+                        )
+                        .userInfoEndpoint(u -> u
+                                .userService(customOAuth2UserService)
+                        )
                         .successHandler(oAuth2SuccessHandler)
                         .failureHandler(oAuth2FailureHandler)
                 )
+
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
 
+    // ── Disable PKCE for GitHub ───────────────────────────────────────────────
     @Bean
     public OAuth2AuthorizationRequestResolver noPkceResolver(
             ClientRegistrationRepository repo) {
@@ -117,13 +138,10 @@ public class SecurityConfig {
 
         resolver.setAuthorizationRequestCustomizer(customizer ->
                 customizer
-                        // ✅ Removes PKCE from the actual URL query params
                         .additionalParameters(params -> {
                             params.remove(PkceParameterNames.CODE_CHALLENGE);
                             params.remove(PkceParameterNames.CODE_CHALLENGE_METHOD);
-                            System.out.println(">>> PKCE stripped! params: " + params.keySet());
                         })
-                        // ✅ Removes PKCE from internal state (prevents code_verifier storage)
                         .attributes(attrs -> {
                             attrs.remove(PkceParameterNames.CODE_CHALLENGE);
                             attrs.remove(PkceParameterNames.CODE_CHALLENGE_METHOD);
@@ -133,6 +151,8 @@ public class SecurityConfig {
 
         return resolver;
     }
+
+    // ── Standard beans ────────────────────────────────────────────────────────
 
     @Bean
     public PasswordEncoder passwordEncoder() {
