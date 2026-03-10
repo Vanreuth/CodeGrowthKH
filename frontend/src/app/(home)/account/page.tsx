@@ -77,20 +77,10 @@ function deriveStats(list: LessonProgressResponse[] | null) {
 export default function AccountPage() {
   const router = useRouter();
   const { user, initialized, updateProfile, logout } = useAuth();
-
-  // GET /me — full list; React Query cache invalidation keeps it fresh
-  // after any POST /complete or DELETE from child components
   const { data: progressData, loading: progressLoading } = useMyProgress();
-
-  // GET /me/completed-count — authoritative count; always stays in sync
-  // because useLessonProgressActions invalidates progressKeys.count on
-  // every complete/delete mutation
   const { data: completedCount } = useCompletedCount();
-
-  // Memoised — only recomputes when the /me response data changes
   const stats = useMemo(() => deriveStats(progressData), [progressData]);
 
-  // The canonical completed number: prefer server count, fall back to derived
   const trueCompleted = completedCount ?? stats.lessonsCompleted;
 
   // ── Local state ────────────────────────────────────────────
@@ -204,11 +194,6 @@ export default function AccountPage() {
   // ── Render ─────────────────────────────────────────────────
   return (
     <div className="space-y-8 py-8 mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
-
-      {/* ── Hero ──────────────────────────────────────────────
-          lessonsCompleted  → useCompletedCount (authoritative server count)
-          totalReadSeconds  → summed from /me response (readTimeSeconds field)
-      ──────────────────────────────────────────────────────── */}
       <ProfileHero
         user={user}
         isEditing={isEditing}
@@ -261,13 +246,6 @@ export default function AccountPage() {
             </div>
           </div>
         </TabsContent>
-
-        {/* ── Activity Tab ─────────────────────────────────────
-            No onProgressChange prop needed — useLessonProgressActions
-            inside LessonRow calls invalidateQueries directly, which
-            causes useMyProgress and useCompletedCount to refetch
-            automatically via React Query.
-        ──────────────────────────────────────────────────────── */}
         <TabsContent value="activity" className="space-y-6">
           <ActivityTab
             progressLoading={progressLoading}

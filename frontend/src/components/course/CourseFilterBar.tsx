@@ -30,9 +30,9 @@ const LEVELS: (CourseLevel | "All")[] = ["All", "BEGINNER", "INTERMEDIATE", "ADV
 
 const levelLabel: Record<string, string> = {
   All:          "ទាំងអស់",
-  BEGINNER:     "ចាប់ផ្តើម",
-  INTERMEDIATE: "មធ្យម",
-  ADVANCED:     "ខ្ពស់",
+  BEGINNER:     "កម្រិតចាប់ផ្តើម",
+  INTERMEDIATE: "កម្រិតមធ្យម",
+  ADVANCED:     "កម្រិតខ្ពស់",
 };
 
 export function CourseFilterBar({
@@ -117,11 +117,6 @@ export function CourseFilterBar({
           <span className="font-semibold text-violet-600 dark:text-violet-400">{totalCount}</span>{" "}
           វគ្គ
         </p>
-        {isLiveApi && (
-          <span className="rounded-full bg-green-500/10 px-2 py-0.5 text-[10px] font-medium text-green-600 dark:text-green-400">
-            ● Live from API
-          </span>
-        )}
         {isApiError && (
           <span className="rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-medium text-amber-600 dark:text-amber-400">
             ⚠ Static data (API offline)

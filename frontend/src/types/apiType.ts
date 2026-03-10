@@ -12,11 +12,14 @@ export interface PageResponse<T> {
   content: T[]
   totalElements: number
   totalPages: number
-  size: number
-  number: number
-  first: boolean
-  last: boolean
-  empty: boolean
+  // backend returns pageNumber/pageSize (Spring default names may vary)
+  pageNumber?: number
+  pageSize?: number
+  number?: number
+  size?: number
+  first?: boolean
+  last?: boolean
+  empty?: boolean
 }
 
 
@@ -45,6 +48,8 @@ export interface CourseFilterParams extends PaginationParams {
   status?: import('./courseType').CourseStatus
   level?: import('./courseType').CourseLevel
   search?: string
+  isFeatured?: boolean | string
+  isFree?: boolean | string
 }
 
 export interface CategoryFilterParams extends PaginationParams {

@@ -1,66 +1,45 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
-import type { CategoryResponse } from "@/types/category";
-import type { CourseResponse, CourseStatus, CourseLevel } from "@/types/courseType";
-import { courseService } from "@/services/courseService";
-import { categoryService } from "@/services/categoryService";
+import { useMemo, useState } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import type { CourseLevel } from "@/types/courseType";
+import { useCourses } from "@/hooks/useCourses";
+import { useCategories } from "@/hooks/useCategories";
 import { CourseFilterBar } from "@/components/course/CourseFilterBar";
 import { CourseGrid } from "@/components/course/CourseGrid";
 import { CourseGuidanceSection } from "@/components/course/CourseGuidanceSection";
+import { Button } from "@/components/ui/button";
+
+const PAGE_SIZE = 6;
 
 export default function CoursesPage() {
 	const [query, setQuery] = useState("");
 	const [selectedLevel, setSelectedLevel] = useState<CourseLevel | "All">("All");
 	const [selectedCategory, setSelectedCategory] = useState<string>("All");
 	const [selectedCategoryId, setSelectedCategoryId] = useState<number | undefined>(undefined);
-	const [selectedStatus, setSelectedStatus] = useState<CourseStatus | "All">("All");
 
-	const [apiCourses, setApiCourses] = useState<CourseResponse[]>([]);
-	const [apiCategories, setApiCategories] = useState<CategoryResponse[]>([]);
-	const [loading, setLoading] = useState(true);
-	const [apiError, setApiError] = useState(false);
+	// ── Data via hooks ────────────────────────────────────────
+	const {
+		data: coursesPage,
+		loading,
+		page,
+		setPage,
+	} = useCourses({
+		size    : PAGE_SIZE,
+		status  : "PUBLISHED",
+		level   : selectedLevel !== "All" ? selectedLevel : undefined,
+		categoryId: selectedCategoryId,
+		search  : query.trim() || undefined,
+	});
 
-	useEffect(() => {
-		categoryService.getAll({ page: 0, size: 50 }).then((p) => {
-			setApiCategories(p.content);
-		}).catch(() => {});
-	}, []);
+	const { data: categoriesPage } = useCategories({ page: 0, size: 50 });
 
-	const fetchCourses = useCallback(() => {
-		let cancelled = false;
-		setLoading(true);
-		courseService.getAll({
-			page: 0,
-			size: 50,
-			...(selectedCategoryId !== undefined && { categoryId: selectedCategoryId }),
-			...(selectedStatus !== "All" && { status: selectedStatus }),
-			...(selectedLevel !== "All" && { level: selectedLevel }),
-			...(query.trim() && { search: query.trim() }),
-		})
-			.then((coursesPage) => {
-				if (!cancelled) {
-					setApiCourses(coursesPage.content);
-					setApiError(false);
-				}
-			})
-			.catch(() => {
-				if (!cancelled) {
-					setApiError(true);
-					setApiCourses([]);
-				}
-			})
-			.finally(() => {
-				if (!cancelled) setLoading(false);
-			});
-		return () => { cancelled = true; };
-	}, [selectedCategoryId, selectedStatus, selectedLevel, query]);
+	const courses      = coursesPage?.content       ?? [];
+	const totalPages   = coursesPage?.totalPages     ?? 0;
+	const totalElements= coursesPage?.totalElements  ?? 0;
+	const apiCategories= categoriesPage?.content     ?? [];
 
-	useEffect(() => {
-		const cancel = fetchCourses();
-		return cancel;
-	}, [fetchCourses]);
-
+	// ── Derived ───────────────────────────────────────────────
 	const categoryOptions = useMemo(
 		() => [{ id: undefined as number | undefined, name: "All" }, ...apiCategories.map((c) => ({ id: c.id, name: c.name }))],
 		[apiCategories]
@@ -71,11 +50,19 @@ export default function CoursesPage() {
 		setSelectedLevel("All");
 		setSelectedCategory("All");
 		setSelectedCategoryId(undefined);
-		setSelectedStatus("All");
 	};
 
 	const hasActiveFilters =
-		query.trim() !== "" || selectedLevel !== "All" || selectedCategory !== "All" || selectedStatus !== "All";
+		query.trim() !== "" || selectedLevel !== "All" || selectedCategory !== "All";
+
+	const pageNumbers = useMemo(() => {
+		const delta = 2;
+		const range: number[] = [];
+		for (let i = Math.max(0, page - delta); i <= Math.min(totalPages - 1, page + delta); i++) {
+			range.push(i);
+		}
+		return range;
+	}, [page, totalPages]);
 
 	return (
 		<div className="space-y-8 mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 mt-10">
@@ -103,19 +90,81 @@ export default function CoursesPage() {
 					setSelectedCategoryId(id);
 				}}
 				categoryOptions={categoryOptions}
-				totalCount={apiCourses.length}
+				totalCount={totalElements}
 				hasActiveFilters={hasActiveFilters}
 				onClearFilters={clearFilters}
-				isLiveApi={!apiError && !loading}
-				isApiError={apiError}
+				isLiveApi={!loading}
+				isApiError={false}
 			/>
 
 			{/* ── Course Grid ── */}
 			<CourseGrid
-				courses={apiCourses}
+				courses={courses}
 				loading={loading}
 				onClearFilters={clearFilters}
 			/>
+
+			{/* ── Pagination ── */}
+			{!loading && totalPages > 1 && (
+				<div className="flex flex-col items-center gap-4 py-6">
+					<p className="text-sm text-muted-foreground">
+						ទំព័រទី <span className="font-semibold text-foreground">{page + 1}</span> នៃ{" "}
+						<span className="font-semibold text-foreground">{totalPages}</span>
+						{" "}· សរុប <span className="font-semibold text-foreground">{totalElements}</span> វគ្គ
+					</p>
+
+					<div className="flex items-center gap-1.5">
+						<Button
+							variant="outline"
+							size="icon"
+							onClick={() => setPage((p) => Math.max(0, p - 1))}
+							disabled={page === 0}
+							className="h-10 w-10 rounded-full border-violet-300 dark:border-violet-700 hover:bg-violet-50 dark:hover:bg-violet-900/30 disabled:opacity-40"
+						>
+							<ChevronLeft className="h-4 w-4" />
+						</Button>
+
+						{pageNumbers[0] > 0 && (
+							<>
+								<Button variant="outline" size="sm" className="h-10 w-10 rounded-full text-sm border-violet-300 dark:border-violet-700 hover:bg-violet-50 dark:hover:bg-violet-900/30" onClick={() => setPage(0)}>1</Button>
+								{pageNumbers[0] > 1 && <span className="px-1 text-muted-foreground select-none">…</span>}
+							</>
+						)}
+
+						{pageNumbers.map((p) => (
+							<Button
+								key={p}
+								size="sm"
+								onClick={() => setPage(p)}
+								className={
+									p === page
+										? "h-10 w-10 rounded-full text-sm bg-gradient-to-br from-violet-600 to-indigo-600 text-white border-0 shadow-md shadow-violet-500/30 hover:from-violet-700 hover:to-indigo-700"
+										: "h-10 w-10 rounded-full text-sm border border-violet-300 dark:border-violet-700 bg-transparent hover:bg-violet-50 dark:hover:bg-violet-900/30"
+								}
+							>
+								{p + 1}
+							</Button>
+						))}
+
+						{pageNumbers[pageNumbers.length - 1] < totalPages - 1 && (
+							<>
+								{pageNumbers[pageNumbers.length - 1] < totalPages - 2 && <span className="px-1 text-muted-foreground select-none">…</span>}
+								<Button variant="outline" size="sm" className="h-10 w-10 rounded-full text-sm border-violet-300 dark:border-violet-700 hover:bg-violet-50 dark:hover:bg-violet-900/30" onClick={() => setPage(totalPages - 1)}>{totalPages}</Button>
+							</>
+						)}
+
+						<Button
+							variant="outline"
+							size="icon"
+							onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
+							disabled={page >= totalPages - 1}
+							className="h-10 w-10 rounded-full border-violet-300 dark:border-violet-700 hover:bg-violet-50 dark:hover:bg-violet-900/30 disabled:opacity-40"
+						>
+							<ChevronRight className="h-4 w-4" />
+						</Button>
+					</div>
+				</div>
+			)}
 
 			{/* ── Guidance ── */}
 			<CourseGuidanceSection />

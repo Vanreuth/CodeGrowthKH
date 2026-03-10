@@ -21,12 +21,14 @@ const COURSE_PATH = '/api/v1/courses'
 export const courseService = {
   /** GET / — paginated courses with optional filters */
   getAll: (params: CourseFilterParams = {}): Promise<PageResponse<CourseResponse>> => {
-    const { page = 0, size = 10, sortBy = 'createdAt', sortDir = 'desc', categoryId, status, level, search } = params
+    const { page = 0, size = 10, sortBy = 'createdAt', sortDir = 'desc', categoryId, status, level, search, isFeatured, isFree } = params
     const queryParams: Record<string, unknown> = { page, size, sortBy, sortDir }
     if (categoryId !== undefined) queryParams.categoryId = categoryId
-    if (status)   queryParams.status = status
-    if (level)    queryParams.level = level
-    if (search)   queryParams.search = search
+    if (status)                   queryParams.status = status
+    if (level)                    queryParams.level = level
+    if (search)                   queryParams.search = search
+    if (isFeatured !== undefined) queryParams.isFeatured = isFeatured
+    // if (isFree !== undefined)     queryParams.isFree = isFree
     return get<PageResponse<CourseResponse>>(COURSE_PATH, { params: queryParams })
   },
 

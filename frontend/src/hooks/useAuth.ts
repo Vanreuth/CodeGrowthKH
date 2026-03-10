@@ -1,4 +1,3 @@
-'use client'
 
 import { useAuthContext } from '../context/AuthContext'
 

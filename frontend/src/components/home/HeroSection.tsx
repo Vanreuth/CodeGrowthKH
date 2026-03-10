@@ -106,19 +106,9 @@ export function HeroSection() {
                        text-foreground transition-colors duration-300
                        sm:text-5xl xl:text-6xl"
           >
-            ចាប់ផ្តើមដំណើរ
+            ចាប់សិក្សា​កូដ​
             <br />
-            <span
-              className="bg-clip-text text-transparent"
-              style={{
-                backgroundImage:
-                  "linear-gradient(to right, var(--primary), var(--accent), var(--primary))",
-              }}
-            >
-              Software Engineer
-            </span>
-            <br />
-            ជាមួយភាសា{" "}
+            ជាភាសា{" "}
             <span className="relative inline-block text-foreground">
               ខ្មែរ
               <svg
@@ -142,15 +132,27 @@ export function HeroSection() {
                 </defs>
               </svg>
             </span>
+             ជាមួយ
+            <br />
+            <span
+              className="bg-clip-text text-transparent"
+              style={{
+                backgroundImage:
+                  "linear-gradient(to right, var(--primary), var(--accent), var(--primary))",
+              }}
+            >
+              GrowCodeKh
+            </span>
+            
           </h1>
 
           {/* Body copy */}
           <p className="max-w-lg text-base leading-relaxed text-muted-foreground md:text-lg transition-colors duration-300">
-            ADUTI Learning ផ្តល់{" "}
+            GrowCodeKh ផ្តល់{" "}
             <span className="font-semibold text-foreground">
               courses ជាភាសាខ្មែរ
             </span>
-            , roadmap ជាជំហានច្បាស់, និង mentor support —
+            , roadmap ជាជំហានច្បាស់
             ដើម្បីជួយអ្នកពី zero ក្លាយជា developer ក្នុង 6–12 ខែ។
           </p>
 
@@ -247,10 +249,10 @@ function HeroVisualCard() {
               <span className="text-muted-foreground">(</span>
               <span className="text-foreground">greet</span>
               <span className="text-muted-foreground">(</span>
-              <span className="text-emerald-600 dark:text-emerald-400">&quot;ADUTI&quot;</span>
+              <span className="text-emerald-600 dark:text-emerald-400">&quot;GrowCodeKh&quot;</span>
               <span className="text-muted-foreground">));</span>
               {"\n"}
-              <span className="text-muted-foreground/60">{"// សូមស្វាគមន៍ ADUTI 🎉"}</span>
+              <span className="text-muted-foreground/60">{"// សូមស្វាគមន៍ GrowCodeKh 🎉"}</span>
             </code>
           </pre>
         </div>
@@ -267,7 +269,7 @@ function HeroVisualCard() {
           >
             ✓
           </div>
-          <span className="text-xs font-medium text-foreground">2,400+ អ្នករៀន</span>
+          <span className="text-xs font-medium text-foreground">100+ អ្នករៀន</span>
         </div>
 
         {/* Floating pill — rating */}
@@ -288,7 +290,7 @@ function HeroVisualCard() {
         >
           <GraduationCap className="h-4 w-4" style={{ color: "var(--primary)" }} />
           <span className="text-xs font-medium text-foreground">
-            30+ Courses • ឥតគិតថ្លៃ
+            10+ Courses • ឥតគិតថ្លៃ
           </span>
         </div>
       </div>

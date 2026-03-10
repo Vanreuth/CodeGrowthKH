@@ -30,20 +30,20 @@ export default function AboutPage() {
 
           <Badge className="mb-4 border-violet-200 bg-violet-50 text-violet-700 dark:bg-violet-500/10 dark:text-violet-300">
             <Sparkles className="mr-1.5 h-3 w-3" />
-            អំពី ADUTI Learning
+            អំពី GrowCodeKh
           </Badge>
 
           <h1 className="text-3xl font-extrabold leading-tight md:text-5xl dark:text-white">
             យើងជួយអ្នករៀន ក្លាយជា{" "}
             <span className="bg-gradient-to-r from-blue-600 via-indigo-500 to-violet-600 bg-clip-text text-transparent">
-              Software Engineer
+              អ្នកជំនាញ IT
             </span>{" "}
             ពិតប្រាកដ
           </h1>
 
           <p className="mt-4 text-base text-slate-600 dark:text-slate-300">
-            ADUTI Learning គឺជាវេទិកា ed-tech ជាភាសាខ្មែរ ដែលបំពេញចន្លោះរវាង
-            tutorial follower និង real developer។
+            GrowCodeKh គឺជាវេទិការៀនកូដ ជាភាសាខ្មែរ ដោយគ្មានការចំណាយ។ យើងផ្តោតការជួយបង្កើតការយល់ដឹងពីភាសាកូដនានាជាភាសាខ្មែរ ដើម្បីជួយអ្នកក្លាយជាអ្នកជំនាញ IT ដែលមានជំនាញ និងមានភាពរឹងមាំក្នុងទីផ្សារការងារ IT។
+
           </p>
 
           {/* quote */}
@@ -124,7 +124,7 @@ export default function AboutPage() {
 
         <div className="flex items-center gap-2 mb-6">
           <Trophy className="h-4 w-4 text-amber-500" />
-          <h2 className="text-xl font-bold">ADUTI Journey</h2>
+          <h2 className="text-xl font-bold">GrowCodeKh  Journey</h2>
         </div>
 
         <div className="relative space-y-6">
@@ -198,7 +198,7 @@ export default function AboutPage() {
 
       </section>
 
-      {/* TEAM */}
+      {/* TEAM
       <section>
 
         <div className="mb-6">
@@ -263,7 +263,7 @@ export default function AboutPage() {
 
         </div>
 
-      </section>
+      </section> */}
 
       {/* CTA */}
       <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-600 via-indigo-600 to-violet-700 p-12 text-center text-white">
@@ -304,8 +304,8 @@ export default function AboutPage() {
 }
 
 export const platformStats = [
-  { value: "2,400+", label: "សិស្សសកម្ម", labelEn: "Active Learners", icon: "👨‍💻" },
-  { value: "30+", label: "វគ្គសិក្សា", labelEn: "Courses", icon: "📚" },
+  { value: "100+", label: "សិស្សសកម្ម", labelEn: "Active Learners", icon: "👨‍💻" },
+  { value: "10+", label: "វគ្គសិក្សា", labelEn: "Courses", icon: "📚" },
   { value: "95%", label: "អត្រាពេញចិត្ត", labelEn: "Satisfaction Rate", icon: "⭐" },
   { value: "6–12", label: "ខែដើម្បីក្លាយជា Dev", labelEn: "Months to Developer", icon: "🚀" },
 ];
@@ -392,8 +392,8 @@ export const values = [
 ];
 
 export const milestones = [
-  { year: "2022", event: "ADUTI Learning ត្រូវបានបង្កើតឡើង", eventEn: "ADUTI Learning founded" },
-  { year: "2023", event: "សិស្ស 500+ ដំបូងបញ្ចប់ Frontend path", eventEn: "First 500 students complete Frontend path" },
-  { year: "2024", event: "បន្ថែម Backend & Fullstack roadmap", eventEn: "Backend & Fullstack roadmaps launched" },
-  { year: "2025", event: "សិស្ស 2,400+ certificate ពេញ platform", eventEn: "2,400+ learners certified across all paths" },
+  { year: "2026", event: "GrowCodeKh ត្រូវបានបង្កើតឡើង", eventEn: "GrowCodeKh founded" },
+  { year: "2026", event: "សិស្ស 10+ ដំបូងបញ្ចប់ Frontend path", eventEn: "First 10students complete Frontend path" },
+  { year: "2026", event: "បន្ថែម Backend & Fullstack roadmap", eventEn: "Backend & Fullstack roadmaps launched" },
+
 ];

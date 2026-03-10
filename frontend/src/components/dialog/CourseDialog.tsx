@@ -40,7 +40,7 @@ const GRADIENTS = [
 // ─── Empty form ───────────────────────────────────────────────────────────────
 const emptyForm = (): CourseFormState => ({
   title: "", description: "", level: "BEGINNER", status: "DRAFT",
-  language: "English", categoryId: undefined, _categoryStr: "",
+  language: "Khmer", categoryId: undefined, _categoryStr: "",
   featured: false, comingSoon: false, isFree: true, price: 0,
   requirements: "", launchDate: "",
 });
@@ -112,7 +112,7 @@ export function CourseDialog({
         language    : course.language ?? "English",
         categoryId  : course.categoryId,
         _categoryStr: course.categoryId ? String(course.categoryId) : "",
-        featured    : course.featured ?? false,
+        featured    : (course.featured || course.isFeatured) ?? false,
         comingSoon  : course.comingSoon ?? false,
         isFree      : course.isFree ?? true,
         price       : course.price ?? 0,
@@ -398,14 +398,15 @@ export function CourseDialog({
                   </Select>
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="cd-lang">Language</Label>
-                  <Input
-                    id="cd-lang"
-                    placeholder="e.g., English"
-                    value={form.language}
-                    onChange={(e) => setField("language", e.target.value)}
-                    disabled={isSubmitting}
-                  />
+                  <Label>Language</Label>
+                  <Select value={form.language || ""} onValueChange={(v) => setField("language", v)} disabled={isSubmitting}>
+                    <SelectTrigger><SelectValue placeholder="Select language" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Khmer">ភាសាខ្មែរ (Khmer)</SelectItem>
+                      <SelectItem value="English">English</SelectItem>
+                  
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
 
@@ -458,25 +459,6 @@ export function CourseDialog({
                   </div>
                   <Switch checked={form.featured ?? false} onCheckedChange={(v) => setField("featured", v)} disabled={isSubmitting} />
                 </div>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label>Coming Soon</Label>
-                    <p className="text-xs text-muted-foreground mt-0.5">Mark as not yet available</p>
-                  </div>
-                  <Switch checked={form.comingSoon ?? false} onCheckedChange={(v) => setField("comingSoon", v)} disabled={isSubmitting} />
-                </div>
-                {form.comingSoon && (
-                  <div className="space-y-1.5 pt-1">
-                    <Label htmlFor="cd-launch">Launch Date</Label>
-                    <Input
-                      id="cd-launch"
-                      type="date"
-                      value={form.launchDate ?? ""}
-                      onChange={(e) => setField("launchDate", e.target.value)}
-                      disabled={isSubmitting}
-                    />
-                  </div>
-                )}
               </div>
             </div>
 

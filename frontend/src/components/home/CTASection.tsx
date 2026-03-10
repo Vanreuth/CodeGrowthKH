@@ -7,68 +7,80 @@ const AVATAR_INITIALS = ["SR", "DM", "SC", "KP", "MH"];
 
 export function CTASection() {
   return (
-    <section className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-20">
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-600 via-indigo-600 to-violet-700 px-6 py-16 text-center text-white shadow-2xl shadow-blue-600/20 md:px-12">
-        {/* Decorative blobs */}
-        <div className="pointer-events-none absolute -left-24 -top-24 h-72 w-72 rounded-full bg-white/5 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-16 -right-16 h-64 w-64 rounded-full bg-white/5 blur-3xl" />
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/25 to-transparent" />
+    <section className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-24">
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-600 via-blue-600 to-violet-700 px-6 py-20 text-center text-white shadow-2xl md:px-12">
 
-        <div className="relative space-y-5">
-          <Badge className="border-white/30 bg-white/15 text-white">
-            <Users className="mr-1.5 h-3 w-3" />
-            ចូលរួមមួយជាមួយ 2,400+ learners ថ្ងៃនេះ
+        {/* background glow */}
+        <div className="absolute -top-32 -left-32 h-96 w-96 rounded-full bg-white/10 blur-3xl" />
+        <div className="absolute -bottom-32 -right-32 h-96 w-96 rounded-full bg-purple-400/10 blur-3xl" />
+
+        <div className="relative space-y-6">
+
+          {/* badge */}
+          <Badge className="border-white/30 bg-white/10 text-white px-4 py-1 text-sm backdrop-blur">
+            <Users className="mr-2 h-3.5 w-3.5" />
+            100+ Developers កំពុងរៀន
           </Badge>
 
-          <h2 className="text-3xl font-extrabold md:text-5xl">
-            ត្រៀមខ្លួនចង់ក្លាយជា
+          {/* headline */}
+          <h2 className="text-3xl font-extrabold leading-tight md:text-5xl lg:text-6xl">
+            ត្រៀមខ្លួនក្លាយជា
             <br />
-            <span className="text-yellow-300">Developer</span> ហើយ?
+            <span className="bg-gradient-to-r from-yellow-300 to-orange-400 bg-clip-text text-transparent">
+              Professional Developer
+            </span>
           </h2>
 
-          <p className="mx-auto max-w-lg text-blue-100">
-            ចុះឈ្មោះ Free ថ្ងៃនេះ — ចូលប្រើ courses, roadmap, dashboard
-            ដោយមិនចំណាយប្រាក់!
+          {/* description */}
+          <p className="mx-auto max-w-xl text-lg text-blue-100">
+            ចាប់ផ្តើមការសិក្សា Programming ជាមួយ Courses,
+            Learning Roadmap និង Dashboard ដោយឥតគិតថ្លៃ។
           </p>
 
-          <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+          {/* buttons */}
+          <div className="flex flex-wrap items-center justify-center gap-4 pt-4">
             <Button
               asChild
               size="lg"
-              className="rounded-full bg-white px-8 text-blue-700 shadow-xl transition-all hover:scale-[1.02] hover:bg-blue-50"
+              className="rounded-full bg-white px-10 text-blue-700 shadow-lg transition-all hover:scale-105 hover:bg-blue-50"
             >
               <Link href="/register">
                 ចុះឈ្មោះ Free
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>
+
             <Button
               asChild
               size="lg"
-              variant="ghost"
-              className="rounded-full text-white hover:bg-white/15"
+              variant="outline"
+              className="rounded-full border-white/40 text-white hover:bg-white/10"
             >
-              <Link href="/courses">រកមើល Courses</Link>
+              <Link href="/courses">មើល Courses</Link>
             </Button>
           </div>
 
-          {/* Social proof avatars */}
-          <div className="flex items-center justify-center gap-3 pt-1">
-            <div className="flex -space-x-2">
+          {/* social proof */}
+          <div className="flex flex-col items-center justify-center gap-3 pt-6">
+
+            <div className="flex -space-x-3">
               {AVATAR_INITIALS.map((initials) => (
                 <div
                   key={initials}
-                  className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-white/30 bg-gradient-to-br from-blue-400 to-violet-400 text-xs font-bold text-white"
+                  className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-white/40 bg-gradient-to-br from-blue-400 to-purple-400 text-xs font-bold text-white shadow-md"
                 >
                   {initials}
                 </div>
               ))}
             </div>
+
             <p className="text-sm text-blue-100">
-              <span className="font-semibold text-white">2,400+</span>{" "}
-              អ្នករៀនបានចូលរួមហើយ
+              <span className="font-semibold text-white">100+</span>{" "}
+              អ្នករៀនបានចូលរួមហើយ 🚀
             </p>
+
           </div>
+
         </div>
       </div>
     </section>

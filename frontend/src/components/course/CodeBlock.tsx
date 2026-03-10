@@ -24,7 +24,7 @@ type LangMeta = {
   badge: string;
   text: string;
   icon: string;
-  prismLang: string; // react-syntax-highlighter language key
+  prismLang: string; 
 };
 
 const LANG_META: Record<string, LangMeta> = {
@@ -63,8 +63,6 @@ function getLangMeta(lang?: string): LangMeta {
   return LANG_META[lang.toLowerCase()] ?? LANG_META.default;
 }
 
-// ─── Custom vscDarkPlus overrides ─────────────────────────────────────────────
-// Keep the bg transparent so our slate-900 shell shows through.
 
 const HIGHLIGHTER_STYLE: React.CSSProperties = {
   margin: 0,
@@ -78,7 +76,7 @@ const HIGHLIGHTER_STYLE: React.CSSProperties = {
 const LINE_NUMBER_STYLE: React.CSSProperties = {
   minWidth: "2.25rem",
   paddingRight: "1rem",
-  color: "#4b5563",     // slate-600
+  color: "#4b5563",     
   fontSize: "11px",
   userSelect: "none",
 };

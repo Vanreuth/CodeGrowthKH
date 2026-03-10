@@ -16,11 +16,11 @@ const HomePage = () => {
     <div className="overflow-x-hidden">
       <HeroSection />
       <StatsBar />
+      <FeaturedCoursesSection />
+      <CommingCourseSection />
       <WhySection />
       <LearningFocusSection />
       <TechMarquee />
-      <FeaturedCoursesSection />
-      <CommingCourseSection />
       <RoadmapSection />
       <DemoCodeSection />
       <TestimonialsSection />

@@ -81,9 +81,9 @@ function StatusBadge({ status }: { status: string }) {
 function useCoursesTable(params: any) {
   const {
     page = 0, size = 10, sortBy = "createdAt", sortDir = "desc",
-    search, status, level,
+    search, status, level, categoryId, isFeatured, isFree,
   } = params;
-  const filterParams = { page, size, sortBy, sortDir, search, status, level };
+  const filterParams = { page, size, sortBy, sortDir, search, status, level, categoryId, isFeatured, isFree };
   const query = useQuery({
     queryKey       : courseKeys.list(filterParams),
     queryFn        : () => courseService.getAll(filterParams),
@@ -116,6 +116,45 @@ export default function CoursesManagementPage() {
 
   const categories = categoriesData?.content ?? [];
   const allCourses = statsData?.content ?? [];
+
+  const filterConfig = useMemo(() => [
+    {
+      key    : "status",
+      label  : "Status",
+      type   : "select" as const,
+      options: [
+        { label: "Published",   value: "PUBLISHED"   },
+        { label: "Draft",       value: "DRAFT"       },
+        { label: "Featured",    value: "FEATURED"    },
+        { label: "Coming Soon", value: "COMING_SOON" },
+      ],
+    },
+    {
+      key    : "level",
+      label  : "Level",
+      type   : "select" as const,
+      options: [
+        { label: "Beginner",     value: "BEGINNER"     },
+        { label: "Intermediate", value: "INTERMEDIATE" },
+        { label: "Advanced",     value: "ADVANCED"     },
+      ],
+    },
+    {
+      key    : "categoryId",
+      label  : "Category",
+      type   : "select" as const,
+      options: categories.map((c) => ({ label: c.name, value: c.id })),
+    },
+    {
+      key    : "isFeatured",
+      label  : "Featured",
+      type   : "select" as const,
+      options: [
+        { label: "Yes", value: "true"  },
+        { label: "No",  value: "false" },
+      ],
+    },
+  ], [categories]);
 
   const stats = useMemo(() => ({
     total            : statsData?.totalElements ?? 0,
@@ -176,16 +215,6 @@ export default function CoursesManagementPage() {
         <div className="flex items-center gap-1.5 text-sm">
           <Users className="h-3.5 w-3.5 text-muted-foreground" />
           <span className="font-medium">{(val ?? 0).toLocaleString()}</span>
-        </div>
-      ),
-    },
-    {
-      key   : "avgRating",
-      label : "Rating",
-      render: (val: number) => (
-        <div className="flex items-center gap-1 text-amber-500">
-          <Star className="h-3.5 w-3.5 fill-current" />
-          <span className="text-sm font-semibold text-foreground">{(val ?? 0).toFixed(1)}</span>
         </div>
       ),
     },
@@ -262,29 +291,7 @@ export default function CoursesManagementPage() {
         description="Manage your course catalog — publish, edit, or remove courses."
         useDataHook={useCoursesTable}
         columns={columns}
-        filters={[
-          {
-            key    : "status",
-            label  : "Status",
-            type   : "select",
-            options: [
-              { label: "Published",   value: "PUBLISHED"   },
-              { label: "Draft",       value: "DRAFT"       },
-              { label: "Featured",    value: "FEATURED"    },
-              { label: "Coming Soon", value: "COMING_SOON" },
-            ],
-          },
-          {
-            key    : "level",
-            label  : "Level",
-            type   : "select",
-            options: [
-              { label: "Beginner",     value: "BEGINNER"     },
-              { label: "Intermediate", value: "INTERMEDIATE" },
-              { label: "Advanced",     value: "ADVANCED"     },
-            ],
-          },
-        ]}
+        filters={filterConfig}
         onView={(item) => openViewDialog(item)}
         onEdit={(item) => openEditDialog(item)}
         onDelete={(item) => setDeletingCourse(item)}

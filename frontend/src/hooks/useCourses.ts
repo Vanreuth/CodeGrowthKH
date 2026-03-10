@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import {
   useQuery,
   useMutation,
@@ -10,7 +10,7 @@ import {
 import { courseService } from '../services/courseService'
 import { chapterService } from '../services/chapterService'
 import { lessonService } from '../services/lessonService'
-import type { PageResponse, PaginationParams } from '../types/apiType'
+import type { PageResponse, PaginationParams, CourseFilterParams } from '../types/apiType'
 import type { CourseResponse, CourseRequest } from '../types/courseType'
 import type { ChapterResponse } from '../types/chapterType'
 import type { LessonResponse } from '../types/lessonType'
@@ -44,12 +44,31 @@ function toState<T>(q: { data?: T; isPending: boolean; error: Error | null }) {
 //  1. useCourses — paginated list
 // ═════════════════════════════════════════════════════════════
 
-export function useCourses(params: PaginationParams = {}) {
-  const { size = 10, sortBy = 'createdAt', sortDir = 'desc' } = params
+export function useCourses(params: CourseFilterParams = {}) {
+  const { size = 10, sortBy = 'createdAt', sortDir = 'desc', status, level, categoryId, search, isFeatured, isFree } = params
   const [page, setPage] = useState(params.page ?? 0)
+
+  // Reset to page 0 whenever filter params change
+  const filtersRef = useRef({ status, level, categoryId, search, isFeatured, isFree })
+  useEffect(() => {
+    const prev = filtersRef.current
+    if (
+      prev.status     !== status     ||
+      prev.level      !== level      ||
+      prev.categoryId !== categoryId ||
+      prev.search     !== search     ||
+      prev.isFeatured !== isFeatured ||
+      prev.isFree     !== isFree
+    ) {
+      setPage(0)
+      filtersRef.current = { status, level, categoryId, search, isFeatured, isFree }
+    }
+  }, [status, level, categoryId, search, isFeatured, isFree])
+
+  const filterParams = { page, size, sortBy, sortDir, status, level, categoryId, search, isFeatured, isFree }
   const query = useQuery({
-    queryKey       : courseKeys.list({ page, size, sortBy, sortDir }),
-    queryFn        : () => courseService.getAll({ page, size, sortBy, sortDir }),
+    queryKey       : courseKeys.list(filterParams),
+    queryFn        : () => courseService.getAll(filterParams),
     placeholderData: keepPreviousData,
   })
   return { ...toState<PageResponse<CourseResponse>>(query), page, setPage, refetch: query.refetch }
@@ -148,7 +167,7 @@ export function useComingSoonCourses(params: PaginationParams = {}) {
   const [page, setPage] = useState(0)
   const query = useQuery({
     queryKey       : courseKeys.comingSoon({ page, size }),
-    queryFn        : () => courseService.getComingSoon({ page, size }),
+    queryFn        : () => courseService.getAll({ page, size, status: 'COMING_SOON', sortDir: 'asc' }),
     placeholderData: keepPreviousData,
   })
   return { ...toState<PageResponse<CourseResponse>>(query), page, setPage, refetch: query.refetch }

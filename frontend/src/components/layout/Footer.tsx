@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import {
   ArrowUpRight,
   Facebook,
@@ -49,8 +50,8 @@ const socials = [
 ];
 
 const contacts = [
-  { icon: Mail,   value: "hello@adutilearning.com", href: "mailto:hello@adutilearning.com" },
-  { icon: Phone,  value: "+855 12 345 678",         href: "tel:+85512345678" },
+  { icon: Mail,   value: "growcodekh@gmail.com.com", href: "mailto:growcodekh@gmail.com" },
+  { icon: Phone,  value: "+855 33 86 537",         href: "tel:+855 33 86 537 " },
   { icon: MapPin, value: "Phnom Penh, Cambodia",    href: "https://maps.google.com/?q=Phnom+Penh" },
 ];
 
@@ -115,15 +116,36 @@ export default function Footer() {
 
           {/* Brand column */}
           <div className="space-y-5">
-            <Link href="/" className="group inline-flex items-center gap-3">
-              <div className="grid h-10 w-10 place-items-center rounded-[11px] bg-gradient-to-br from-blue-600 to-violet-600 text-white shadow-md shadow-blue-500/30 transition-transform duration-200 group-hover:scale-105">
-                <GraduationCap className="h-5 w-5" />
+          ​​​​​​<Link
+            href="/"
+            className="group inline-flex items-center gap-3"
+          >
+            <div className="relative">
+
+              {/* glow */}
+              <div className="absolute -inset-[4px] rounded-xl bg-gradient-to-br from-green-400 via-emerald-400 to-blue-500 opacity-0 blur-md transition group-hover:opacity-40" />
+
+              <div className="relative h-12 w-12 rounded-xl  p-[4px] ">
+                <Image
+                  src="/growth.png"
+                  alt="GrowCodeKhmer"
+                  width={120}
+                  height={120}
+                  className="h-full w-full object-contain transition-transform duration-300 group-hover:scale-110"
+                />
               </div>
-              <div className="leading-none">
-                <p className="text-[15px] font-bold text-foreground">ADUTI Learning</p>
-                <p className="mt-0.5 text-[11px] text-muted-foreground">រឹនកូតជាភាសាខ្មែរ</p>
-              </div>
-            </Link>
+            </div>
+
+            <div className="leading-none">
+              <p className="text-[17px] font-bold tracking-tight bg-gradient-to-r from-green-600 via-emerald-600 to-blue-600 bg-clip-text text-transparent">
+                GrowCodeKhmer
+              </p>
+
+              <p className="text-[11px] text-muted-foreground group-hover:text-emerald-500 transition">
+                រៀនកូដជាភាសាខ្មែរ
+              </p>
+            </div>
+          </Link>
 
             <p className="max-w-[260px] text-sm leading-relaxed text-muted-foreground">
               វេទិកាអប់រំ IT ជាភាសាខ្មែរ ដែលជួយអ្នករៀនក្លាយជា Frontend, Backend
@@ -133,8 +155,8 @@ export default function Footer() {
             {/* Stats pills */}
             <div className="flex flex-wrap gap-2">
               {[
-                { label: "2,400+ Learners", color: "bg-blue-50 text-blue-700 border-blue-200/60 dark:bg-blue-500/10 dark:text-blue-300 dark:border-blue-500/20" },
-                { label: "30+ Courses", color: "bg-violet-50 text-violet-700 border-violet-200/60 dark:bg-violet-500/10 dark:text-violet-300 dark:border-violet-500/20" },
+                { label: "100+ Learners", color: "bg-blue-50 text-blue-700 border-blue-200/60 dark:bg-blue-500/10 dark:text-blue-300 dark:border-blue-500/20" },
+                { label: "10+ Courses", color: "bg-violet-50 text-violet-700 border-violet-200/60 dark:bg-violet-500/10 dark:text-violet-300 dark:border-violet-500/20" },
                 { label: "95% ពេញចិត្ត", color: "bg-emerald-50 text-emerald-700 border-emerald-200/60 dark:bg-emerald-500/10 dark:text-emerald-300 dark:border-emerald-500/20" },
               ].map((s) => (
                 <span key={s.label} className={`inline-flex rounded-full border px-2.5 py-0.5 text-[11px] font-semibold ${s.color}`}>
@@ -250,7 +272,7 @@ export default function Footer() {
           <div className="container-app flex flex-col items-center justify-between gap-3 py-4 sm:flex-row">
             <p className="text-xs text-muted-foreground">
               © {new Date().getFullYear()}{" "}
-              <span className="font-semibold text-foreground">ADUTI Learning</span>
+              <span className="font-semibold text-foreground">GrowCodeKh</span>
               . All rights reserved.
             </p>
             <div className="flex items-center gap-1">

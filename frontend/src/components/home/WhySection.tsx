@@ -8,16 +8,16 @@ export function WhySection() {
       <div className="mb-12 text-center">
         <Badge className="mb-3 border-indigo-200/60 bg-indigo-50 text-indigo-700 dark:border-indigo-500/30 dark:bg-indigo-500/10 dark:text-indigo-300">
           <Zap className="mr-1.5 h-3 w-3" />
-          ហេតុអ្វីបានជា ADUTI?
+          ហេតុអ្វីបានជាជ្រើសរើស GrowCodeKh?
         </Badge>
         <h2 className="text-3xl font-bold text-foreground md:text-4xl">
           បទពិសោធន៍{" "}
           <span className="bg-gradient-to-r from-blue-600 to-violet-600 bg-clip-text text-transparent">
-            រៀនដែលអំណួត
+            រៀន
           </span>
         </h2>
         <p className="mx-auto mt-3 max-w-xl text-muted-foreground">
-          ពន្យល់ជាខ្មែរ — Build project ពិត — Roadmap ច្បាស់ — Mentor Support
+          ពន្យល់ជាខ្មែរ — Build project​ ពិត — Roadmap ច្បាស់ — Support សកម្ម
         </p>
       </div>
 
