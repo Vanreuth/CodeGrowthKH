@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { useMemo } from "react";
-import { CalendarDays, Clock3 } from "lucide-react";
+import { CalendarDays, ChevronRight, Clock3 } from "lucide-react";
 import { useComingSoonCourses } from "@/hooks/useCourses";
 import type { CourseResponse } from "@/types/courseType";
+import SectionHeader from "../section/SectionHeader";
 
 type ComingCourse = {
   id: number;
@@ -49,23 +50,11 @@ export function CommingCourseSection() {
 
   return (
       <section className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-16">
-        <div className="mb-6 flex items-center justify-between gap-4">
-          <div>
-            <h2 className="text-2xl font-extrabold text-foreground md:text-3xl">
-              វគ្គសិក្សា Coming Soon
-            </h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              វគ្គដែលនឹងបើកឆាប់ៗ ដើម្បីអ្នកត្រៀមផ្លូវសិក្សាមុន
-            </p>
-          </div>
-
-          <Link
-              href="/courses"
-              className="inline-flex items-center gap-1 rounded-full border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground hover:bg-muted/50 transition-colors"
-          >
-            មើលទាំងអស់
-          </Link>
-        </div>
+        <SectionHeader
+          title="វគ្គសិក្សា"
+          highlight="Coming Soon"
+          description="វគ្គដែលនឹងបើកឆាប់ៗ ដើម្បីអ្នកត្រៀមផ្លូវសិក្សាមុន"
+        />
 
         {loading && (
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -149,6 +138,16 @@ export function CommingCourseSection() {
               Failed to load courses
             </p>
         )}
+
+        <div className="mt-8 flex justify-center">
+        <Link
+          href="/courses"
+          className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-5 py-2.5 text-sm font-semibold text-foreground shadow-sm transition hover:bg-muted/50"
+        >
+          មើលវគ្គសិក្សាទាំងអស់
+          <ChevronRight className="h-4 w-4" />
+        </Link>
+      </div>
       </section>
   );
 }

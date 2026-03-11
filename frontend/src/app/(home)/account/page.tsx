@@ -1,4 +1,4 @@
-// app/account/page.tsx
+
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
@@ -76,7 +76,6 @@ function deriveStats(list: LessonProgressResponse[] | null) {
 export default function AccountPage() {
   const router = useRouter();
 
-  // ✅ FIX 1: destructure `isRefreshing` from useAuth
   const { user, initialized, isRefreshing, updateProfile, logout } = useAuth();
 
   const { data: progressData, loading: progressLoading } = useMyProgress();
@@ -97,23 +96,15 @@ export default function AccountPage() {
     defaultValues: { username: "", phoneNumber: "", address: "", bio: "" },
   });
 
-  // ✅ FIX 2: destructure `reset` — it's a stable ref, safe in deps
   const { reset } = form;
-
-  // ── Auth guard ────────────────────────────────────────────
-  // ✅ FIX 3: wait for BOTH initialized AND isRefreshing===false
-  //    before deciding to redirect — prevents mid-refresh redirects
   useEffect(() => {
-    if (!initialized)  return;   // auth hasn't settled yet
-    if (isRefreshing)  return;   // token refresh still in-flight
+    if (!initialized)  return;   
+    if (isRefreshing)  return;  
 
     if (!user) {
-      // Guest confirmed — send to login
       router.replace("/login?callbackUrl=/account");
       return;
     }
-
-    // ✅ FIX 4: use primitive user.id / user.role, not the whole user object
     const isAdmin =
       user.roles?.includes("ADMIN") ||
       user.roles?.includes("ROLE_ADMIN") ||
@@ -123,14 +114,12 @@ export default function AccountPage() {
   }, [
     initialized,
     isRefreshing,
-    user?.id,       // ✅ primitive — only changes when user actually changes
+    user?.id,     
     user?.role,
     user?.roles,
     router,
   ]);
 
-  // ── Populate form when user loads ─────────────────────────
-  // ✅ FIX 5: `reset` (stable) instead of `form` (new ref every render)
   useEffect(() => {
     if (!user) return;
     reset({
@@ -139,9 +128,8 @@ export default function AccountPage() {
       address:     user.address     || "",
       bio:         user.bio         || "",
     });
-  }, [user?.id, reset]); // ✅ user.id: only re-runs when user actually changes
+  }, [user?.id, reset]);
 
-  // ── Revoke preview URL on unmount ─────────────────────────
   useEffect(
     () => () => { if (previewUrl) URL.revokeObjectURL(previewUrl); },
     [previewUrl],
@@ -199,12 +187,12 @@ export default function AccountPage() {
 
   const handleLogout = async () => {
     try { await logout(); toast.success("បានចេញពីគណនីដោយជោគជ័យ"); }
-    catch { /* swallow */ }
+    catch {
+      toast.error("បរាជ័យក្នុងការចេញពីគណនី");
+     }
     finally { router.push("/"); }
   };
 
-  // ── Loading state — auth not yet settled ──────────────────
-  // ✅ FIX 6: show spinner while refreshing too, not just !initialized
   if (!initialized || isRefreshing) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
@@ -217,8 +205,6 @@ export default function AccountPage() {
       </div>
     );
   }
-
-  // Auth settled but no user (redirect already fired above)
   if (!user) return null;
 
   // ── Render ────────────────────────────────────────────────

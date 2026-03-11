@@ -26,7 +26,7 @@ export function SettingsTab({ onLogout, onDeleteAccount }: SettingsTabProps) {
     <div className="space-y-6">
       <div className="grid gap-6 md:grid-cols-2">
         {/* Security */}
-        <Card>
+        {/* <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Shield className="h-5 w-5 text-emerald-600" />
@@ -54,7 +54,9 @@ export function SettingsTab({ onLogout, onDeleteAccount }: SettingsTabProps) {
               </Button>
             </Link>
           </CardContent>
-        </Card>
+        </Card> */}
+
+        
 
         {/* Account */}
         <Card>
@@ -66,7 +68,7 @@ export function SettingsTab({ onLogout, onDeleteAccount }: SettingsTabProps) {
             <CardDescription>ការកំណត់គណនីផ្សេងទៀត</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
-            <Link href="/dashboard/settings">
+            {/* <Link href="/dashboard/settings">
               <Button variant="outline" className="w-full justify-between">
                 <span className="flex items-center gap-2">
                   <Settings className="h-4 w-4" />
@@ -74,7 +76,7 @@ export function SettingsTab({ onLogout, onDeleteAccount }: SettingsTabProps) {
                 </span>
                 <ChevronRight className="h-4 w-4" />
               </Button>
-            </Link>
+            </Link> */}
 
             {/* Logout dialog */}
             <AlertDialog>
@@ -107,9 +109,8 @@ export function SettingsTab({ onLogout, onDeleteAccount }: SettingsTabProps) {
             </AlertDialog>
           </CardContent>
         </Card>
-      </div>
 
-      {/* Danger Zone */}
+          {/* Danger Zone */}
       <Card className="border-red-200 dark:border-red-900/50">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-red-600">
@@ -149,6 +150,8 @@ export function SettingsTab({ onLogout, onDeleteAccount }: SettingsTabProps) {
           </AlertDialog>
         </CardContent>
       </Card>
+
+      </div>
     </div>
   );
 }

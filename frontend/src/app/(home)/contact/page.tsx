@@ -4,19 +4,23 @@ import { useState } from "react";
 import Link from "next/link";
 import {
   ArrowRight,
+  BookOpen,
   CheckCircle2,
   ChevronRight,
   Clock,
   ExternalLink,
+  MapPinned,
   MessageCircle,
   Send,
   Sparkles,
+  Youtube,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { FAQSection } from "@/components/home/FAQSection";
 const GOALS = [
   "Frontend Developer",
   "Backend Developer",
@@ -25,6 +29,8 @@ const GOALS = [
   "DevOps / Cloud",
   "មិនទាន់ដឹង",
 ];
+
+import { Mail } from 'lucide-react';
 
 const EXPERIENCE_LEVELS = [
   "ថ្មីទាំងស្រុង (Zero)",
@@ -65,9 +71,8 @@ export default function ContactPage() {
             ជាមួយ ការសិក្សា​ដោយឥតគិតថ្លៃជាភាសាខ្មែរ
           </h1>
           <p className="mt-4 text-base leading-relaxed text-slate-600 md:text-lg dark:text-slate-300">
-            ប្រាប់ goal និង skill level នឹង propose course sequence
-            និង roadmap ដែលត្រូវជាមួយ timeline របស់អ្នក ក្នុង{" "}
-            <strong className="text-slate-800 dark:text-slate-200">24 ម៉ោង</strong>។
+           សូមទំនាក់ទំនងមកកាន់យើងខ្ញុំតាមបណ្តាញសង្គម{" "}
+            <strong className="text-slate-800 dark:text-slate-200">ខាងក្រោម</strong>។
           </p>
 
           {/* Quick trust row */}
@@ -75,7 +80,7 @@ export default function ContactPage() {
             {[
               "ឥតគិតថ្លៃ",
               "ទាញយកសៀវភៅឥតគិតថ្លៃ",
-              // "",
+              "តាមដានវឌ្ឍនភាពមេរៀន",
               "ជាភាសាខ្មែរ",
             ].map((t) => (
               <span
@@ -138,7 +143,7 @@ export default function ContactPage() {
                   <Input
                     id="name"
                     required
-                    placeholder="ឧ. Dara Chan"
+                    placeholder="ឧ. Heng Vanreuth"
                     className="border-slate-200 bg-slate-50 focus:bg-white dark:border-white/10 dark:bg-white/5 dark:focus:bg-white/8"
                   />
                 </div>
@@ -209,7 +214,7 @@ export default function ContactPage() {
                 <Textarea
                   id="message"
                   rows={5}
-                  placeholder="ប្រាប់យើងអំពី: ពេលវេលាទំនេរ/សប្តាហ៍, target timeline, course ដែលចាប់អារម្មណ៍, ឬ សំណួរផ្សេងៗ..."
+                  placeholder="ប្រាប់យើងអំពី: Error ដែលមាននៅលើ​​ website  , course ដែលចាប់អារម្មណ៍, ឬ សំណួរផ្សេងៗ..."
                   className="resize-none border-slate-200 bg-slate-50 focus:bg-white dark:border-white/10 dark:bg-white/5 dark:focus:bg-white/8"
                 />
               </div>
@@ -310,29 +315,7 @@ export default function ContactPage() {
       </section>
 
       {/* ── FAQ ──────────────────────────────────────────────────────────── */}
-      <section>
-        <div className="mb-6 text-center">
-          <Badge className="mb-3 border-amber-200/60 bg-amber-50 text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300">
-            <Sparkles className="mr-1.5 h-3 w-3" />
-            FAQ
-          </Badge>
-          <h2 className="text-2xl font-bold text-slate-900 md:text-3xl dark:text-white">
-            សំណួរ{" "}
-            <span className="bg-gradient-to-r from-amber-500 to-orange-500 bg-clip-text text-transparent">
-              ញឹកញាប់
-            </span>
-          </h2>
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-            Common questions before enrollment
-          </p>
-        </div>
-
-        <div className="mx-auto max-w-3xl divide-y divide-slate-200 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:divide-white/8 dark:border-white/10 dark:bg-slate-900/70">
-          {faqs.map((faq, i) => (
-            <FAQItem key={i} faq={faq} defaultOpen={i === 0} />
-          ))}
-        </div>
-      </section>
+       <FAQSection/>
 
       {/* ── CTA ──────────────────────────────────────────────────────────── */}
       <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-600 via-indigo-600 to-violet-700 px-7 py-12 text-center text-white shadow-2xl shadow-blue-600/20 md:py-14">
@@ -420,8 +403,8 @@ export const contactChannels = [
     value: "@aduti_learning",
     helper: "ចូលរួម channel — សំណួរ, code review, updates",
     helperEn: "Join our main community channel for Q&A and updates",
-    icon: "✈️",
-    href: "https://t.me/aduti_learning",
+    icon: <Send className="h-4 w-4" />,
+    href: "https://t.me/Vanreuth",
     color: "from-blue-500 to-sky-400",
   },
   {
@@ -430,8 +413,8 @@ export const contactChannels = [
     value: "ADUTI Learning",
     helper: "Follow ដើម្បីទទួល course updates & tips",
     helperEn: "Follow for course announcements and learning tips",
-    icon: "📘",
-    href: "https://facebook.com/adutilearning",
+    icon: <BookOpen className="h-4 w-4" />,
+    href: "https://facebook.com/growcodekh",
     color: "from-indigo-500 to-blue-500",
   },
   {
@@ -440,72 +423,33 @@ export const contactChannels = [
     value: "ADUTI Learning",
     helper: "Free lessons, tutorials, career advice ជាភាសាខ្មែរ",
     helperEn: "Free Khmer-language tutorials and career content",
-    icon: "▶️",
-    href: "https://youtube.com/@adutilearning",
+    icon: <Youtube className="h-4 w-4" />,
+    href: "https://youtube.com/@growcodekh",
     color: "from-red-500 to-rose-400",
   },
 ];
 
 export const directContacts = [
   {
-    icon: "✉️",
+    icon: <Mail className="h-5 w-5" />,
     label: "Email",
     labelKh: "អ៊ីម៉ែល",
-    value: "hello@adutilearning.com",
-    href: "mailto:hello@adutilearning.com",
+    value: "growcodekh@gmail.com",
+    href: "mailto:growcodekh@gmail.com",
   },
   {
-    icon: "📞",
-    label: "Phone / Telegram",
-    labelKh: "ទូរស័ព្ទ",
-    value: "+855 12 345 678",
-    href: "tel:+85512345678",
+    icon: <Send className="h-5 w-5" />,
+    label: "Telegram",
+    labelKh: "Telegram",
+    value: "https://t.me/Vanreuth",
+    href: "https://t.me/Vanreuth",
   },
   {
-    icon: "📍",
+    icon: <MapPinned className="h-5 w-5" />,
     label: "Location",
     labelKh: "ទីតាំង",
     value: "Phnom Penh, Cambodia",
     href: "https://maps.google.com/?q=Phnom+Penh",
-  },
-];
-
-export const faqs = [
-  {
-    question: "តើ ADUTI Learning ជាអ្វី?",
-    questionEn: "What is ADUTI Learning?",
-    answer:
-      "ADUTI Learning គឺជាវេទិកា ed-tech ជាភាសាខ្មែរ ដែលផ្តោតលើ Software Development — courses, roadmap, mentor support ពី zero ដល់ developer ពិត។",
-  },
-  {
-    question: "តើខ្ញុំត្រូវចំណាយប្រាក់ទេ?",
-    questionEn: "Is it free?",
-    answer:
-      "អ្នកអាចចុះឈ្មោះ Free ហើយចូលប្រើ courses និង roadmap ភ្លាមៗ។ មានជម្រើស premium សម្រាប់ mentor 1-on-1 និង project feedback។",
-  },
-  {
-    question: "ខ្ញុំមិនមានបទពិសោធន៍ — អាចចាប់ផ្តើមបានទេ?",
-    questionEn: "No experience needed?",
-    answer:
-      "បាន! Roadmap ចាប់ពី HTML & CSS ដំបូងបំផុត ហើយ mentor guide អ្នកជាជំហានៗ គ្មានការស្ដីបន្ទោស ឬ judging ទេ។",
-  },
-  {
-    question: "Certificate ទទួលស្គាល់ដោយណា?",
-    questionEn: "Is the certificate recognized?",
-    answer:
-      "Certificate ពី ADUTI Learning អ្នកអាចដាក់លើ LinkedIn/CV បានភ្លាមៗ។ ក្រុមហ៊ុន IT ក្នុង Cambodia ស្គាល់ platform យើង។",
-  },
-  {
-    question: "Mentor support ដំណើរការដូចម្តេច?",
-    questionEn: "How does mentor support work?",
-    answer:
-      "Mentor ឆ្លើយសំណួរ, review code weekly, និង ណែនាំ learning path ដែលត្រូវជាមួយ goal របស់អ្នក — តាម Telegram ឬ live session។",
-  },
-  {
-    question: "ត្រូវរៀន ប៉ុន្មានម៉ោងក្នុងមួយអាទិត្យ?",
-    questionEn: "How many hours per week?",
-    answer:
-      "យើងណែនាំ 5–7 ម៉ោងក្នុង 1 សប្តាហ៍។ Roadmap រចនាឲ្យ flexible — អ្នកអាចរៀនពេលល្ងាចឬ weekend ក៏បាន។",
   },
 ];
 

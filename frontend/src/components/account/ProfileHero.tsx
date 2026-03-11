@@ -54,7 +54,6 @@ interface ProfileHeroProps {
   progressLoading: boolean;
   totalLessonsTracked: number;
   lessonsCompleted: number;
-  /** Total reading time in seconds, derived from progress data */
   totalReadSeconds: number;
   onEditToggle: () => void;
   onCancelEdit: () => void;
@@ -113,12 +112,6 @@ export function ProfileHero({
       value: progressLoading ? <Pulse /> : formatReadTime(totalReadSeconds),
       label: "ម៉ោងសិក្សា",
       bgClass: "bg-blue-100 dark:bg-blue-900/30",
-    },
-    {
-      icon: <Award className="h-5 w-5 text-amber-600 dark:text-amber-400" />,
-      value: "0",
-      label: "វិញ្ញាបនបត្រ",
-      bgClass: "bg-amber-100 dark:bg-amber-900/30",
     },
   ];
 
