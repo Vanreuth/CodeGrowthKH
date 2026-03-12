@@ -82,7 +82,7 @@ app:
     expiration: ${JWT_EXPIRATION:900000}
     refreshExpiration: ${JWT_REFRESH_EXPIRATION:604800000}
   oauth2:
-    redirect-uri: http://localhost:3000/oauth2/redirect
+    redirect-uri: ${OAUTH2_REDIRECT_URI:http://localhost:3000/oauth2/redirect}
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:}
 
