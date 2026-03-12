@@ -38,6 +38,12 @@ function isOnAuthPage(): boolean {
   return AUTH_PATHS.some((p) => window.location.pathname.startsWith(p))
 }
 
+// Do NOT intercept 401s that come from the refresh endpoint itself —
+// that would cause an infinite loop (refresh → 401 → try refresh again…).
+function isRefreshEndpoint(config: InternalAxiosRequestConfig): boolean {
+  return !!config.url?.includes('/auth/refresh')
+}
+
 export const httpClient: AxiosInstance = axios.create({
   baseURL        : '',
   withCredentials: true,
@@ -54,7 +60,12 @@ httpClient.interceptors.response.use(
   async (error) => {
     const original = error.config as InternalAxiosRequestConfig & { _retry?: boolean }
 
-    if (error.response?.status !== 401 || original._retry || isOnAuthPage()) {
+    if (
+      error.response?.status !== 401 ||
+      original._retry ||
+      isOnAuthPage() ||
+      isRefreshEndpoint(original)
+    ) {
       return Promise.reject(error)
     }
 
