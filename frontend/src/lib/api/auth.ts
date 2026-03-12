@@ -66,10 +66,8 @@ export async function updateProfile(
   return put<AuthResponse>(`${AUTH_PATH}/profile`, form, { multipart: true })
 }
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL
 export function redirectToOAuth(provider: 'google' | 'github'): void {
-  window.location.href =
-    `${BACKEND_URL}/oauth2/authorization/${provider}`
+  window.location.href = `/api/v1/auth/oauth2/authorize/${provider}`
 }
 
 /** List available OAuth2 providers */
