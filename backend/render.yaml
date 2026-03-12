@@ -1,136 +1,78 @@
-# ─────────────────────────────────────────────────────────────────────────────
-# render.yaml — Place at ROOT of your Spring Boot repository
-# Render auto-detects this file on first deploy
-# Docs: https://render.com/docs/render-yaml-spec
-# ─────────────────────────────────────────────────────────────────────────────
+# backend/render.yaml
 
 services:
-  # ── Spring Boot Web Service ────────────────────────────────────────────────
   - type: web
     name: backend
     runtime: docker
-    dockerfilePath: ./Dockerfile
 
-    # Match your Neon DB region (ap-southeast-1) → closest Render region
+    # ⚠️ Key for monorepo — point to backend subfolder
+    dockerfilePath: ./backend/Dockerfile
+    rootDir: ./backend
+
     region: singapore
-
-    # free   → sleeps after 15 min idle (use UptimeRobot to prevent)
-    # starter → always on ($7/month)
     plan: free
+    branch: main
 
-    # Render calls this URL to verify service is healthy
-    # Returns {"status":"UP"} when Spring Boot is ready
+    # Only rebuild when backend files change
+    # Ignores frontend changes ✅
+    buildFilter:
+      paths:
+        - backend/src/**
+        - backend/pom.xml
+        - backend/Dockerfile
+        - backend/render.yaml
+
     healthCheckPath: /actuator/health
-
-    # Auto-redeploy on every push to main branch
     autoDeploy: true
 
     envVars:
-      # ────────────────────────────────────────────────────────────────────
-      # sync: false  → secret value, set manually in Render dashboard
-      # value: "xxx" → non-secret, safe to commit
-      # generateValue: true → Render generates a secure random string
-      # ────────────────────────────────────────────────────────────────────
-
-      # ── Spring Profile ──────────────────────────────────────────────────
-      # prod → enables: SameSite=None; Secure in CookieUtil
-      #               + ddl-auto=validate (safe for production)
       - key: SPRING_PROFILES_ACTIVE
         value: prod
-
-      # ── Database — Neon PostgreSQL ──────────────────────────────────────
-      # Use the POOLER connection string (handles Neon connection limits)
-      # Format: jdbc:postgresql://ep-xxx-pooler.region.aws.neon.tech/dbname?sslmode=require&channel_binding=require
       - key: DB_URL
         sync: false
-
       - key: DB_USERNAME
         sync: false
-
       - key: DB_PASSWORD
         sync: false
-
-      # Free tier has 512MB RAM — keep pool small
       - key: DB_POOL_SIZE
         value: "3"
-
-      # NEVER use 'update' or 'create' in production
-      # Run Flyway/Liquibase migrations instead
       - key: SPRING_JPA_HIBERNATE_DDL_AUTO
         value: validate
-
-      # ── JWT ─────────────────────────────────────────────────────────────
-      # IMPORTANT: Use sync:false (not generateValue) on free tier!
-      # generateValue changes on every redeploy → logs ALL users out
-      # Generate once: openssl rand -hex 64
-      # Then paste into Render dashboard manually
       - key: JWT_SECRET
         sync: false
-
-      # 900,000ms = 15 minutes
       - key: JWT_EXPIRATION
         value: "900000"
-
-      # 604,800,000ms = 7 days
       - key: JWT_REFRESH_EXPIRATION
         value: "604800000"
-
-      # ── OAuth2 — Google ─────────────────────────────────────────────────
-      # Google Cloud Console → APIs & Services → Credentials → OAuth 2.0
       - key: GOOGLE_CLIENT_ID
         sync: false
-
       - key: GOOGLE_CLIENT_SECRET
         sync: false
-
-      # ── OAuth2 — GitHub ─────────────────────────────────────────────────
-      # GitHub → Settings → Developer Settings → OAuth Apps
       - key: GITHUB_CLIENT_ID
         sync: false
-
       - key: GITHUB_CLIENT_SECRET
         sync: false
-
-      # Where browser lands after OAuth2 login — must be your FRONTEND domain
-      # Local:  http://localhost:3000/oauth2/redirect
-      # Prod:   https://yourdomain.com/oauth2/redirect
       - key: OAUTH2_REDIRECT_URI
-        value: https://yourdomain.com/oauth2/redirect
-
-      # ── Cloudflare R2 ───────────────────────────────────────────────────
+        sync: false
       - key: R2_ACCOUNT_ID
         sync: false
-
       - key: R2_ACCESS_KEY_ID
         sync: false
-
       - key: R2_SECRET_ACCESS_KEY
         sync: false
-
       - key: R2_BUCKET_NAME
         sync: false
-
-      # https://ACCOUNT_ID.r2.cloudflarestorage.com
       - key: R2_ENDPOINT
         sync: false
-
-      # https://pub-xxx.r2.dev  (public bucket URL)
       - key: R2_PUBLIC_URL
         sync: false
-
       - key: R2_REGION
         value: auto
-
-      # ── File Upload ─────────────────────────────────────────────────────
       - key: MAX_FILE_SIZE
         value: 10MB
-
       - key: MAX_REQUEST_SIZE
         value: 20MB
-
-      # ── Logging ─────────────────────────────────────────────────────────
       - key: LOG_LEVEL_ROOT
         value: WARN
-
       - key: LOG_LEVEL_APP
         value: INFO
