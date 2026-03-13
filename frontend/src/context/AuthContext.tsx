@@ -69,33 +69,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // ── Step 2: try to get a new access_token via refresh_token ──────────
       setIsRefreshing(true)
       try {
-        // ✅ FIX 1 — use the AuthResponse returned by refresh() DIRECTLY.
-        //
-        // ❌ BEFORE:
-        //   await authService.refresh()    // returns AuthResponse but result ignored
-        //   const userData = await authService.me()  // extra call that FAILS if
-        //                                            // proxy didn't forward Set-Cookie
-        //   setUser(userData)
-        //
-        //   Chain when proxy drops Set-Cookie:
-        //     refresh() → new access_token NOT saved as cookie
-        //     me()      → fails (still no access_token cookie)
-        //     setUser(null) → initialized=true → AccountPage fires router.replace('/login')
-        //     middleware    → has refresh_token → redirects back to /account
-        //     AuthProvider  → mounts again → same cycle → infinite loop ♻️
-        //
-        // ✅ AFTER:
-        //   refresh() already returns the full AuthResponse including user data.
-        //   Use it directly — no second me() call needed.
-        //   Even if the proxy hasn't forwarded Set-Cookie yet, the user is set
-        //   in memory and the page renders correctly for this session.
         const refreshed = await refreshToken()
         if (!cancelled) setUser(refreshed)
       } catch {
-        // refresh_token also expired/missing — call the logout endpoint via raw
-        // fetch (bypasses the 401 interceptor) to clear the stale httpOnly cookies.
-        // Without this, the middleware sees canRefresh=true and bounces /login → /account
-        // in an infinite loop even though the refresh_token is no longer valid.
         try {
           await fetch('/api/v1/auth/logout', { method: 'POST', credentials: 'include' })
         } catch {
@@ -112,11 +88,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     })
 
     return () => { cancelled = true }
-  }, []) // ✅ empty deps — runs exactly ONCE on mount
-
-  // ── Login ─────────────────────────────────────────────────────────────────
-  // Navigation is handled by the caller (LoginPage) — do NOT do window.location.href
-  // here, which would cause a hard reload race with the caller's router.replace().
+  }, [])
   const login = useCallback(async (
     username: string,
     password: string

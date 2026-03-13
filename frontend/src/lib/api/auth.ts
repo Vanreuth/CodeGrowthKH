@@ -1,4 +1,3 @@
-
 import { get, post, put, buildFormData } from '@/lib/api/client'
 import type {
   AuthResponse,
@@ -8,9 +7,7 @@ import type {
 } from '@/types/authType'
 
 const AUTH_PATH = '/api/v1/auth'
-const API_BASE_URL = process.env.API_BASE_URL
-
-// ── Auth ───────────────────────────────────────────────────────────────────
+// ✅ No backend URL needed in browser at all
 
 export async function login(payload: LoginRequest): Promise<AuthResponse> {
   return post<AuthResponse>(`${AUTH_PATH}/login`, payload)
@@ -23,7 +20,7 @@ export async function logout(): Promise<void> {
 export async function getMe(): Promise<AuthResponse> {
   const res = await fetch(`${AUTH_PATH}/me`, {
     credentials: 'include',
-    cache: 'no-store',
+    cache      : 'no-store',
   })
   if (!res.ok) throw new Error('Unauthorized')
   const data = await res.json()
@@ -32,39 +29,40 @@ export async function getMe(): Promise<AuthResponse> {
 
 export async function register(
   payload: RegisterRequest,
-  profilePicture?: File
+  profilePicture?: File,
 ): Promise<void> {
   const form = buildFormData(
     payload as unknown as Record<string, unknown>,
-    { profilePicture }
+    { profilePicture },
   )
-  return post<void>(
-    `${AUTH_PATH}/register`,
-    form,
-    { multipart: true, raw: true }
-  )
+  return post<void>(`${AUTH_PATH}/register`, form, { multipart: true, raw: true })
 }
-export async function refreshToken(): Promise<void> {
+
+export async function refreshToken(): Promise<AuthResponse> {
   const res = await fetch(`${AUTH_PATH}/refresh`, {
-    method: 'POST',
+    method     : 'POST',
     credentials: 'include',
   })
   if (!res.ok) throw new Error('Refresh failed')
+  const data = await res.json()
+  return data.data
 }
 
 export async function updateProfile(
   payload: UpdateProfileRequest,
-  photo?: File
+  photo?: File,
 ): Promise<AuthResponse> {
   const form = buildFormData(
     payload as Record<string, unknown>,
-    { profilePicture: photo }
+    { profilePicture: photo },
   )
   return put<AuthResponse>(`${AUTH_PATH}/profile`, form, { multipart: true })
 }
 
+// ✅ Goes to Next.js route handler → handler reads API_BASE_URL server-side
+// Browser never sees the backend URL
 export function redirectToOAuth(provider: 'google' | 'github'): void {
-  window.location.href = `${API_BASE_URL}/oauth2/authorization/${provider}`
+  window.location.href = `/api/oauth/${provider}`
 }
 
 export async function getOAuthProviders(): Promise<string[]> {

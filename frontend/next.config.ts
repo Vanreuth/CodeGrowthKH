@@ -7,23 +7,12 @@ const nextConfig: NextConfig = {
 
   images: {
     remotePatterns: [
-      {
-        protocol: "https",
-        hostname: "pub-21ac384ecd8e4ec88d9c0d2834aa1d5f.r2.dev",
-      },
-      {
-        protocol: "http",
-        hostname: "localhost",
-        port: "8080",
-      },
-      {
-      protocol: "https",
-      hostname: "growcodekh.onrender.com", // ✅ add this
-    },
+      { protocol: "https", hostname: "pub-21ac384ecd8e4ec88d9c0d2834aa1d5f.r2.dev" },
+      { protocol: "https", hostname: "growcodekh.onrender.com" },
+      { protocol: "http",  hostname: "localhost", port: "8080" },
     ],
   },
 
-  // ✅ Proxy /api/* through Next.js → cookies stay same-domain
   async rewrites() {
     return [
       {
