@@ -24,12 +24,12 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO:validate}   # ✅ fixed typo: vilidate → validate
+      ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO:update}
     show-sql: false
     properties:
       hibernate:
         format_sql: false
-        # dialect removed — Hibernate 6 auto-detects PostgreSQL ✅
+
 
   servlet:
     multipart:
@@ -45,7 +45,7 @@ spring:
           google:
             client-id: ${GOOGLE_CLIENT_ID}
             client-secret: ${GOOGLE_CLIENT_SECRET}
-            scope: openid, profile, email
+            scope: profile, email
             redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
             authorization-grant-type: authorization_code
           github:
