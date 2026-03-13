@@ -443,15 +443,16 @@ public class CourseServiceImpl implements CourseService {
 
 
     private String generateSlug(String title) {
+        if (title == null) return "course-" + UUID.randomUUID().toString().substring(0, 8);
+
         String slug = title
                 .toLowerCase()
                 .trim()
-                .replaceAll("[^a-z0-9\\s-]", "")  // ✅ strips Khmer → keeps only "java"
+                .replaceAll("[^a-z0-9\\s\\-\u1780-\u17FF\u19E0-\u19FF]", "") // ✅ keep Khmer unicode
                 .replaceAll("\\s+", "-")
                 .replaceAll("-+", "-")
-                .replaceAll("^-|-$", "");          // trim leading/trailing hyphens
+                .replaceAll("^-|-$", "");
 
-        // Fallback if title is all Khmer (no latin at all)
         if (slug.isBlank()) {
             slug = "course-" + UUID.randomUUID().toString().substring(0, 8);
         }

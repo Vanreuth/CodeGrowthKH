@@ -29,6 +29,11 @@ public class CoursePdfGeneratorService {
     private static final String G_MUTED   = "rgba(47,141,70,0.12)";
     private static final String G_BORDER  = "rgba(47,141,70,0.25)";
 
+    // ── Lines-per-page threshold for splitting large code blocks ─────────
+    // A4 at ~8.8pt font, ~1.85 line-height ≈ 45 lines fit in one page body.
+    // We use a conservative 38 to leave room for the topbar + margins.
+    private static final int CODE_SPLIT_THRESHOLD = 38;
+
     // ── Language accent colours ──────────────────────────────────────────
     private static String langAccent(String lang) {
         if (lang == null) return G_PRIMARY;
@@ -36,6 +41,7 @@ public class CoursePdfGeneratorService {
             case "HTML"                         -> "#e44d26";
             case "CSS"                          -> "#268fe4";
             case "JS", "JAVASCRIPT"             -> "#f0a500";
+            case "JSX", "TSX", "REACT", "NEXT", "NEXTJS" -> "#61dafb";
             case "TS", "TYPESCRIPT"             -> "#3178c6";
             case "JAVA", "SPRING", "SPRINGBOOT" -> "#5382a1";
             case "PYTHON"                       -> "#3572a5";
@@ -50,6 +56,7 @@ public class CoursePdfGeneratorService {
             case "SWIFT"                        -> "#f05138";
             case "GO"                           -> "#00acd7";
             case "RUST"                         -> "#dea584";
+            case "CS", "C#", "CSHARP"          -> "#7b4fc9";
             default                             -> G_PRIMARY;
         };
     }
@@ -60,7 +67,9 @@ public class CoursePdfGeneratorService {
             case "HTML", "XML"                  -> "markup";
             case "CSS"                          -> "css";
             case "JS", "JAVASCRIPT"             -> "javascript";
+        case "JSX", "REACT", "NEXT", "NEXTJS" -> "jsx";
             case "TS", "TYPESCRIPT"             -> "typescript";
+        case "TSX"                          -> "tsx";
             case "JAVA", "SPRING", "SPRINGBOOT" -> "java";
             case "PYTHON"                       -> "python";
             case "SQL"                          -> "sql";
@@ -74,11 +83,51 @@ public class CoursePdfGeneratorService {
             case "SWIFT"                        -> "swift";
             case "GO"                           -> "go";
             case "RUST"                         -> "rust";
+            case "CS", "C#", "CSHARP"          -> "csharp";
             case "YAML", "YML"                  -> "yaml";
             case "DOCKERFILE"                   -> "docker";
             default                             -> "clike";
         };
     }
+
+        private static String normalizeLanguage(String lang, String code) {
+          String raw = lang == null ? "" : lang.trim();
+          if (raw.isEmpty()) return detectLanguageFromCode(code);
+
+          String key = raw.toUpperCase()
+              .replace("-", "")
+              .replace("_", "")
+              .replace(" ", "");
+
+          return switch (key) {
+            case "JS", "JAVASCRIPT", "NODE", "NODEJS" -> "JAVASCRIPT";
+            case "TS", "TYPESCRIPT" -> "TYPESCRIPT";
+            case "JSX", "REACT", "REACTJS", "NEXT", "NEXTJS" -> "JSX";
+            case "TSX" -> "TSX";
+            case "HTML", "HTML5", "XHTML", "XML" -> "HTML";
+            case "PY", "PYTHON" -> "PYTHON";
+            case "SHELL", "BASH", "SH", "ZSH" -> "BASH";
+            case "C#", "CS", "CSHARP" -> "CSHARP";
+            case "TXT", "TEXT", "PLAINTEXT", "CODE", "NONE", "NA", "N/A" -> detectLanguageFromCode(code);
+            default -> raw.toUpperCase();
+          };
+        }
+
+        private static String detectLanguageFromCode(String code) {
+          if (code == null || code.isBlank()) return "JAVASCRIPT";
+          String s = code.strip();
+
+          if (s.startsWith("{") || s.startsWith("[")) return "JSON";
+          if (s.contains("import React") || s.contains(" from 'react'") || s.contains("</") || s.contains("<>") || s.contains("className=")) return "JSX";
+          if (s.startsWith("<!DOCTYPE") || s.contains("<html") || s.contains("<div")) return "HTML";
+          if (s.contains("public class") || s.contains("System.out.println") || s.contains("@SpringBootApplication")) return "JAVA";
+          if (s.contains("def ") || s.contains("import pandas") || s.contains("print(")) return "PYTHON";
+          if (s.contains("SELECT ") || s.contains("INSERT INTO") || s.contains("CREATE TABLE")) return "SQL";
+          if (s.startsWith("#!/bin/bash") || s.startsWith("#!/usr/bin/env bash") || s.contains("echo ")) return "BASH";
+          if (s.contains("{") && s.contains("}") && (s.contains("=>") || s.contains("const ") || s.contains("let ") || s.contains("function "))) return "JAVASCRIPT";
+
+          return "JAVASCRIPT";
+        }
 
     // ═══════════════════════════════════════════════════════════════════
     //  PUBLIC generate()
@@ -96,10 +145,9 @@ public class CoursePdfGeneratorService {
                             .setWaitUntil(WaitUntilState.NETWORKIDLE));
 
             page.waitForFunction(
-                    "() => typeof Prism !== 'undefined' && " +
-                            "document.querySelectorAll('pre').length >= 0"
+                  "() => window.__prismDone === true"
             );
-            page.waitForTimeout(600);
+            page.waitForTimeout(1000);
 
             byte[] pdf = page.pdf(new Page.PdfOptions()
                     .setFormat("A4")
@@ -135,13 +183,17 @@ public class CoursePdfGeneratorService {
                 .append("<link rel=\"preconnect\" href=\"https://fonts.googleapis.com\">\n")
                 .append("<link rel=\"preconnect\" href=\"https://fonts.gstatic.com\" crossorigin>\n")
                 .append("<link href=\"https://fonts.googleapis.com/css2?")
+                .append("family=Noto+Sans+Khmer:wght@300;400;500;600;700")
                 .append("family=Noto+Serif+Khmer:wght@300;400;600;700")
                 .append("&family=Inter:wght@300;400;500;600;700;800;900")
                 .append("&family=JetBrains+Mono:ital,wght@0,400;0,500;0,700;1,400")
                 .append("&display=swap\" rel=\"stylesheet\">\n")
-                // ── Prism Tomorrow theme (light base, overridden below) ──
+                // Prism base: tomorrow (neutral dark) — our token !important rules win cleanly
                 .append("<link rel=\"stylesheet\" href=\"")
                 .append(PRISM_CDN).append("/themes/prism-tomorrow.min.css\">\n")
+                // Line-numbers plugin CSS
+                .append("<link rel=\"stylesheet\" href=\"")
+                .append(PRISM_CDN).append("/plugins/line-numbers/prism-line-numbers.min.css\">\n")
                 .append("<style>\n").append(css()).append("</style>\n</head>\n<body>\n");
 
         html.append(coverPage(course, level, lang, isFree, instructor, date, lessons));
@@ -153,7 +205,10 @@ public class CoursePdfGeneratorService {
 
         // ── Prism.js scripts ──────────────────────────────────────────
         html.append("\n<script src=\"").append(PRISM_CDN).append("/prism.min.js\"></script>\n")
+          .append("<script src=\"").append(PRISM_CDN).append("/components/prism-markup-templating.min.js\"></script>\n")
                 .append("<script src=\"").append(PRISM_CDN).append("/components/prism-typescript.min.js\"></script>\n")
+          .append("<script src=\"").append(PRISM_CDN).append("/components/prism-jsx.min.js\"></script>\n")
+          .append("<script src=\"").append(PRISM_CDN).append("/components/prism-tsx.min.js\"></script>\n")
                 .append("<script src=\"").append(PRISM_CDN).append("/components/prism-java.min.js\"></script>\n")
                 .append("<script src=\"").append(PRISM_CDN).append("/components/prism-python.min.js\"></script>\n")
                 .append("<script src=\"").append(PRISM_CDN).append("/components/prism-sql.min.js\"></script>\n")
@@ -167,11 +222,13 @@ public class CoursePdfGeneratorService {
                 .append("<script src=\"").append(PRISM_CDN).append("/components/prism-swift.min.js\"></script>\n")
                 .append("<script src=\"").append(PRISM_CDN).append("/components/prism-go.min.js\"></script>\n")
                 .append("<script src=\"").append(PRISM_CDN).append("/components/prism-rust.min.js\"></script>\n")
+                .append("<script src=\"").append(PRISM_CDN).append("/components/prism-csharp.min.js\"></script>\n")
                 .append("<script src=\"").append(PRISM_CDN).append("/components/prism-yaml.min.js\"></script>\n")
                 .append("<script src=\"").append(PRISM_CDN).append("/components/prism-docker.min.js\"></script>\n")
                 .append("<script src=\"").append(PRISM_CDN).append("/components/prism-graphql.min.js\"></script>\n")
                 .append("<script src=\"").append(PRISM_CDN).append("/components/prism-regex.min.js\"></script>\n")
-                .append("<script>if(typeof Prism !== 'undefined') Prism.highlightAll();</script>\n")
+                .append("<script src=\"").append(PRISM_CDN).append("/plugins/line-numbers/prism-line-numbers.min.js\"></script>\n")
+                .append("<script>window.__prismDone=false;if(typeof Prism !== 'undefined'){Prism.highlightAll();}window.__prismDone=true;</script>\n")
                 .append("</body>\n</html>");
 
         return html.toString();
@@ -469,78 +526,204 @@ public class CoursePdfGeneratorService {
     }
 
     // ═══════════════════════════════════════════════════════════════════
-    //  CODE SNIPPET  ── GFG light-blue style (matches screenshot)
+    //  CODE SNIPPET  ── Smart page-break aware rendering
+    //
+    //  Strategy:
+    //  • Short blocks (≤ CODE_SPLIT_THRESHOLD lines): wrapped in
+    //    page-break-inside:avoid so they always print whole.
+    //  • Long blocks (> CODE_SPLIT_THRESHOLD lines): split into N chunks,
+    //    each prefixed with a "continued" banner so readers know it flows.
+    //    Each chunk still gets page-break-inside:avoid within itself.
     // ═══════════════════════════════════════════════════════════════════
 
     private String snippetHtml(CodeSnippet cs) {
-        String rawLang = cs.getLanguage() != null ? cs.getLanguage().toUpperCase() : "CODE";
-        String pLang   = prismLang(cs.getLanguage());
-        String accent  = langAccent(cs.getLanguage());
+      String rawCode = cs.getCode() != null ? cs.getCode() : "";
+      String normalizedLang = normalizeLanguage(cs.getLanguage(), rawCode);
+      String rawLang = normalizedLang;
+      String pLang   = prismLang(normalizedLang);
+      String accent  = langAccent(normalizedLang);
         String title   = (cs.getTitle() != null && !cs.getTitle().isBlank())
                 ? cs.getTitle() : "ឧទាហរណ៍ / Example";
-        String codeEsc = esc(cs.getCode() != null ? cs.getCode() : "");
+
+        String[] allLines = rawCode.split("\n", -1);
+        int total = allLines.length;
 
         StringBuilder sb = new StringBuilder();
 
-        // GFG-style wrapper
-        sb.append("<div class=\"snippet\">\n");
+        if (total <= CODE_SPLIT_THRESHOLD) {
+            // ── Short block: render in one go, avoid page break inside ──
+            sb.append(renderSnippetChunk(
+                    rawLang, pLang, accent, title, esc(rawCode),
+                    1, 1, 1, total, total, false));
+        } else {
+            // ── Long block: split into pages of CODE_SPLIT_THRESHOLD lines ──
+            int chunkCount = (int) Math.ceil((double) total / CODE_SPLIT_THRESHOLD);
+            for (int c = 0; c < chunkCount; c++) {
+                int fromLine = c * CODE_SPLIT_THRESHOLD;          // 0-based
+                int toLine   = Math.min(fromLine + CODE_SPLIT_THRESHOLD, total);
 
-        // Top bar: language pill left · title center · action icons right
-        sb.append("""
-            <div class="sn-topbar">
-              <span class="sn-lang-pill" style="color:%s;border-color:%s55;">%s</span>
-              <span class="sn-topbar-title">%s</span>
-              <span class="sn-actions">
-                <span class="sn-act sn-act-close">✕</span>
-                <span class="sn-act sn-act-run">▷</span>
-                <span class="sn-act sn-act-copy">⎘</span>
-              </span>
-            </div>
-            """.formatted(accent, accent, rawLang, esc(title)));
+                String[] slice = Arrays.copyOfRange(allLines, fromLine, toLine);
+                String chunkCode = esc(String.join("\n", slice));
 
-        // Code body — light blue-gray background
-        sb.append("<div class=\"sn-body\">\n")
-                .append("<pre><code class=\"language-").append(pLang).append("\">")
-                .append(codeEsc)
-                .append("</code></pre>\n")
-                .append("</div>\n");
+                sb.append(renderSnippetChunk(
+                        rawLang, pLang, accent, title, chunkCode,
+                        c + 1, chunkCount,
+                        fromLine + 1, toLine, total,
+                        c > 0));           // showContinued banner on 2nd+ chunks
+            }
+        }
 
-        sb.append("</div>\n");
-
-        // Explanation / output below block
+        // ── Explanation / output block (attached to last snippet chunk) ──
         if (cs.getExplanation() != null && !cs.getExplanation().isBlank()) {
             String expl = cs.getExplanation().trim();
             if (expl.toLowerCase().startsWith("output:")
                     || expl.toLowerCase().startsWith("output :")) {
                 String out = expl.replaceFirst("(?i)output\\s*:\\s*", "");
                 sb.append("""
-                    <div class="out-block">
+                    <div class="out-block" style="page-break-inside:avoid;">
                       <div class="out-lbl">▶&nbsp; Output</div>
                       <div class="out-body">%s</div>
                     </div>
                     """.formatted(esc(out)));
             } else {
                 sb.append("""
-                    <div class="note-block">
+                    <div class="note-block" style="page-break-inside:avoid;">
                       <span class="note-icon">💡</span>
                       <span class="note-text">%s</span>
                     </div>
                     """.formatted(esc(expl)));
             }
         }
+
         return sb.toString();
     }
 
+    /**
+     * Renders one visual chunk of a code snippet.
+     *
+     * @param rawLang      display language name (e.g. "JAVA")
+     * @param pLang        Prism language slug
+     * @param accent       hex accent colour
+     * @param title        snippet title
+     * @param escapedCode  HTML-escaped code text for this chunk
+     * @param chunkNum     1-based chunk index
+     * @param chunkTotal   total number of chunks
+     * @param fromLine     1-based first line number of this chunk
+     * @param toLine       1-based last line number of this chunk
+     * @param totalLines   total lines across all chunks
+     * @param showContinued whether to render a "continued" banner at the top
+     */
+    private String renderSnippetChunk(String rawLang, String pLang, String accent,
+                                      String title, String escapedCode,
+                                      int chunkNum, int chunkTotal,
+                                      int fromLine, int toLine, int totalLines,
+                                      boolean showContinued) {
+
+        boolean isFirst = chunkNum == 1;
+        boolean isLast  = chunkNum == chunkTotal;
+        boolean isMulti = chunkTotal > 1;
+
+        // Border-radius: round top corners only on first chunk, bottom only on last
+        String borderRadius;
+        if (!isMulti) {
+            borderRadius = "8px";
+        } else if (isFirst) {
+            borderRadius = "8px 8px 0 0";
+        } else if (isLast) {
+            borderRadius = "0 0 8px 8px";
+        } else {
+            borderRadius = "0";
+        }
+
+        // Margin between chunks
+        String marginTop = isFirst ? "12px" : "0";
+
+        // "continued" header shown on 2nd+ chunks
+        String continuedBanner = showContinued
+                ? """
+                  <div class="sn-continued">
+                    <span class="sn-cont-icon">↳</span>
+                    <span class="sn-cont-label">%s&nbsp;<span class="sn-cont-sub">continued (lines %d – %d of %d)</span></span>
+                  </div>
+                  """.formatted(esc(title), fromLine, toLine, totalLines)
+                : "";
+
+        // Top bar: only on first chunk (includes mac dots + lang pill)
+        String topBar = isFirst
+                ? """
+                  <div class="sn-topbar">
+                    <span class="sn-mac-dots">
+                      <span class="sn-dot-r"></span>
+                      <span class="sn-dot-y"></span>
+                      <span class="sn-dot-g"></span>
+                    </span>
+                    <span class="sn-lang-pill" style="color:%s;border-color:%s55;background:%s18;">%s</span>
+                    <span class="sn-topbar-title">%s</span>
+                    %s
+                  </div>
+                  """.formatted(
+                accent, accent, accent, rawLang, esc(title),
+                isMulti ? "<span class=\"sn-line-count\">%d lines total</span>".formatted(totalLines) : "")
+                : "";
+
+        // Line-range indicator on non-first chunks (subtle, in the code body header)
+        String lineRangeBar = (!isFirst)
+                ? """
+                  <div class="sn-linerange">Lines %d – %d</div>
+                  """.formatted(fromLine, toLine)
+                : "";
+
+        // Bottom connector bar shown between chunks (not on last)
+        String connectorBar = (!isLast)
+                ? "<div class=\"sn-connector\"></div>"
+                : "";
+
+        return """
+            <div class="snippet" style="
+              margin-top:%s;
+              border-radius:%s;
+              border-left:3px solid %s;
+              background:#0d1117;
+              page-break-inside:avoid;
+              %s
+            ">
+              %s
+              %s
+              <div class="sn-body">
+                %s
+                <pre class="line-numbers" data-start="%d"><code class="language-%s">%s</code></pre>
+              </div>
+            </div>%s
+            """.formatted(
+                marginTop,
+                borderRadius,
+                accent,
+                (!isLast && isMulti) ? "border-bottom:none;" : "",
+                continuedBanner,
+                topBar,
+                lineRangeBar,
+                fromLine,   // data-start so line numbers are correct on continued chunks
+                pLang,
+                escapedCode,
+                connectorBar);
+    }
+
     // ═══════════════════════════════════════════════════════════════════
-    //  CSS  ── Light page + Darcula code blocks
+    //  CSS  ── Light page + Darcula code blocks + page-break rules
     // ═══════════════════════════════════════════════════════════════════
 
     private String css() {
         return """
             *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+            :root {
+              --font-kh: 'Noto Sans Khmer', 'Noto Serif Khmer', serif;
+              --font-en: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
+              --font-code: 'JetBrains Mono', 'Noto Sans Khmer', 'Noto Serif Khmer', 'Fira Code', Consolas, 'Courier New', monospace;
+            }
+
             body {
-              font-family: 'Noto Serif Khmer', 'Inter', sans-serif;
+              font-family: var(--font-kh), var(--font-en);
               font-size: 11pt; color: #1e293b;
               background: #f8f9fa;
               -webkit-print-color-adjust: exact; print-color-adjust: exact;
@@ -550,6 +733,22 @@ public class CoursePdfGeneratorService {
             /* ─────── Layout ─────── */
             .page { width: 210mm; min-height: 297mm; page-break-after: always; overflow: hidden; display: flex; flex-direction: column; }
             .page:last-child { page-break-after: avoid; }
+
+            /* ── Global print page-break rules ── */
+            /* Lessons try to keep their header + first content together */
+            .lesson        { page-break-inside: auto; }
+            .ls-header     { page-break-after: avoid; page-break-inside: avoid; }
+            /* Content paragraphs and lists flow normally but avoid orphan breaks */
+            .ls-body p     { orphans: 3; widows: 3; }
+            .ls-body ul    { page-break-inside: avoid; }
+            /* Chapter banner always starts on a new line but never breaks mid-banner */
+            .ch-banner     { page-break-inside: avoid; page-break-after: avoid; }
+            /* TOC rows should not break mid-entry */
+            .toc-chapter   { page-break-inside: avoid; }
+            .toc-lesson    { page-break-inside: avoid; }
+            /* Note and output blocks stay together */
+            .note-block    { page-break-inside: avoid; }
+            .out-block     { page-break-inside: avoid; }
 
             /* ════════════════════════════════════════════
                COVER PAGE
@@ -724,6 +923,15 @@ public class CoursePdfGeneratorService {
               padding: 8px 16px; font-size: 12pt; font-weight: 700; color: #14532d; flex: 1; line-height: 1.7;
             }
             .ls-body { font-size: 10.5pt; line-height: 2.1; color: #334155; margin-bottom: 10px; }
+            .ls-body,
+            .ls-body p,
+            .ls-body li,
+            .ch-desc,
+            .toc-ls-title,
+            .cv-desc,
+            .note-text {
+              font-family: var(--font-kh), var(--font-en);
+            }
             .ls-body p  { margin-bottom: 10px; }
             .ls-body ul { padding-left: 22px; margin-bottom: 10px; }
             .ls-body li { margin-bottom: 4px; line-height: 2; list-style: none; padding-left: 4px; position: relative; }
@@ -732,8 +940,6 @@ public class CoursePdfGeneratorService {
 
             /* ════════════════════════════════════════════
                CODE SNIPPET  ── GFG light-blue style
-               Matches: pale blue-gray body, darker top bar,
-               dark navy keywords, red strings, action icons
             ════════════════════════════════════════════ */
 
             .snippet {
@@ -742,98 +948,269 @@ public class CoursePdfGeneratorService {
               overflow: hidden;
               border: 1px solid #c8d8e8;
               box-shadow: 0 2px 8px rgba(0,0,0,.08);
+              /* Each .snippet chunk has page-break-inside:avoid set inline */
             }
 
-            /* Top bar — slightly darker than code body */
+            /* ════════════════════════════════════════════
+               CODE SNIPPET  ── Tokyo Night dark theme
+               Deep navy bg · vibrant semantic token colours
+               Mirrors the web CodeBlock theme exactly.
+            ════════════════════════════════════════════ */
+
+            /* ── Outer wrapper ── */
+            .snippet {
+              /* border, radius, margin come from inline style (chunk-aware) */
+              overflow: hidden;
+              border: 1px solid rgba(255,255,255,0.08);
+              box-shadow: 0 4px 18px rgba(0,0,0,.45);
+            }
+
+            /* ── "Continued" banner: shown on 2nd+ chunks ── */
+            .sn-continued {
+              display: flex; align-items: center; gap: 8px;
+              background: #1a1f35; border-bottom: 1px solid rgba(255,255,255,0.07);
+              padding: 5px 14px;
+              font-family: 'Inter', sans-serif; font-size: 7.5pt;
+            }
+            .sn-cont-icon  { color: #7dcfff; font-weight: 800; font-size: 9pt; }
+            .sn-cont-label { color: #9aa5ce; font-weight: 600; }
+            .sn-cont-sub   { color: #565f89; font-weight: 400; font-style: italic; }
+
+            /* ── Line range indicator ── */
+            .sn-linerange {
+              font-family: 'JetBrains Mono', 'Courier New', monospace;
+              font-size: 7pt; font-weight: 600;
+              color: #3d4255; background: #0d1117;
+              padding: 2px 16px; border-bottom: 1px solid rgba(255,255,255,0.04);
+              letter-spacing: .04em;
+            }
+
+            /* ── Line count badge in topbar ── */
+            .sn-line-count {
+              margin-left: auto;
+              font-family: 'JetBrains Mono', 'Courier New', monospace;
+              font-size: 7pt; color: #565f89;
+              background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.10);
+              padding: 1px 8px; border-radius: 10px;
+            }
+
+            /* ── Connector dashes between chunks ── */
+            .sn-connector {
+              height: 3px;
+              background: repeating-linear-gradient(
+                90deg, rgba(122,162,247,0.25) 0px, rgba(122,162,247,0.25) 5px,
+                transparent 5px, transparent 11px
+              );
+            }
+
+            /* ── Top bar (first chunk only) ── */
             .sn-topbar {
               display: flex;
               align-items: center;
               gap: 10px;
-              background: #dce8f4;
-              border-bottom: 1px solid #c0d4e8;
-              padding: 7px 14px;
-              min-height: 36px;
+              /* Three-stop dark header — just slightly lighter than code body */
+              background: #161b22;
+              border-bottom: 1px solid rgba(255,255,255,0.06);
+              padding: 8px 16px;
+              min-height: 38px;
             }
 
-            /* Language pill */
+            /* ── Traffic-light dots ── */
+            .sn-mac-dots {
+              display: flex; gap: 5px; align-items: center; flex-shrink: 0; margin-right: 4px;
+            }
+            .sn-dot-r { width: 10px; height: 10px; border-radius: 50%; background: #ff5f57; }
+            .sn-dot-y { width: 10px; height: 10px; border-radius: 50%; background: #ffbd2e; }
+            .sn-dot-g { width: 10px; height: 10px; border-radius: 50%; background: #28c840; }
+
+            /* ── Language pill ── */
             .sn-lang-pill {
               font-family: 'Inter', sans-serif;
-              font-size: 7pt;
+              font-size: 6.5pt;
               font-weight: 800;
-              letter-spacing: .08em;
+              letter-spacing: .09em;
               text-transform: uppercase;
-              padding: 2px 9px;
+              padding: 2px 8px;
               border-radius: 20px;
               border: 1px solid;
-              background: rgba(255,255,255,.55);
+              white-space: nowrap;
+              /* colour / border set by inline style from langAccent() */
+            }
+
+            /* ── Snippet title ── */
+            .sn-topbar-title {
+              font-family: var(--font-code);
+              font-size: 7.5pt;
+              font-weight: 400;
+              color: #565f89;
+              flex: 1;
+              overflow: hidden;
+              text-overflow: ellipsis;
               white-space: nowrap;
             }
 
-            /* Title */
-            .sn-topbar-title {
-              font-family: 'Inter', sans-serif;
-              font-size: 8pt;
-              font-weight: 500;
-              color: #3d5a7a;
-              flex: 1;
-            }
-
-            /* Action icons — ✕ ▷ ⎘ */
-            .sn-actions {
-              display: flex;
-              align-items: center;
-              gap: 8px;
-            }
-            .sn-act {
-              font-size: 9pt;
-              color: #7a9bbb;
-              background: rgba(255,255,255,.6);
-              border: 1px solid #b0c8de;
-              border-radius: 4px;
-              padding: 1px 6px;
-              line-height: 1.6;
-              font-family: 'Inter', sans-serif;
-            }
-            .sn-act-run  { color: #2f8d46; border-color: #8fccaa; }
-            .sn-act-copy { color: #5382a1; border-color: #9bbdd4; }
-
-            /* Code body — light blue-gray, GFG signature */
+            /* ── Code body — deep GitHub-dark navy ── */
             .sn-body {
-              background: #eef4fb;
+              background: #0d1117;
               padding: 0;
             }
 
             .sn-body pre[class*="language-"] {
               margin: 0 !important;
               border-radius: 0 !important;
-              font-family: 'JetBrains Mono', 'Courier New', monospace !important;
-              font-size: 8.8pt !important;
-              line-height: 1.85 !important;
-              padding: 16px 20px !important;
-              background: #eef4fb !important;
+              font-family: var(--font-code) !important;
+              font-size: 8.5pt !important;
+              line-height: 1.9 !important;
+              padding: 14px 20px !important;
+              background: #0d1117 !important;
               border: none !important;
-              color: #1a1a2e !important;
+              color: #c0caf5 !important;
+              white-space: pre-wrap !important;
+              word-break: break-all !important;
+              overflow-x: hidden !important;
             }
 
-            /* GFG light-theme token colors — match screenshot */
-            .sn-body .token.keyword      { color: #0033b3 !important; font-weight: 600 !important; }
-            .sn-body .token.builtin      { color: #0033b3 !important; font-weight: 600 !important; }
-            .sn-body .token.class-name   { color: #1a1a2e !important; font-weight: 600 !important; }
-            .sn-body .token.function     { color: #00627a !important; }
-            .sn-body .token.string       { color: #067d17 !important; }
-            .sn-body .token.number       { color: #1750eb !important; }
-            .sn-body .token.boolean      { color: #0033b3 !important; }
-            .sn-body .token.comment      { color: #8c8c8c !important; font-style: italic !important; }
-            .sn-body .token.operator     { color: #1a1a2e !important; }
-            .sn-body .token.punctuation  { color: #1a1a2e !important; }
-            .sn-body .token.variable     { color: #1a1a2e !important; }
-            .sn-body .token.property     { color: #871094 !important; }
-            .sn-body .token.annotation   { color: #808000 !important; }
-            .sn-body .token.attr-name    { color: #0033b3 !important; }
-            .sn-body .token.attr-value   { color: #067d17 !important; }
-            .sn-body .token.tag          { color: #0033b3 !important; }
-            .sn-body .token.selector     { color: #871094 !important; }
-            .sn-body code                { color: #1a1a2e !important; background: none !important; }
+            /*
+             * ══════════════════════════════════════════════════════════
+             *  TOKEN COLOURS — Tokyo Night palette
+             *  Rules use maximum specificity so they beat prism-tomorrow.
+             *  Semantic map:
+             *    keyword    #bb9af7  violet-pink   control flow
+             *    class-name #7dcfff  sky blue      types / classes
+             *    function   #9ece6a  chartreuse    callables
+             *    string     #e0af68  apricot       string literals
+             *    number     #2ac3de  cyan-mint     numeric literals
+             *    boolean    #f7768e  rose-pink     bool / null / const
+             *    comment    #565f89  steel-muted   recedes
+             *    operator   #89b4fa  lavender      structural glue
+             *    property   #73daca  sea-foam      object members
+             *    annotation #e0af68  amber         decorators / meta
+             *    tag        #f7768e  coral-pink    HTML/JSX tags
+             *    attr-name  #7aa2f7  powder blue   HTML attribute keys
+             *    attr-value #9ece6a  warm green    HTML attribute values
+             *    regex      #ff9e64  orange        patterns / URLs
+             *    selector   #bb9af7  violet        CSS selectors
+             * ══════════════════════════════════════════════════════════
+             */
+
+            /* ── Base code text ── */
+            .sn-body pre[class*="language-"],
+            .sn-body pre[class*="language-"] code,
+            .sn-body code[class*="language-"] {
+              color: #c0caf5 !important;
+              background: #0d1117 !important;
+              text-shadow: none !important;
+            }
+
+            /* Ensure plain, un-tokenized snippets still read with high contrast */
+            .sn-body code[class*="language-"]:not([class*="language-none"]) {
+              color: #c0caf5 !important;
+            }
+
+            /* ── Line-numbers gutter ── */
+            .sn-body pre.line-numbers {
+              padding-left: 3.5em !important;
+              position: relative;
+            }
+            .sn-body .line-numbers .line-numbers-rows {
+              border-right: 1px solid rgba(255,255,255,0.06) !important;
+              top: 0 !important;
+            }
+            .sn-body .line-numbers-rows > span:before {
+              color: #3d4255 !important;
+              font-size: 8pt !important;
+            }
+
+            /* ── Punctuation ── */
+            .sn-body .token.punctuation           { color: #9aa5ce !important; }
+
+            /* ── Keywords ── */
+            .sn-body .token.keyword               { color: #bb9af7 !important; font-weight: 600 !important; }
+            .sn-body .token.important             { color: #bb9af7 !important; font-weight: 700 !important; }
+            .sn-body .token.atrule                { color: #bb9af7 !important; }
+            .sn-body .token.rule                  { color: #73daca !important; }
+
+            /* ── Types / class names ── */
+            .sn-body .token.class-name            { color: #7dcfff !important; font-weight: 600 !important; }
+            .sn-body .token.builtin               { color: #7dcfff !important; }
+            .sn-body .token.maybe-class-name      { color: #7dcfff !important; }
+            .sn-body .token.type                  { color: #7dcfff !important; }
+
+            /* ── Functions ── */
+            .sn-body .token.function              { color: #9ece6a !important; }
+            .sn-body .token.function-variable     { color: #9ece6a !important; }
+            .sn-body .token.method                { color: #9ece6a !important; }
+
+            /* ── Strings ── */
+            .sn-body .token.string                { color: #e0af68 !important; }
+            .sn-body .token.char                  { color: #e0af68 !important; }
+            .sn-body .token.template-string       { color: #e0af68 !important; }
+            .sn-body .token.template-punctuation  { color: #9aa5ce !important; }
+
+            /* ── Numbers ── */
+            .sn-body .token.number                { color: #2ac3de !important; }
+
+            /* ── Booleans / null / constants ── */
+            .sn-body .token.boolean               { color: #f7768e !important; }
+            .sn-body .token.constant              { color: #f7768e !important; }
+            .sn-body .token.null                  { color: #f7768e !important; }
+            .sn-body .token.undefined             { color: #f7768e !important; }
+            .sn-body .token.symbol                { color: #f7768e !important; }
+
+            /* ── Comments ── */
+            .sn-body .token.comment               { color: #565f89 !important; font-style: italic !important; }
+            .sn-body .token.prolog                { color: #565f89 !important; }
+            .sn-body .token.doctype               { color: #565f89 !important; }
+            .sn-body .token.cdata                 { color: #565f89 !important; }
+
+            /* ── Operators ── */
+            .sn-body .token.operator              { color: #89b4fa !important; }
+            .sn-body .token.arrow                 { color: #89b4fa !important; }
+
+            /* ── Properties / keys ── */
+            .sn-body .token.property              { color: #73daca !important; }
+            .sn-body .token.property-access       { color: #73daca !important; }
+
+            /* ── Annotations / decorators ── */
+            .sn-body .token.annotation            { color: #e0af68 !important; }
+            .sn-body .token.decorator             { color: #e0af68 !important; }
+
+            /* ── Variables ── */
+            .sn-body .token.variable              { color: #c0caf5 !important; }
+            .sn-body .token.parameter             { color: #c0caf5 !important; }
+
+            /* ── HTML/JSX tags ── */
+            .sn-body .token.tag                   { color: #f7768e !important; }
+            .sn-body .token.tag .token.punctuation { color: #9aa5ce !important; }
+
+            /* ── HTML attribute names ── */
+            .sn-body .token.attr-name             { color: #7aa2f7 !important; }
+
+            /* ── HTML attribute values ── */
+            .sn-body .token.attr-value            { color: #9ece6a !important; }
+            .sn-body .token.attr-value .token.punctuation { color: #9aa5ce !important; }
+
+            /* ── Regex / URL ── */
+            .sn-body .token.regex                 { color: #ff9e64 !important; }
+            .sn-body .token.url                   { color: #ff9e64 !important; }
+
+            /* ── CSS selectors ── */
+            .sn-body .token.selector              { color: #bb9af7 !important; }
+
+            /* ── Diff colors ── */
+            .sn-body .token.inserted              { color: #9ece6a !important; }
+            .sn-body .token.deleted               { color: #f7768e !important; }
+
+            /* ── Namespace (fade slightly) ── */
+            .sn-body .token.namespace             { opacity: 0.75; }
+
+            /* Khmer + English friendly rendering inside highlighted code */
+            .sn-body .token,
+            .sn-body code,
+            .sn-body pre {
+              font-family: var(--font-code) !important;
+              font-variant-ligatures: common-ligatures;
+            }
 
             /* ════════════════════════════════════════════
                NOTE / OUTPUT
@@ -856,8 +1233,9 @@ public class CoursePdfGeneratorService {
             .out-body {
               background: #f0f7f0; border: 1px solid #c8e0c8; border-top: none;
               padding: 12px 18px;
-              font-family: 'JetBrains Mono', 'Courier New', monospace;
-              font-size: 8.5pt; color: #1a3a1a; line-height: 1.8; white-space: pre;
+              font-family: var(--font-code);
+              font-size: 8.5pt; color: #1a3a1a; line-height: 1.8;
+              white-space: pre-wrap; word-break: break-word;
             }
             """;
     }

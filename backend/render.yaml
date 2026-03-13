@@ -72,6 +72,10 @@ services:
         value: 10MB
       - key: MAX_REQUEST_SIZE
         value: 20MB
+      - key: COOKIE_SECURE
+        value: "true"
+      - key: COOKIE_SAME_SITE
+        value: None
       - key: LOG_LEVEL_ROOT
         value: WARN
       - key: LOG_LEVEL_APP

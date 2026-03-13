@@ -179,7 +179,7 @@ public class LessonServiceImpl implements LessonService {
     private String toSlug(String title) {
         if (title == null) return "";
         return title.toLowerCase().trim()
-                .replaceAll("[^a-z0-9\\s-]", "")
+                .replaceAll("[^a-z0-9\\s\\-\u1780-\u17FF\u19E0-\u19FF]", "") // ✅ keep Khmer
                 .replaceAll("\\s+", "-")
                 .replaceAll("-{2,}", "-")
                 .replaceAll("^-|-$", "");
