@@ -43,7 +43,7 @@ export default function CourseLessonPage() {
 
     if (/\.asp$/i.test(rawLessonParam)) {
       const canonicalLesson = lessonFromPath;
-      const canonical = `/${encodeURIComponent(courseSlug)}/${encodeURIComponent(canonicalLesson)}`;
+      const canonical = `/courses/${encodeURIComponent(courseSlug)}/${encodeURIComponent(canonicalLesson)}`;
       if (pathname !== canonical) {
         router.replace(canonical, { scroll: false });
       }

@@ -131,7 +131,7 @@ export function CourseCard({
                     className="mt-4 w-full text-white shadow-sm"
                     style={{ background: '#2f8d46' }}
                 >
-                    <Link href={`/${course.slug}`}>
+                    <Link href={`/courses/${course.slug}`}>
                         {isFree ? "ចូលរៀនឥតគិតថ្លៃ" : "មើលវគ្គសិក្សា"}
                     </Link>
                 </Button>

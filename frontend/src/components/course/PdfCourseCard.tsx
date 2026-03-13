@@ -129,7 +129,7 @@ export function PdfCourseCard({
                   <Download className="mr-2 h-4 w-4" />
               )}
 
-              {hasPdf ? "ទាញយក PDF" : "បង្កើត + ទាញយក"}
+              {hasPdf ? "ទាញយក PDF" : "ទាញយក"}
             </Button>
 
             <Button

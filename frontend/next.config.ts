@@ -27,6 +27,21 @@ const nextConfig: NextConfig = {
     ],
   },
 
+//   async redirects() {
+//   return [
+//     {
+//       source: "/:slug(...).+)",
+//       destination: "/courses/:slug",
+//       permanent: true,
+//     },
+//     {
+//       source: "/:slug(...)/:lesson",
+//       destination: "/courses/:slug/:lesson",
+//       permanent: true,
+//     },
+//   ];
+// },
+
 };
 
 export default nextConfig;

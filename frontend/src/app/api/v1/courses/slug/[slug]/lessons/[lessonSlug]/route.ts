@@ -1,7 +1,4 @@
-/**
- * GET /api/v1/courses/slug/[slug]/lessons/[lessonSlug]
- * Proxies to Spring Boot — returns full lesson including codeSnippets.
- */
+
 import { NextRequest } from 'next/server'
 import { proxyToBackend } from '@/lib/proxy'
 
