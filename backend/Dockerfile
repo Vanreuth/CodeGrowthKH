@@ -1,12 +1,17 @@
 # ---------- Build Stage ----------
 FROM maven:3.9-eclipse-temurin-21 AS build
 WORKDIR /app
+ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
 
 COPY pom.xml .
 RUN mvn -q -e -B dependency:go-offline
 
 COPY src ./src
 RUN mvn -q -e -B clean package -DskipTests
+RUN mvn -q -e -B org.codehaus.mojo:exec-maven-plugin:3.5.0:java \
+    -Dexec.classpathScope=runtime \
+    -Dexec.mainClass=com.microsoft.playwright.CLI \
+    -Dexec.args="install chromium"
 
 # ---------- Runtime Stage ----------
 FROM eclipse-temurin:21-jre-jammy
@@ -26,22 +31,18 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Create app user
 RUN useradd -ms /bin/bash app
 
-# Copy jar BEFORE switching user (needed for Playwright CLI extraction)
+# Copy application jar and preinstalled Playwright browsers
 COPY --from=build /app/target/*.jar app.jar
-RUN chown app:app app.jar
+COPY --from=build /ms-playwright /home/app/.cache/ms-playwright
 
 # Set Playwright browser path
 ENV PLAYWRIGHT_BROWSERS_PATH=/home/app/.cache/ms-playwright
-
-# Install Playwright Chromium as app user
-USER app
-RUN mkdir -p /home/app/.cache/ms-playwright
-
-RUN java -cp app.jar \
-    -DPLAYWRIGHT_BROWSERS_PATH=/home/app/.cache/ms-playwright \
-    com.microsoft.playwright.CLI install chromium
-
 ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
+
+RUN chown -R app:app /app /home/app/.cache/ms-playwright
+
+# Run as non-root after all filesystem setup is complete
+USER app
 
 EXPOSE 8080
 
