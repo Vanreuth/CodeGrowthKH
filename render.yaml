@@ -28,9 +28,7 @@ services:
         value: prod
 
       - key: DB_URL
-        fromDatabase:
-          name: growcodekh-db
-          property: connectionString
+        value: jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}
       - key: DB_USERNAME
         fromDatabase:
           name: growcodekh-db
