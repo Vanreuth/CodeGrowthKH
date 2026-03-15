@@ -164,7 +164,7 @@ export const testimonials = [
     name: "Sophea Rin",
     role: "អ្នកអភិវឌ្ឍន៍ Frontend ថ្មី",
     avatar: "SR",
-    text: "ADUTI Learning បានជួយឲ្យខ្ញុំយល់ React ក្នុងរយៈពេលខ្លី។ មេរៀនជាភាសាខ្មែរ ងាយស្រួលអាន និងអនុវត្តតាមបានពិត។",
+    text: "CodeGrowthKH បានជួយឲ្យខ្ញុំយល់ React ក្នុងរយៈពេលខ្លី។ មេរៀនជាភាសាខ្មែរ ងាយស្រួលអាន និងអនុវត្តតាមបានពិត។",
     stars: 5,
   },
   {

@@ -1,11 +1,8 @@
 package finalproject.backend.config;
 
-import com.microsoft.playwright.BrowserType;
-import com.microsoft.playwright.Playwright;
 import finalproject.backend.modal.*;
 import finalproject.backend.repository.*;
 import finalproject.backend.util.RoleUtil;
-import jakarta.annotation.PostConstruct;
 import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -100,7 +97,7 @@ public class DataInitializer implements CommandLineRunner {
                 () -> {
                     userRepository.save(User.builder()
                             .username("admin")
-                            .email("admin@growcodekh.site")
+                            .email("admin@codegrowthkh.site")
                             .password(encodedPassword)
                             .status("ACTIVE")
                             .roles(adminRoles)       // ✅ mutable set
@@ -119,7 +116,7 @@ public class DataInitializer implements CommandLineRunner {
 
         userRepository.findByUsername("instructor").ifPresentOrElse(
                 instructor -> {
-                    instructor.setEmail("instructor@growcodekh.site");
+                    instructor.setEmail("instructor@codegrowthkh.site");
                     instructor.setPassword(encodedPassword);
                     instructor.setStatus("ACTIVE");
                     instructor.setRoles(instructorRoles);
@@ -129,7 +126,7 @@ public class DataInitializer implements CommandLineRunner {
                 () -> {
                     userRepository.save(User.builder()
                             .username("instructor")
-                            .email("instructor@growcodekh.site")
+                            .email("instructor@codegrowthkh.site")
                             .password(encodedPassword)
                             .status("ACTIVE")
                             .roles(instructorRoles)

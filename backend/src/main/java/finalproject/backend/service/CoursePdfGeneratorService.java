@@ -8,9 +8,9 @@ import finalproject.backend.modal.Chapter;
 import finalproject.backend.modal.CodeSnippet;
 import finalproject.backend.modal.Course;
 import finalproject.backend.modal.Lesson;
-import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
 
 import java.net.URI;
@@ -28,11 +28,11 @@ import java.util.List;
  * Generates course PDFs via Playwright (headless Chromium).
  *
  * ── Speed optimisations ────────────────────────────────────────────────
- *  1. SINGLETON BROWSER  — injected from PlaywrightConfig; Chromium starts
- *     once at app boot, not once per request.  Saves ~1.5 s / call.
+ *  1. SINGLETON BROWSER  — injected from PlaywrightConfig and created lazily
+ *     on first PDF request, not during web-service startup.
  *
- *  2. INLINED PRISM BUNDLE — all Prism JS fetched once at @PostConstruct,
- *     embedded as a single <script> block.  Saves ~600–900 ms / call.
+ *  2. INLINED PRISM BUNDLE — Prism assets fetched once on the first PDF
+ *     request and embedded as a single <script> block. Saves ~600–900 ms / call.
  *
  *  3. INLINED PRISM CSS — theme + line-numbers CSS embedded in <style>.
  *     Saves 2 CDN round-trips per request.
@@ -48,10 +48,10 @@ import java.util.List;
 @RequiredArgsConstructor
 public class CoursePdfGeneratorService {
 
-    // ── Injected singleton browser (from PlaywrightConfig) ───────────────
-    private final Browser browser;
+    // ── Injected singleton browser provider (from PlaywrightConfig) ───────
+    private final ObjectProvider<Browser> browserProvider;
 
-    // ── CDN base (used only at startup to pre-fetch assets) ──────────────
+    // ── CDN base (used on first PDF request to pre-fetch assets) ─────────
     private static final String PRISM_CDN =
             "https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0";
 
@@ -62,65 +62,79 @@ public class CoursePdfGeneratorService {
     // ── Code-block split threshold ────────────────────────────────────────
     private static final int CODE_SPLIT_THRESHOLD = 38;
 
-    // ── Pre-fetched assets (populated once at startup) ────────────────────
+    // ── Pre-fetched assets (populated once on first use) ──────────────────
     private String prismBundle         = "";
     private String prismThemeCss       = "";
     private String prismLineNumbersCss = "";
+    private final Object prismLock = new Object();
+    private volatile boolean prismAssetsLoaded;
 
     // ── GFG Green palette ─────────────────────────────────────────────────
     private static final String G_PRIMARY = "#2f8d46";
 
     // ═══════════════════════════════════════════════════════════════════
-    //  STARTUP — fetch Prism assets once, inline them forever after
+    //  PRISM ASSETS — fetch once, inline them forever after
     // ═══════════════════════════════════════════════════════════════════
 
-    @PostConstruct
-    void warmUp() {
-        log.info("⚡ Pre-fetching Prism assets …");
-        long t0 = System.currentTimeMillis();
-
-        HttpClient http = HttpClient.newBuilder()
-                .connectTimeout(Duration.ofSeconds(10))
-                .build();
-
-        prismThemeCss       = fetchText(http, PRISM_CDN + "/themes/prism-tomorrow.min.css");
-        prismLineNumbersCss = fetchText(http, PRISM_CDN + "/plugins/line-numbers/prism-line-numbers.min.css");
-
-        List<String> jsUrls = List.of(
-                PRISM_CDN + "/prism.min.js",
-                PRISM_CDN + "/components/prism-markup-templating.min.js",
-                PRISM_CDN + "/components/prism-typescript.min.js",
-                PRISM_CDN + "/components/prism-jsx.min.js",
-                PRISM_CDN + "/components/prism-tsx.min.js",
-                PRISM_CDN + "/components/prism-java.min.js",
-                PRISM_CDN + "/components/prism-python.min.js",
-                PRISM_CDN + "/components/prism-sql.min.js",
-                PRISM_CDN + "/components/prism-bash.min.js",
-                PRISM_CDN + "/components/prism-json.min.js",
-                PRISM_CDN + "/components/prism-kotlin.min.js",
-                PRISM_CDN + "/components/prism-dart.min.js",
-                PRISM_CDN + "/components/prism-php.min.js",
-                PRISM_CDN + "/components/prism-c.min.js",
-                PRISM_CDN + "/components/prism-cpp.min.js",
-                PRISM_CDN + "/components/prism-swift.min.js",
-                PRISM_CDN + "/components/prism-go.min.js",
-                PRISM_CDN + "/components/prism-rust.min.js",
-                PRISM_CDN + "/components/prism-csharp.min.js",
-                PRISM_CDN + "/components/prism-yaml.min.js",
-                PRISM_CDN + "/components/prism-docker.min.js",
-                PRISM_CDN + "/components/prism-graphql.min.js",
-                PRISM_CDN + "/plugins/line-numbers/prism-line-numbers.min.js"
-        );
-
-        StringBuilder sb = new StringBuilder();
-        for (String url : jsUrls) {
-            String js = fetchText(http, url);
-            if (!js.isEmpty()) sb.append(js).append('\n');
+    private void ensurePrismAssetsLoaded() {
+        if (prismAssetsLoaded) {
+            return;
         }
-        prismBundle = sb.toString();
 
-        log.info("✅ Prism ready — {} KB in {} ms",
-                prismBundle.length() / 1024, System.currentTimeMillis() - t0);
+        synchronized (prismLock) {
+            if (prismAssetsLoaded) {
+                return;
+            }
+
+            log.info("⚡ Loading Prism assets on first PDF request …");
+            long t0 = System.currentTimeMillis();
+
+            HttpClient http = HttpClient.newBuilder()
+                    .connectTimeout(Duration.ofSeconds(10))
+                    .build();
+
+            prismThemeCss = fetchText(http, PRISM_CDN + "/themes/prism-tomorrow.min.css");
+            prismLineNumbersCss = fetchText(http, PRISM_CDN + "/plugins/line-numbers/prism-line-numbers.min.css");
+
+            List<String> jsUrls = List.of(
+                    PRISM_CDN + "/prism.min.js",
+                    PRISM_CDN + "/components/prism-markup-templating.min.js",
+                    PRISM_CDN + "/components/prism-typescript.min.js",
+                    PRISM_CDN + "/components/prism-jsx.min.js",
+                    PRISM_CDN + "/components/prism-tsx.min.js",
+                    PRISM_CDN + "/components/prism-java.min.js",
+                    PRISM_CDN + "/components/prism-python.min.js",
+                    PRISM_CDN + "/components/prism-sql.min.js",
+                    PRISM_CDN + "/components/prism-bash.min.js",
+                    PRISM_CDN + "/components/prism-json.min.js",
+                    PRISM_CDN + "/components/prism-kotlin.min.js",
+                    PRISM_CDN + "/components/prism-dart.min.js",
+                    PRISM_CDN + "/components/prism-php.min.js",
+                    PRISM_CDN + "/components/prism-c.min.js",
+                    PRISM_CDN + "/components/prism-cpp.min.js",
+                    PRISM_CDN + "/components/prism-swift.min.js",
+                    PRISM_CDN + "/components/prism-go.min.js",
+                    PRISM_CDN + "/components/prism-rust.min.js",
+                    PRISM_CDN + "/components/prism-csharp.min.js",
+                    PRISM_CDN + "/components/prism-yaml.min.js",
+                    PRISM_CDN + "/components/prism-docker.min.js",
+                    PRISM_CDN + "/components/prism-graphql.min.js",
+                    PRISM_CDN + "/plugins/line-numbers/prism-line-numbers.min.js"
+            );
+
+            StringBuilder sb = new StringBuilder();
+            for (String url : jsUrls) {
+                String js = fetchText(http, url);
+                if (!js.isEmpty()) {
+                    sb.append(js).append('\n');
+                }
+            }
+            prismBundle = sb.toString();
+            prismAssetsLoaded = true;
+
+            log.info("✅ Prism ready — {} KB in {} ms",
+                    prismBundle.length() / 1024, System.currentTimeMillis() - t0);
+        }
     }
 
     private String fetchText(HttpClient http, String url) {
@@ -143,6 +157,8 @@ public class CoursePdfGeneratorService {
     public byte[] generate(Course course) {
         long t0 = System.currentTimeMillis();
         log.info("🖨️  Generating PDF — course='{}'", course.getSlug());
+        ensurePrismAssetsLoaded();
+        Browser browser = browserProvider.getObject();
 
         try (BrowserContext ctx = browser.newContext(
                 new Browser.NewContextOptions().setLocale("km-KH"))) {
@@ -219,7 +235,7 @@ public class CoursePdfGeneratorService {
         String lang       = course.getLanguage()   != null ? course.getLanguage()         : "Khmer";
         boolean isFree    = Boolean.TRUE.equals(course.getIsFree());
         String instructor = course.getInstructor() != null
-                ? course.getInstructor().getUsername() : "GrowCodeKH";
+                ? course.getInstructor().getUsername() : "CodeGrowthKH";
         String date       = LocalDate.now().format(DateTimeFormatter.ofPattern("dd MMMM yyyy"));
         int lessons       = course.getTotalLessons() != null ? course.getTotalLessons() : 0;
 
@@ -377,7 +393,7 @@ public class CoursePdfGeneratorService {
             <div class="page cover">
               <div class="cv-stripe-top"></div><div class="cv-stripe-left"></div>
               <div class="cv-glow-tr"></div><div class="cv-glow-bl"></div>
-              <div class="cv-brand"><span class="cv-brand-dot"></span>GrowCodeKH &nbsp;·&nbsp; growcodekh.site</div>
+              <div class="cv-brand"><span class="cv-brand-dot"></span>CodeGrowthKH &nbsp;·&nbsp; codegrowthkh.site</div>
               <div class="cv-hero">
                 <div class="cv-tag">COURSE DOCUMENTATION</div>
                 <h1 class="cv-title">%s</h1>
@@ -398,11 +414,11 @@ public class CoursePdfGeneratorService {
               <div class="cv-meta">
                 <div class="cv-meta-row"><span class="cv-meta-icon">👨‍🏫</span><span class="cv-meta-key">Instructor</span><span class="cv-meta-sep">·</span><span class="cv-meta-val">%s</span></div>
                 <div class="cv-meta-row"><span class="cv-meta-icon">📅</span><span class="cv-meta-key">Generated</span><span class="cv-meta-sep">·</span><span class="cv-meta-val">%s</span></div>
-                <div class="cv-meta-row"><span class="cv-meta-icon">🌍</span><span class="cv-meta-key">Platform</span><span class="cv-meta-sep">·</span><span class="cv-meta-val" style="color:#2f8d46;">growcodekh.site</span></div>
+                <div class="cv-meta-row"><span class="cv-meta-icon">🌍</span><span class="cv-meta-key">Platform</span><span class="cv-meta-sep">·</span><span class="cv-meta-val" style="color:#2f8d46;">codegrowthkh.site</span></div>
               </div>
               <div class="cv-footer">
-                <span>© %d GrowCodeKH — All rights reserved</span>
-                <span style="color:#2f8d46;font-weight:700;">growcodekh.site</span>
+                <span>© %d CodeGrowthKH — All rights reserved</span>
+                <span style="color:#2f8d46;font-weight:700;">codegrowthkh.site</span>
               </div>
             </div>
             """.formatted(esc(course.getTitle()), esc(desc),
@@ -419,7 +435,7 @@ public class CoursePdfGeneratorService {
         StringBuilder sb = new StringBuilder();
         sb.append("""
             <div class="page inner-page">
-              <div class="pg-header"><span class="pg-site">growcodekh.site</span><span class="pg-title">%s</span></div>
+              <div class="pg-header"><span class="pg-site">codegrowthkh.site</span><span class="pg-title">%s</span></div>
               <div class="toc-eyebrow">TABLE OF CONTENTS</div>
               <div class="toc-heading">តារាងមាតិកា <span class="toc-heading-sub">/ Table of Contents</span></div>
               <div class="toc-rule"></div>
@@ -449,9 +465,9 @@ public class CoursePdfGeneratorService {
         }
         sb.append("""
               <div class="pg-footer">
-                <span class="pf-brand">© GrowCodeKH</span>
+                <span class="pf-brand">© CodeGrowthKH</span>
                 <span class="pg-num">— 2 —</span>
-                <span class="pf-site">growcodekh.site</span>
+                <span class="pf-site">codegrowthkh.site</span>
               </div>
             </div>
             """);
@@ -466,7 +482,7 @@ public class CoursePdfGeneratorService {
         StringBuilder sb = new StringBuilder();
         sb.append("""
             <div class="page inner-page">
-              <div class="pg-header"><span class="pg-site">growcodekh.site</span><span class="pg-title">Chapter %d · %s</span></div>
+              <div class="pg-header"><span class="pg-site">codegrowthkh.site</span><span class="pg-title">Chapter %d · %s</span></div>
               <div class="ch-banner">
                 <div class="ch-badge"><div class="ch-badge-label">ជំពូក</div><div class="ch-badge-num">%02d</div></div>
                 <div class="ch-banner-body"><div class="ch-banner-eyebrow">CHAPTER %d</div><div class="ch-banner-title">%s</div></div>
@@ -483,9 +499,9 @@ public class CoursePdfGeneratorService {
 
         sb.append("""
               <div class="pg-footer">
-                <span class="pf-brand">© GrowCodeKH</span>
+                <span class="pf-brand">© CodeGrowthKH</span>
                 <span class="pg-num">— %d —</span>
-                <span class="pf-site">growcodekh.site</span>
+                <span class="pf-site">codegrowthkh.site</span>
               </div>
             </div>
             """.formatted(ci + 2));

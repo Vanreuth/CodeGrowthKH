@@ -6,7 +6,7 @@ server:
 
 spring:
   application:
-    name: backend
+    name: codegrowthkh-backend
 
   datasource:
     driver-class-name: org.postgresql.Driver

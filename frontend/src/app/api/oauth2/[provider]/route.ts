@@ -6,7 +6,7 @@ export async function GET(
   { params }: { params: Promise<{ provider: string }> }
 ) {
   const { provider } = await params
-  const backend = process.env.API_BASE_URL ?? 'https://growcodekh.onrender.com'
+  const backend = process.env.API_BASE_URL ?? "https://codegrowthkh.onrender.com"
 
   return NextResponse.redirect(
     `${backend}/oauth2/authorization/${provider}`

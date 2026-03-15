@@ -192,13 +192,13 @@ export function AppSidebar({ onMobileClose, isMobile = false }: SidebarProps) {
                   <div className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10">
                     <img
                       src="/growth.png"
-                      alt="GrowCodeKhmer"
+                      alt="CodeGrowthKH"
                       className="size-5 object-contain"
                     />
                   </div>
                   <div className="min-w-0">
                     <p className="truncate text-[13px] font-bold text-foreground tracking-tight">
-                      GrowCodeKhmer
+                      CodeGrowthKH
                     </p>
                     <p className="truncate text-[10px] text-muted-foreground font-medium uppercase tracking-wider">
                       Practical IT Education

@@ -9,10 +9,10 @@
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>com.example</groupId>
-    <artifactId>aditi-backend</artifactId>
+    <artifactId>codegrowthkh-backend</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>SpringSecurity</name>
-    <description>SpringSecurity</description>
+    <name>codegrowthkh-backend</name>
+    <description>CodeGrowthKH backend service</description>
     <url/>
     <licenses>
         <license/>

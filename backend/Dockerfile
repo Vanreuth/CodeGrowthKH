@@ -17,6 +17,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libnss3 libatk1.0-0 libatk-bridge2.0-0 libcups2 libdrm2 \
     libxkbcommon0 libxcomposite1 libxdamage1 libxfixes3 libxrandr2 \
     libgbm1 libasound2 libpangocairo-1.0-0 libpango-1.0-0 libcairo2 \
+    libcairo-gobject2 libgdk-pixbuf-2.0-0 libgtk-3-0 libxcursor1 \
     libx11-6 libx11-xcb1 libxcb1 libxext6 \
     fonts-noto fonts-noto-cjk fonts-khmeros fonts-khmeros-core \
     wget curl ca-certificates \
@@ -31,18 +32,16 @@ RUN chown app:app app.jar
 
 # Set Playwright browser path
 ENV PLAYWRIGHT_BROWSERS_PATH=/home/app/.cache/ms-playwright
-ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=0
 
 # Install Playwright Chromium as app user
 USER app
 RUN mkdir -p /home/app/.cache/ms-playwright
 
-# ✅ Correct way: extract the CLI jar and run install
 RUN java -cp app.jar \
     -DPLAYWRIGHT_BROWSERS_PATH=/home/app/.cache/ms-playwright \
-    com.microsoft.playwright.CLI install chromium 2>/dev/null || \
-    # Fallback: download via playwright CLI if above fails
-    (curl -fsSL https://playwright.dev/java/docs/intro && echo "Manual install needed")
+    com.microsoft.playwright.CLI install chromium
+
+ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
 
 EXPOSE 8080
 

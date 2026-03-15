@@ -132,7 +132,7 @@ function InstructorSidebar() {
                       Instructor Hub
                     </p>
                     <p className="truncate text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
-                      GrowCodeKhmer
+                      CodeGrowthKH
                     </p>
                   </div>
                 </div>

@@ -1,12 +1,12 @@
 databases:
-  - name: growcodekh-db
-    databaseName: growcodekh
+  - name: codegrowthkh-db
+    databaseName: codegrowthkh
     region: singapore
     plan: free
 
 services:
   - type: web
-    name: growcodekh-backend
+    name: codegrowthkh
     runtime: docker
     rootDir: ./backend
     dockerfilePath: ./Dockerfile 
@@ -20,7 +20,7 @@ services:
         - backend/pom.xml
         - backend/Dockerfile
 
-    healthCheckPath: /actuator/health
+    healthCheckPath: /health
     autoDeploy: true
 
     envVars:
@@ -29,23 +29,23 @@ services:
 
       - key: DB_HOST
         fromDatabase:
-          name: growcodekh-db
+          name: codegrowthkh-db
           property: host
       - key: DB_PORT
         fromDatabase:
-          name: growcodekh-db
+          name: codegrowthkh-db
           property: port
       - key: DB_NAME
         fromDatabase:
-          name: growcodekh-db
+          name: codegrowthkh-db
           property: database
       - key: DB_USERNAME
         fromDatabase:
-          name: growcodekh-db
+          name: codegrowthkh-db
           property: user
       - key: DB_PASSWORD
         fromDatabase:
-          name: growcodekh-db
+          name: codegrowthkh-db
           property: password
 
       - key: DB_POOL_SIZE

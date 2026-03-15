@@ -13,7 +13,7 @@ const notoSansKhmer = Noto_Sans_Khmer({
 });
 
 export const metadata: Metadata = {
-  title: "GrowCodeKhmer — Practical IT Education",
+  title: "CodeGrowthKH — Practical IT Education",
   description: "Learn programming lanaguage with a roadmap built for real product work. Frontend, Backend, DevOps, and more.",
   icons: {
     icon: [

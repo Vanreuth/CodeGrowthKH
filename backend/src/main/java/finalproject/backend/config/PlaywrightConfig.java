@@ -4,6 +4,7 @@ import com.microsoft.playwright.Browser;
 import com.microsoft.playwright.BrowserType;
 import com.microsoft.playwright.Playwright;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -16,7 +17,8 @@ import java.util.Locale;
  * the entire application lifetime.
  *
  * WHY:  Launching Chromium costs ~1.5 s per request.
- *       As a singleton bean it launches once on startup and is reused.
+ *       As a lazy singleton bean it launches once on the first PDF request
+ *       and is reused after that.
  *
  * THREAD SAFETY:
  *       Browser is thread-safe for concurrent page creation.
@@ -28,12 +30,14 @@ import java.util.Locale;
 @Configuration
 public class PlaywrightConfig {
 
+    @Lazy
     @Bean(destroyMethod = "close")
     public Playwright playwright() {
         log.info("🎭 Creating singleton Playwright instance");
         return Playwright.create();
     }
 
+    @Lazy
     @Bean(destroyMethod = "close")
     public Browser browser(Playwright playwright) {
         List<String> args = new ArrayList<>();

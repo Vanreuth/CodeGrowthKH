@@ -41,7 +41,7 @@ NEXT_PUBLIC_API_URL=http://localhost:8080
 Notes:
 
 - next.config.ts maps API_BASE_URL to NEXT_PUBLIC_API_URL during build.
-- If API_BASE_URL is not provided, it falls back to https://growcodekh.onrender.com.
+- If API_BASE_URL is not provided, it falls back to https://codegrowthkh.onrender.com.
 
 ## Run Locally
 

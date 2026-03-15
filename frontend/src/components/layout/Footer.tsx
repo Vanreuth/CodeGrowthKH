@@ -50,7 +50,7 @@ const socials = [
 ];
 
 const contacts = [
-  { icon: Mail,   value: "growcodekh@gmail.com.com", href: "mailto:growcodekh@gmail.com" },
+  { icon: Mail,   value: "codegrowthkh@gmail.com", href: "mailto:codegrowthkh@gmail.com" },
   { icon: Phone,  value: "+855 33 86 537",         href: "tel:+855 33 86 537 " },
   { icon: MapPin, value: "Phnom Penh, Cambodia",    href: "https://maps.google.com/?q=Phnom+Penh" },
 ];
@@ -128,7 +128,7 @@ export default function Footer() {
               <div className="relative h-12 w-12 rounded-xl  p-[4px] ">
                 <Image
                   src="/growth.png"
-                  alt="GrowCodeKhmer"
+                  alt="CodeGrowthKH"
                   width={120}
                   height={120}
                   className="h-full w-full object-contain transition-transform duration-300 group-hover:scale-110"
@@ -138,7 +138,7 @@ export default function Footer() {
 
             <div className="leading-none">
               <p className="text-[17px] font-bold tracking-tight bg-gradient-to-r from-green-600 via-emerald-600 to-blue-600 bg-clip-text text-transparent">
-                GrowCodeKhmer
+                CodeGrowthKH
               </p>
 
               <p className="text-[11px] text-muted-foreground group-hover:text-emerald-500 transition">
