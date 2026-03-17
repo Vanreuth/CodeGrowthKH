@@ -7481,7 +7481,7 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     private void done(Course course) {
-        int total = lessonRepository.countByCourseId(course.getId());
+        int total = Math.toIntExact(lessonRepository.countByCourseId(course.getId()));
         course.setTotalLessons(total);
         courseRepository.save(course);
         log.info("✅ {} → {} lessons seeded", course.getTitle(), total);

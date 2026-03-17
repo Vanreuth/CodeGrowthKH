@@ -49,19 +49,28 @@ public class LessonProgressServiceImpl implements LessonProgressService {
                         .lesson(lesson)
                         .build());
 
-        // Scroll position
+        // ── Scroll percent ────────────────────────────────────────────────────
+        // Request fields are primitive ints, so scrollPct is always present.
         progress.setScrollPct(request.getScrollPct());
 
-        // Accumulate reading time (never let it become negative)
-        int current = progress.getReadTimeSeconds() != null ? progress.getReadTimeSeconds() : 0;
-        progress.setReadTimeSeconds(current + Math.max(0, request.getReadTimeSeconds()));
+        // ── Reading time accumulation ─────────────────────────────────────────
+        // Request fields are primitive ints, so 0 means "no additional time".
+        if (request.getReadTimeSeconds() > 0) {
+            int current = progress.getReadTimeSeconds() != null
+                    ? progress.getReadTimeSeconds() : 0;
+            int updated = current + request.getReadTimeSeconds();
+            progress.setReadTimeSeconds(updated);
+            log.debug("Read time updated: user={} lesson={} {}s → {}s",
+                    user.getId(), lesson.getId(), current, updated);
+        }
 
-        // Mark completed once (idempotent)
-        if (request.isCompleted() && !Boolean.TRUE.equals(progress.getCompleted())) {
+        // ── Completion (idempotent) ────────────────────────────────────────────
+        boolean wasCompletedBefore = Boolean.TRUE.equals(progress.getCompleted());
+        if (request.isCompleted() && !wasCompletedBefore) {
             progress.markCompleted();
         }
 
-        // PDF downloaded flag (idempotent)
+        // ── PDF downloaded flag (idempotent) ──────────────────────────────────
         if (request.isPdfDownloaded() && !Boolean.TRUE.equals(progress.getPdfDownloaded())) {
             progress.setPdfDownloaded(true);
             progress.setPdfDownloadedAt(LocalDateTime.now());
@@ -69,6 +78,15 @@ public class LessonProgressServiceImpl implements LessonProgressService {
 
         LessonProgress saved = lessonProgressRepository.save(progress);
         log.info("Upserted progress id={} user={} lesson={}", saved.getId(), user.getId(), lesson.getId());
+
+        // FIX I3: only run course-completion check when THIS upsert actually
+        // flipped completed false→true. Avoids a redundant DB count on every
+        // scroll-position or read-time save where the lesson is already done.
+        boolean justCompleted = !wasCompletedBefore && Boolean.TRUE.equals(saved.getCompleted());
+        if (justCompleted) {
+            checkCourseCompletion(user, lesson);
+        }
+
         return ApiResponse.success(lessonProgressMapper.toResponse(saved), "Progress saved successfully");
     }
 
@@ -85,15 +103,24 @@ public class LessonProgressServiceImpl implements LessonProgressService {
                         .lesson(lesson)
                         .build());
 
+        // Already completed — return early, no re-save (idempotent)
         if (Boolean.TRUE.equals(progress.getCompleted())) {
-            // Already completed — just return without re-saving
-            return ApiResponse.success(lessonProgressMapper.toResponse(progress),
+            return ApiResponse.success(
+                    lessonProgressMapper.toResponse(progress),
                     "Lesson was already completed");
         }
 
         progress.markCompleted();
         LessonProgress saved = lessonProgressRepository.save(progress);
         log.info("Marked lesson id={} completed for user id={}", lessonId, userId);
+
+        // Right place to check course completion:
+        //   1. A lesson only flips false→true here (idempotent guard above
+        //      means we never reach this line for already-completed lessons).
+        //   2. Runs inside the same @Transactional, so countCompletedByCourseIdAndUserId
+        //      sees the row we just saved — count is always accurate.
+        checkCourseCompletion(user, lesson);
+
         return ApiResponse.success(lessonProgressMapper.toResponse(saved), "Lesson marked as completed");
     }
 
@@ -129,7 +156,9 @@ public class LessonProgressServiceImpl implements LessonProgressService {
     @Transactional(readOnly = true)
     public ApiResponse<List<LessonProgressResponse>> getProgressByUser(Long userId) {
         ensureUserExists(userId);
-        List<LessonProgressResponse> list = lessonProgressRepository.findByUserId(userId)
+        // Use ordered query — newest activity first, matches account page activity tab order
+        List<LessonProgressResponse> list = lessonProgressRepository
+                .findByUserIdOrderByUpdatedAtDesc(userId)
                 .stream()
                 .map(lessonProgressMapper::toResponse)
                 .collect(Collectors.toList());
@@ -140,7 +169,8 @@ public class LessonProgressServiceImpl implements LessonProgressService {
     @Transactional(readOnly = true)
     public ApiResponse<List<LessonProgressResponse>> getProgressByCourseAndUser(Long courseId, Long userId) {
         ensureUserExists(userId);
-        List<LessonProgressResponse> list = lessonProgressRepository.findByCourseIdAndUserId(courseId, userId)
+        List<LessonProgressResponse> list = lessonProgressRepository
+                .findByCourseIdAndUserId(courseId, userId)
                 .stream()
                 .map(lessonProgressMapper::toResponse)
                 .collect(Collectors.toList());
@@ -161,6 +191,36 @@ public class LessonProgressServiceImpl implements LessonProgressService {
         ensureUserExists(userId);
         long count = lessonProgressRepository.countCompletedByCourseIdAndUserId(courseId, userId);
         return ApiResponse.success(count, "Completed lesson count for course retrieved");
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    //  Course completion check
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Called only when a lesson just flipped from incomplete → complete.
+     *
+     * Both repository calls return long — consistent with LessonRepository.countByCourseId
+     * now returning long (was int, caused implicit widening).
+     */
+    private void checkCourseCompletion(User user, Lesson lesson) {
+        if (lesson.getCourse() == null) return;
+        Long courseId = lesson.getCourse().getId();
+
+        // FIX B2: LessonRepository.countByCourseId now returns long — no widening cast needed
+        long totalLessons = lessonRepository.countByCourseId(courseId);
+        if (totalLessons == 0) return;
+
+        long completedCount = lessonProgressRepository
+                .countCompletedByCourseIdAndUserId(courseId, user.getId());
+
+        log.info("Course completion check — user={} course={} {}/{}",
+                user.getId(), courseId, completedCount, totalLessons);
+
+        if (completedCount >= totalLessons) {
+            log.info("COURSE COMPLETED — user={} course={}", user.getId(), courseId);
+            // Add certificate / email call here when needed
+        }
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -187,4 +247,3 @@ public class LessonProgressServiceImpl implements LessonProgressService {
                     String.valueOf(HttpStatus.NOT_FOUND.value()));
     }
 }
-

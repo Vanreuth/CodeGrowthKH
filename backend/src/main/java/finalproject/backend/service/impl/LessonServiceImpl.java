@@ -156,7 +156,7 @@ public class LessonServiceImpl implements LessonService {
     }
 
     private void syncCourseTotalLessons(Course course) {
-        course.setTotalLessons(lessonRepository.countByCourseId(course.getId()));
+        course.setTotalLessons(Math.toIntExact(lessonRepository.countByCourseId(course.getId())));
         courseRepository.save(course);
     }
 
