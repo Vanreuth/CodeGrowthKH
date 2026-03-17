@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 
-const API_BASE_URL = process.env.API_BASE_URL ?? "https://codegrowthkh.onrender.com"
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_URL 
 
 const nextConfig: NextConfig = {
   reactStrictMode: false,

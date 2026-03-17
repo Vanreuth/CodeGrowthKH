@@ -31,17 +31,15 @@ This is the frontend application for the online education platform. It is built 
 Create a file named .env in this frontend folder.
 
 ```env
-# Backend base URL used at build time by next.config.ts
-API_BASE_URL=http://localhost:8080
-
-# Optional direct public API URL fallback
+# Backend base URL used by the frontend
 NEXT_PUBLIC_API_URL=http://localhost:8080
 ```
 
 Notes:
 
-- next.config.ts maps API_BASE_URL to NEXT_PUBLIC_API_URL during build.
-- If API_BASE_URL is not provided, it falls back to https://codegrowthkh.onrender.com.
+- `NEXT_PUBLIC_API_URL` is the primary frontend API base URL.
+- Older `API_BASE_URL` is still accepted as a fallback.
+- If neither env var is provided, it falls back to https://codegrowthkh.onrender.com.
 
 ## Run Locally
 
@@ -80,5 +78,5 @@ npm run start
 ## Troubleshooting
 
 - If routes do not update after file changes, restart dev server.
-- If frontend cannot reach backend, verify API_BASE_URL/NEXT_PUBLIC_API_URL values.
+- If frontend cannot reach backend, verify `NEXT_PUBLIC_API_URL`.
 - If cookies/auth fail in production, verify backend cookie and CORS settings.
