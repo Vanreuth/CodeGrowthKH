@@ -26,7 +26,7 @@ const courseLinkByTechName: Partial<Record<string, string>> = {
   JavaScript: learningCourseLinks[2].href,
   React: learningCourseLinks[3].href,
   Java: learningCourseLinks[5].href,
-  Spring: learningCourseLinks[6].href,
+  "Spring Boot": learningCourseLinks[6].href,
   Git: learningCourseLinks[7].href,
 };
 
@@ -61,41 +61,33 @@ const techCatalog: TechItem[] = [
   },
   {
     name: "Python",
-    badge: "Py",
-    badgeClassName:
-      "bg-[linear-gradient(135deg,#2563eb_0%,#60a5fa_48%,#facc15_52%,#fbbf24_100%)] text-white",
+    icon: "/tech/python.png",
     glow: "rgba(59, 130, 246, 0.2)",
   },
   {
     name: "C++",
-    badge: "C++",
-    badgeClassName: "bg-[linear-gradient(135deg,#93c5fd,#2563eb)] text-white",
+    icon: "/tech/cpp.png",
     glow: "rgba(37, 99, 235, 0.18)",
   },
   {
     name: "Java",
-    icon: "/tech/java.png",
+    icon: "/tech/java.svg",
     glow: "rgba(239, 68, 68, 0.16)",
     href: courseLinkByTechName.Java,
   },
   {
     name: "PHP",
-    badge: "php",
-    badgeClassName: "bg-[#7c83c7] text-white italic lowercase",
+    icon:"/tech/php.png",
     glow: "rgba(99, 102, 241, 0.18)",
   },
   {
     name: "Swift",
-    badge: "Swift",
-    badgeClassName:
-      "bg-[linear-gradient(135deg,#fb923c,#ef4444)] text-white text-[10px]",
+    icon: "/tech/swift.png",
     glow: "rgba(249, 115, 22, 0.18)",
   },
   {
     name: "Kotlin",
-    badge: "K",
-    badgeClassName:
-      "bg-[linear-gradient(135deg,#7c3aed,#d946ef_55%,#3b82f6)] text-white",
+    icon: "/tech/kotlin.png",
     glow: "rgba(139, 92, 246, 0.18)",
   },
   {
@@ -106,22 +98,19 @@ const techCatalog: TechItem[] = [
   },
   {
     name: "Dart",
-    badge: "D",
-    badgeClassName:
-      "bg-[linear-gradient(135deg,#0ea5e9,#14b8a6)] text-white",
+    icon: "/tech/dart.png",
     glow: "rgba(6, 182, 212, 0.18)",
   },
   {
     name: "Go",
-    badge: "Go",
-    badgeClassName: "bg-[#8de1ef] text-slate-800",
+    icon:"/tech/go.png",
     glow: "rgba(34, 211, 238, 0.18)",
   },
   {
-    name: "Spring",
-    icon: "/tech/spring_boot.png",
+    name: "Spring Boot",
+    icon: "/tech/spring.png",
     glow: "rgba(34, 197, 94, 0.2)",
-    href: courseLinkByTechName.Spring,
+    href: courseLinkByTechName["Spring Boot"],
   },
   {
     name: "MongoDB",
@@ -195,7 +184,7 @@ const techSlides: TechItem[][] = [
     "MongoDB",
     "Docker",
     "Java",
-    "Spring",
+    "Spring Boot",
     "Tailwind",
     "Redux",
     "Three.js",
@@ -264,19 +253,19 @@ function TechCard({
           )}
         </div>
       </div>
-      <span className="text-center text-[15px] font-semibold tracking-tight text-slate-300 transition-colors duration-300 group-hover:text-slate-500">
+      <span className="text-center text-[15px] font-semibold tracking-tight text-slate-600 transition-colors duration-300 group-hover:text-slate-900">
         {item.name}
       </span>
       {item.href ? (
-        <span className="text-[11px] font-semibold text-blue-500 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-          View course
+        <span className="rounded-full bg-blue-50 px-2.5 py-1 text-[11px] font-semibold text-blue-600 opacity-80 transition-all duration-300 group-hover:bg-blue-100 group-hover:opacity-100">
+          មើលវគ្គសិក្សា
         </span>
       ) : null}
     </>
   );
 
   const sharedClassName = cn(
-    "group flex flex-col items-center gap-4 text-center transition-all duration-700",
+    "group flex w-[108px] shrink-0 flex-col items-center gap-4 text-center transition-all duration-700 sm:w-[116px]",
     active ? "translate-y-0 opacity-100" : "translate-y-3 opacity-0",
     item.href ? "cursor-pointer" : "",
   );
@@ -300,7 +289,7 @@ function TechCard({
   );
 }
 
-export function StatsBar() {
+export function TechBar() {
   const [activeSlide, setActiveSlide] = useState(0);
   const [progress, setProgress] = useState(0);
   const [paused, setPaused] = useState(false);
@@ -355,8 +344,6 @@ export function StatsBar() {
           description="ស្វែងយល់អំពីភាសាកូដ និងបច្ចេកវិទ្យាដែលពេញនិយម និងត្រូវបានប្រើប្រាស់យ៉ាងទូលំទូលាយក្នុងសហគមន៍កូដ។"
         />
 
-      ​​​​
-
         <div
           className="relative mt-12"
           onMouseEnter={() => setPaused(true)}
@@ -387,7 +374,8 @@ export function StatsBar() {
             >
               {techSlides.map((slide, slideIndex) => (
                 <div key={slideIndex} className="w-full shrink-0 px-2 sm:px-4">
-                  <div className="grid grid-cols-2 gap-x-4 gap-y-12 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-10">
+                  <div className="overflow-x-auto pb-4 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+                    <div className="flex min-w-max items-start gap-5 px-1 sm:gap-6">
                     {slide.map((item, itemIndex) => (
                       <TechCard
                         key={`${slideIndex}-${item.name}-${itemIndex}`}
@@ -396,6 +384,7 @@ export function StatsBar() {
                         delay={itemIndex * 55}
                       />
                     ))}
+                    </div>
                   </div>
                 </div>
               ))}

@@ -183,6 +183,34 @@ export const testimonials = [
   },
 ];
 
+export const founderSpotlight = {
+  badge: "ស្គាល់ពីអ្នកបង្កើត",
+  eyebrow: "ស្ថាបនិក GrowCodeKh",
+  name: "Heng Vanreuth",
+  role: "អ្នកបង្កើត និងអ្នកអភិវឌ្ឍន៍វេទិកា GrowCodeKh",
+  description:
+    "ខ្ញុំបង្កើត GrowCodeKh ដើម្បីជួយអ្នកសិក្សាខ្មែរ ឲ្យអាចចាប់ផ្តើមរៀនកូដបានកាន់តែងាយស្រួល ជាមួយមេរៀនដែលអានយល់ ធ្វើតាមបាន និងអាចយកទៅអនុវត្តក្នុងគម្រោងពិត។ គោលបំណងរបស់ខ្ញុំគឺបង្កើតសហគមន៍រៀន IT ជាភាសាខ្មែរ ដែលជួយគ្នាលូតលាស់ទៅមុខជាមួយគ្នា។",
+  imageSrc: "/growth_icon.png",
+  primaryAction: {
+    label: "ទាក់ទងតាម Telegram",
+    href: "https://t.me/Vanreuth",
+  },
+  secondaryActions: [
+    {
+      label: "អំពីយើង",
+      href: "/about",
+    },
+    {
+      label: "ផែនទីរៀន",
+      href: "/roadmap",
+    },
+    {
+      label: "អ៊ីមែល",
+      href: "mailto:admin@codegrowthkh.site",
+    },
+  ],
+};
+
 export const faqs = [
   {
     q: "តើ​ CodeGrowthKh ជាអ្វី?",

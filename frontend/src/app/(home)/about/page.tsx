@@ -13,6 +13,7 @@ import {
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { FounderSpotlightSection } from "@/components/home/FounderSpotlightSection";
 
 export default function AboutPage() {
   return (
@@ -298,6 +299,8 @@ export default function AboutPage() {
         </div>
 
       </section>
+
+      <FounderSpotlightSection />
 
     </div>
   );
