@@ -6,7 +6,6 @@ import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { courseService } from "@/lib/api/courseService";
-import { lessonProgressService } from "@/lib/api/lessonProgressService";
 import { toast } from "sonner";
 import { ArrowLeft, BookOpen, Menu, X } from "lucide-react";
 import {
@@ -21,16 +20,14 @@ import { useCoursePdf } from "@/hooks/useCoursesPdf";
 import { CourseSidebar } from "@/components/course/CourseSidebar";
 import { LessonContent } from "@/components/course/LessonContent";
 import { WelcomeScreen } from "@/components/course/WelcomeScreen";
-
-// ── ADD 1: import useReadingTimer ─────────────────────────────────────────────
 import { useReadingTimer } from "@/hooks/usereadingtimer";
+import {
+  useMyProgress,
+  useLessonProgressActions,
+  progressKeys,
+} from "@/hooks/useLessonProgress";
 
 // ─── Visual helper ────────────────────────────────────────────────────────────
-
-// ─── Single GFG-inspired green theme ─────────────────────────────────────────
-const GFG_ACCENT      = "#2f8d46";
-const GFG_MUTED       = "rgba(47,141,70,0.10)";
-const GFG_RING        = "rgba(47,141,70,0.22)";
 
 function getCourseVisual(title: string): {
   accent: string;
@@ -40,20 +37,23 @@ function getCourseVisual(title: string): {
   tag: string;
 } {
   const t = title.toLowerCase();
-  let icon = "📚";
-  let tag  = "Course";
-
-  if      (t.includes("html"))                              { icon = "🌐"; tag = "HTML";    }
-  else if (t.includes("css"))                               { icon = "🎨"; tag = "CSS";     }
-  else if (t.includes("javascript") || t.includes("js"))   { icon = "⚡"; tag = "JS";      }
-  else if (t.includes("next"))                              { icon = "▲";  tag = "Next.js"; }
-  else if (t.includes("react"))                             { icon = "⚛️"; tag = "React";   }
-  else if (t.includes("spring") || t.includes("java"))     { icon = "☕"; tag = "Java";    }
-  else if (t.includes("docker") || t.includes("devops"))   { icon = "🐳"; tag = "DevOps";  }
-  else if (t.includes("python"))                            { icon = "🐍"; tag = "Python";  }
-
-  // One consistent green accent for every course — GFG-inspired
-  return { accent: GFG_ACCENT, accentMuted: GFG_MUTED, accentRing: GFG_RING, icon, tag };
+  if (t.includes("html"))
+    return { accent: "#f97316", accentMuted: "rgba(249,115,22,0.12)", accentRing: "rgba(249,115,22,0.35)", icon: "🌐", tag: "HTML" };
+  if (t.includes("css"))
+    return { accent: "#06b6d4", accentMuted: "rgba(6,182,212,0.12)", accentRing: "rgba(6,182,212,0.35)", icon: "🎨", tag: "CSS" };
+  if (t.includes("javascript") || t.includes("js"))
+    return { accent: "#eab308", accentMuted: "rgba(234,179,8,0.12)", accentRing: "rgba(234,179,8,0.35)", icon: "⚡", tag: "JS" };
+  if (t.includes("next"))
+    return { accent: "#e2e8f0", accentMuted: "rgba(226,232,240,0.08)", accentRing: "rgba(226,232,240,0.25)", icon: "▲", tag: "Next.js" };
+  if (t.includes("react"))
+    return { accent: "#38bdf8", accentMuted: "rgba(56,189,248,0.12)", accentRing: "rgba(56,189,248,0.35)", icon: "⚛️", tag: "React" };
+  if (t.includes("spring") || t.includes("java"))
+    return { accent: "#4ade80", accentMuted: "rgba(74,222,128,0.12)", accentRing: "rgba(74,222,128,0.35)", icon: "🍃", tag: "Java" };
+  if (t.includes("docker") || t.includes("devops"))
+    return { accent: "#60a5fa", accentMuted: "rgba(96,165,250,0.12)", accentRing: "rgba(96,165,250,0.35)", icon: "🐳", tag: "DevOps" };
+  if (t.includes("python"))
+    return { accent: "#a78bfa", accentMuted: "rgba(167,139,250,0.12)", accentRing: "rgba(167,139,250,0.35)", icon: "🐍", tag: "Python" };
+  return { accent: "#c084fc", accentMuted: "rgba(192,132,252,0.12)", accentRing: "rgba(192,132,252,0.35)", icon: "📚", tag: "Course" };
 }
 
 // ─── Skeleton ─────────────────────────────────────────────────────────────────
@@ -91,84 +91,17 @@ export function CourseDetailSkeleton() {
 function processLessonContent(raw?: string | null): string {
   if (!raw || !raw.trim()) return "";
   const trimmed = raw.trim();
-
-  // Already HTML — return as-is (backward compat with old HTML-stored content)
-  if (/<(?:p|div|br|h[1-6]|ul|ol|li|table|blockquote|pre|section|article)[/\s>]/i.test(trimmed)) {
+  if (/<(?:p|div|br|h[1-6]|ul|ol|li|table|blockquote|pre|section|article)[\/\s>]/i.test(trimmed)) {
     return trimmed;
   }
-
-  // ── Step 1: protect fenced code blocks ──────────────────────────────────
-  const codeBlocks: string[] = [];
-  let s = trimmed.replace(/```(\w*)\r?\n?([\s\S]*?)```/g, (_m, lang, code) => {
-    const safe = code
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;");
-    codeBlocks.push(
-      `<pre><code class="language-${lang || "text"}">${safe.trim()}</code></pre>`
-    );
-    return `\x00BLK${codeBlocks.length - 1}\x00`;
-  });
-
-  // ── Step 2: inline formatting ────────────────────────────────────────────
-  s = s
-    .replace(/^### (.+)$/gm, "<h3>$1</h3>")
-    .replace(/^## (.+)$/gm, "<h2>$1</h2>")
-    .replace(/^# (.+)$/gm, "<h1>$1</h1>")
-    .replace(/^(?:---|\*\*\*|___) *$/gm, "<hr/>")
-    .replace(/\*\*\*(.+?)\*\*\*/g, "<strong><em>$1</em></strong>")
-    .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
-    .replace(/__(.+?)__/g, "<strong>$1</strong>")
-    .replace(/\*([^*\n]+)\*/g, "<em>$1</em>")
-    .replace(/_([^_\n]+)_/g, "<em>$1</em>")
-    .replace(/`([^`\n]+)`/g, "<code>$1</code>")
-    .replace(
-      /\[([^\]]+)\]\(([^)]+)\)/g,
-      '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>'
-    );
-
-  // ── Step 3: block-level elements ─────────────────────────────────────────
-  const html = s
-    .split(/\n{2,}/)
+  return trimmed
+    .split(/\n\s*\n/)
     .filter(Boolean)
-    .map((blk) => {
-      const t = blk.trim();
-      if (!t) return "";
-      if (/^\x00BLK\d+\x00$/.test(t)) return t; // placeholder
-      if (/^<(?:h[1-6]|hr|ul|ol|blockquote|pre)/i.test(t)) return t; // already html
-      // Blockquote
-      if (/^> /m.test(t)) {
-        const inner = t.replace(/^> /gm, "").replace(/\n/g, "<br/>");
-        return `<blockquote>${inner}</blockquote>`;
-      }
-      // Unordered list
-      if (/^[*\-+] /m.test(t)) {
-        const items = t
-          .split("\n")
-          .filter((l) => /^[*\-+] /.test(l))
-          .map((l) => `<li>${l.replace(/^[*\-+] /, "")}</li>`)
-          .join("");
-        return `<ul>${items}</ul>`;
-      }
-      // Ordered list
-      if (/^\d+\. /m.test(t)) {
-        const items = t
-          .split("\n")
-          .filter((l) => /^\d+\. /.test(l))
-          .map((l) => `<li>${l.replace(/^\d+\. /, "")}</li>`)
-          .join("");
-        return `<ol>${items}</ol>`;
-      }
-      // Paragraph
-      return `<p>${t.split("\n").map((l) => l.trimEnd()).join("<br/>")}</p>`;
+    .map((para) => {
+      const lines = para.split(/\n/).map((l) => l.trimEnd()).join("<br/>");
+      return `<p>${lines}</p>`;
     })
     .join("\n");
-
-  // ── Step 4: restore code blocks ──────────────────────────────────────────
-  return codeBlocks.reduce(
-    (acc, block, i) => acc.replace(`\x00BLK${i}\x00`, block),
-    html
-  );
 }
 
 // ─── Slug helpers ─────────────────────────────────────────────────────────────
@@ -215,12 +148,6 @@ function findLessonIndex(lessons: LessonResponse[], lesson: LessonResponse | nul
   return lessons.findIndex((l) => normalizeLessonSlug(l.slug || l.title) === n);
 }
 
-const completedCache = new Map<string, number[]>();
-
-function cacheKey(userId: number | string, slug: string) {
-  return `completed-lessons:${userId}:${slug}`;
-}
-
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 interface Props {
@@ -241,9 +168,11 @@ export function CourseLearningContent({ courseSlug, initialLessonSlug }: Props) 
   const { user } = useAuth();
   const isAuthenticated = Boolean(user);
 
-  const completedCacheKey = useMemo(
-    () => (isAuthenticated && user?.id ? cacheKey(user.id, slug) : null),
-    [isAuthenticated, user?.id, slug]
+  // completedLessons is now derived from useMyProgress (React Query) — no localStorage needed
+  const { data: progressData } = useMyProgress();
+  const completedLessons: Set<number> = useMemo(
+    () => new Set((progressData ?? []).filter((p) => p.completed).map((p) => p.lessonId)),
+    [progressData],
   );
 
   const { data: course, loading: courseLoading } = useCourseWithChapters(slug);
@@ -271,39 +200,19 @@ export function CourseLearningContent({ courseSlug, initialLessonSlug }: Props) 
   const [expandedChapters, setExpandedChapters] = useState<number[]>([]);
   const [selectedLesson, setSelectedLesson] = useState<LessonResponse | null>(null);
   const [loadingLesson, setLoadingLesson] = useState(false);
-  const [completedLessons, setCompletedLessons] = useState<Set<number>>(new Set());
   const [markingComplete, setMarkingComplete] = useState(false);
 
+  // ── ADD 2: start/restart timer whenever selectedLesson changes ────────────
+  // - lessonId=0 while no lesson is selected → hook does nothing (guarded by `if (!lessonId) return`)
+  // - When user switches lesson (42 → 67): effect cleanup saves lesson 42's
+  //   time first, then the new effect starts fresh for lesson 67
+  // - Saves automatically every 30s, on tab hide, and on navigate away
   useReadingTimer(selectedLesson?.id ?? 0);
 
   const requestRef = useRef(0);
   const normalizedInit = useMemo(
     () => normalizeLessonSlug(searchParams?.get("lesson") || initialLessonSlug),
     [initialLessonSlug, searchParams]
-  );
-
-  const persistCache = useCallback(
-    (lessons: Set<number>) => {
-      if (!completedCacheKey) return;
-      const arr = [...lessons];
-      completedCache.set(completedCacheKey, arr);
-      if (typeof window !== "undefined") {
-        window.localStorage.setItem(completedCacheKey, JSON.stringify(arr));
-      }
-    },
-    [completedCacheKey]
-  );
-
-  const markLocal = useCallback(
-    (id: number) => {
-      setCompletedLessons((prev) => {
-        const next = new Set(prev);
-        next.add(id);
-        persistCache(next);
-        return next;
-      });
-    },
-    [persistCache]
   );
 
   const chapters = useMemo<ChapterResponse[]>(() => {
@@ -460,44 +369,10 @@ export function CourseLearningContent({ courseSlug, initialLessonSlug }: Props) 
     }
   }, [allLessons, currentIdx, queryClient, slug]);
 
-  useEffect(() => {
-    if (!completedCacheKey) return;
-    const mem = completedCache.get(completedCacheKey);
-    if (mem) {
-      setCompletedLessons(new Set(mem));
-      return;
-    }
-    if (typeof window === "undefined") return;
-    try {
-      const raw = window.localStorage.getItem(completedCacheKey);
-      if (raw) {
-        const ids = (JSON.parse(raw) as unknown[]).filter(
-          (v): v is number => typeof v === "number"
-        );
-        completedCache.set(completedCacheKey, ids);
-        setCompletedLessons(new Set(ids));
-      }
-    } catch {}
-  }, [completedCacheKey]);
-
-  useEffect(() => {
-    if (!isAuthenticated) {
-      setCompletedLessons(new Set());
-      return;
-    }
-    lessonProgressService
-      .getMine()
-      .then((progress) => {
-        const ids = progress
-          .filter((p) => p.completed)
-          .map((p) => p.lessonId)
-          .filter((id): id is number => typeof id === "number");
-        const s = new Set(ids);
-        setCompletedLessons(s);
-        persistCache(s);
-      })
-      .catch(() => {});
-  }, [isAuthenticated, persistCache]);
+  // useLessonProgressActions: mutations only, no GET query per lesson
+  const { markCompleted: apiMarkCompleted, isCompletePending } = useLessonProgressActions(
+    selectedLesson?.id ?? 0,
+  );
 
   const handleMarkComplete = async () => {
     if (!selectedLesson) return;
@@ -505,22 +380,32 @@ export function CourseLearningContent({ courseSlug, initialLessonSlug }: Props) 
       toast.info("សូមចូលប្រើប្រាស់ដើម្បីរក្សាទុកវឌ្ឍនភាព", { duration: 2000 });
       setTimeout(
         () => router.push(`/login?returnUrl=${encodeURIComponent(window.location.pathname)}`),
-        1500
+        1500,
       );
       return;
     }
+
+    // Optimistic update — mark in React Query cache immediately so the
+    // sidebar and progress bar update before the API responds
+    queryClient.setQueryData(progressKeys.mine, (old: any[] | undefined) => {
+      const list = old ?? [];
+      const exists = list.find((p) => p.lessonId === selectedLesson.id);
+      if (exists) return list.map((p) =>
+        p.lessonId === selectedLesson.id ? { ...p, completed: true, completedAt: new Date().toISOString() } : p
+      );
+      return [...list, { lessonId: selectedLesson.id, completed: true, completedAt: new Date().toISOString() }];
+    });
+
     setMarkingComplete(true);
     try {
-      await lessonProgressService.markCompleted(selectedLesson.id);
-      markLocal(selectedLesson.id);
+      await apiMarkCompleted();
+      // onSuccess in useLessonProgressActions already invalidates progressKeys.mine
+      // and progressKeys.count — React Query re-fetches fresh data from server
       toast.success("បានបញ្ចប់មេរៀន!", { description: selectedLesson.title });
-      if (canGoNext) setTimeout(goNext, 500);
     } catch {
-      markLocal(selectedLesson.id);
-      toast.success("បានបញ្ចប់មេរៀន!", {
-        description: `${selectedLesson.title} (ក្នុង device)`,
-      });
-      if (canGoNext) setTimeout(goNext, 500);
+      // ✅ Rollback optimistic update — do NOT fake success
+      queryClient.invalidateQueries({ queryKey: progressKeys.mine });
+      toast.error("មិនអាចរក្សាទុក — សូមព្យាយាមម្តងទៀត");
     } finally {
       setMarkingComplete(false);
     }
@@ -587,6 +472,7 @@ export function CourseLearningContent({ courseSlug, initialLessonSlug }: Props) 
 
       {/* ── Mobile toggle ── */}
       <button
+        type="button"
         className="fixed z-50 lg:hidden flex items-center justify-center rounded-full transition-all hover:scale-110"
         style={{
           top: "5rem",

@@ -162,6 +162,7 @@ export function CourseSidebar({
         {hasPdf && (
           <div className="mt-3 pt-3" style={{ borderTop: "1px solid var(--cl-border)" }}>
             <button
+              type="button"
               onClick={onPdfDownload}
               disabled={pdfDownloading}
               className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-all hover:opacity-80 disabled:opacity-50"
@@ -216,6 +217,7 @@ export function CourseSidebar({
               >
                 <CollapsibleTrigger asChild>
                   <button
+                    type="button"
                     className={`chapter-trigger ${isExp ? "chapter-open" : ""} w-full flex items-center gap-3 px-4 py-3 text-left`}
                     style={{
                       borderLeft: isExp ? "3px solid #2f8d46" : "3px solid transparent",

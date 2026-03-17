@@ -4,6 +4,7 @@ import { Target, Award } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
+import { formatDurationCompactKh } from "./progress-utils";
 
 // ─────────────────────────────────────────────────────────────
 //  LearningProgressCard
@@ -22,14 +23,7 @@ export function LearningProgressCard({
   lessonsProgressPct,
   totalReadSeconds,
 }: LearningProgressCardProps) {
-  const readTimeLabel =
-    totalReadSeconds >= 3600
-      ? `${Math.round(totalReadSeconds / 3600)}h`
-      : totalReadSeconds >= 60
-        ? `${Math.round(totalReadSeconds / 60)}m`
-        : totalReadSeconds > 0
-          ? `${totalReadSeconds}s`
-          : "--";
+  const readTimeLabel = formatDurationCompactKh(totalReadSeconds);
 
   return (
     <Card>
@@ -79,7 +73,7 @@ export function LearningProgressCard({
           <div className="flex items-center gap-2">
             <span className="text-2xl">🔥</span>
             <div>
-              <p className="text-sm font-medium">Streak បច្ចុប្បន្ន</p>
+              <p className="text-sm font-medium">ស្ទ្រីកបច្ចុប្បន្ន</p>
               <p className="text-xs text-muted-foreground">រៀនជារៀងរាល់ថ្ងៃ</p>
             </div>
           </div>
@@ -95,12 +89,12 @@ export function LearningProgressCard({
 // ─────────────────────────────────────────────────────────────
 
 const ACHIEVEMENTS = [
-  { icon: "🏆", label: "First Lesson",  threshold: 1   },
-  { icon: "🎯", label: "10 Lessons",    threshold: 10  },
-  { icon: "⭐", label: "25 Lessons",    threshold: 25  },
-  { icon: "🔥", label: "50 Lessons",    threshold: 50  },
-  { icon: "💎", label: "100 Lessons",   threshold: 100 },
-  { icon: "👑", label: "200 Lessons",   threshold: 200 },
+  { icon: "🏆", label: "មេរៀនដំបូង", threshold: 1 },
+  { icon: "🎯", label: "១០ មេរៀន", threshold: 10 },
+  { icon: "⭐", label: "២៥ មេរៀន", threshold: 25 },
+  { icon: "🔥", label: "៥០ មេរៀន", threshold: 50 },
+  { icon: "💎", label: "១០០ មេរៀន", threshold: 100 },
+  { icon: "👑", label: "២០០ មេរៀន", threshold: 200 },
 ];
 
 interface AchievementGridProps {
@@ -123,7 +117,7 @@ export function AchievementGrid({ lessonsCompleted }: AchievementGridProps) {
             return (
               <div
                 key={i}
-                title={unlocked ? `Unlocked at ${a.threshold} lessons` : `Complete ${a.threshold} lessons to unlock`}
+                title={unlocked ? `បានបើកនៅ ${a.threshold} មេរៀន` : `បំពេញ ${a.threshold} មេរៀន ដើម្បីបើក`}
                 className={`flex flex-col items-center gap-1 rounded-lg p-2 transition-opacity ${
                   unlocked
                     ? "bg-gradient-to-b from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20"

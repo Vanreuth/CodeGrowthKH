@@ -272,6 +272,7 @@ export function LessonContent({
               )}
               {!completedLessons.has(selectedLesson.id) && (
                 <button
+                  type="button"
                   onClick={onMarkComplete}
                   disabled={markingComplete}
                   className="complete-btn flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold shrink-0"
@@ -297,6 +298,7 @@ export function LessonContent({
             {/* Prev / Next navigation */}
             <div className="grid grid-cols-2">
               <button
+                type="button"
                 onClick={onGoPrev}
                 disabled={!canGoPrev}
                 className="nav-btn flex items-center gap-3 px-5 py-4 text-left"
@@ -333,6 +335,7 @@ export function LessonContent({
               </button>
 
               <button
+                type="button"
                 onClick={onGoNext}
                 disabled={!canGoNext}
                 className="nav-btn flex items-center gap-3 px-5 py-4 text-right justify-end"

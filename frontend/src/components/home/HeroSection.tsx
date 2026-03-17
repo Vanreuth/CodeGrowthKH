@@ -141,14 +141,14 @@ export function HeroSection() {
                   "linear-gradient(to right, var(--primary), var(--accent), var(--primary))",
               }}
             >
-              GrowCodeKh
+              CodeGrowthKh
             </span>
             
           </h1>
 
           {/* Body copy */}
           <p className="max-w-lg text-base leading-relaxed text-muted-foreground md:text-lg transition-colors duration-300">
-            GrowCodeKh ផ្តល់{" "}
+            CodeGrowthKh ផ្តល់{" "}
             <span className="font-semibold text-foreground">
               courses ជាភាសាខ្មែរ
             </span>
@@ -249,10 +249,10 @@ function HeroVisualCard() {
               <span className="text-muted-foreground">(</span>
               <span className="text-foreground">greet</span>
               <span className="text-muted-foreground">(</span>
-              <span className="text-emerald-600 dark:text-emerald-400">&quot;GrowCodeKh&quot;</span>
+              <span className="text-emerald-600 dark:text-emerald-400">&quot;CodeGrowthKh&quot;</span>
               <span className="text-muted-foreground">));</span>
               {"\n"}
-              <span className="text-muted-foreground/60">{"// សូមស្វាគមន៍ GrowCodeKh 🎉"}</span>
+              <span className="text-muted-foreground/60">{"// សូមស្វាគមន៍ CodeGrowthKh 🎉"}</span>
             </code>
           </pre>
         </div>

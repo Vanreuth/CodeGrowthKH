@@ -133,7 +133,7 @@ export default function AboutPage() {
 
           {milestones.map((m, i) => (
             <div
-              key={m.year}
+              key={`${m.year}-${m.eventEn ?? m.event}-${i}`}
               className="relative flex gap-4 pl-7 hover:translate-x-1 transition"
             >
 
