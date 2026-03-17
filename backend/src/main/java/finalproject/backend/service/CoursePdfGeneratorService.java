@@ -78,8 +78,8 @@ public class CoursePdfGeneratorService {
     );
 
     // ── Timeouts ──────────────────────────────────────────────────────────
-    private static final double CONTENT_TIMEOUT_MS = 30_000;
-    private static final double ASSET_TIMEOUT_MS   =  8_000;
+    private static final double CONTENT_TIMEOUT_MS = 60_000;
+    private static final double ASSET_TIMEOUT_MS   = 15_000;
 
     // ── Code-block split threshold ────────────────────────────────────────
     private static final int CODE_SPLIT_THRESHOLD = 38;
@@ -302,8 +302,17 @@ public class CoursePdfGeneratorService {
         html.append("<script>\n")
                 .append(prismBundle)
                 .append("\nwindow.__prismDone=false;")
-                .append("if(typeof Prism!=='undefined'){Prism.highlightAll();}")
-                .append("window.__prismDone=true;")
+                .append("""
+                        setTimeout(() => {
+                          try {
+                            if (typeof Prism !== 'undefined') {
+                              Prism.highlightAll();
+                            }
+                          } finally {
+                            window.__prismDone = true;
+                          }
+                        }, 0);
+                        """)
                 .append("\n</script>\n")
                 .append("</body>\n</html>");
 
