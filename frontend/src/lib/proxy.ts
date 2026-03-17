@@ -156,6 +156,7 @@ async function buildResponse(upstream: Response): Promise<NextResponse> {
     if (HOP_BY_HOP.has(lower))       continue  // skip connection headers
     if (lower === 'set-cookie')       continue  // handled separately below
     if (lower === 'content-encoding') continue  // body already decoded by fetch
+    if (lower === 'content-length')   continue  // length can change after decoding
     response.headers.set(key, value)
   }
 

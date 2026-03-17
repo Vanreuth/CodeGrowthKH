@@ -1,8 +1,5 @@
 import type { NextConfig } from "next";
 
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || "https://api.codegrowthkh.site";
-
 const nextConfig: NextConfig = {
   reactStrictMode: false,
 
@@ -15,15 +12,6 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "avatars.githubusercontent.com" },
       { protocol: "http", hostname: "localhost", port: "8080" },
     ],
-  },
-
-  async rewrites() {
-    return [
-      {
-        source: "/api/:path*",
-        destination: `${API_BASE_URL}/api/:path*`,
-      },
-    ];
   },
 };
 
