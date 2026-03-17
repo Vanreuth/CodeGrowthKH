@@ -17,11 +17,10 @@ export const metadata: Metadata = {
   description: "Learn programming lanaguage with a roadmap built for real product work. Frontend, Backend, DevOps, and more.",
   icons: {
     icon: [
-      { url: "/favicon.ico", sizes: "any" },
-      { url: "/icon.png", type: "image/png", sizes: "512x512" },
+      { url: "/icon.png?v=2", type: "image/png", sizes: "512x512" },
     ],
-    shortcut: "/favicon.ico",
-    apple: { url: "/apple-icon.png", type: "image/png", sizes: "512x512" },
+    shortcut: "/icon.png?v=2",
+    apple: { url: "/apple-icon.png?v=2", type: "image/png", sizes: "512x512" },
   },
 };
 
