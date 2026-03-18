@@ -13,14 +13,14 @@ const notoSansKhmer = Noto_Sans_Khmer({
 });
 
 export const metadata: Metadata = {
-  title: "CodeGrowthKH — Practical IT Education",
+  title: "CodeGrowthKH",
   description: "Learn programming lanaguage with a roadmap built for real product work. Frontend, Backend, DevOps, and more.",
   icons: {
     icon: [
-      { url: "/icon.png?v=2", type: "image/png", sizes: "512x512" },
+      { url: "/growth_icon.png", type: "image/png", sizes: "512x512" },
     ],
-    shortcut: "/icon.png?v=2",
-    apple: { url: "/apple-icon.png?v=2", type: "image/png", sizes: "512x512" },
+    shortcut: "/growth_icon.png",
+    apple: { url: "/growth_apple_icon.png", type: "image/png", sizes: "512x512" },
   },
 };
 
