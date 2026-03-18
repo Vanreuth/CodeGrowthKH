@@ -1,14 +1,10 @@
 import Link from "next/link";
 import {
   ArrowRight,
-  BookOpen,
-  CheckCircle2,
-  ExternalLink,
   Quote,
   ShieldCheck,
   Sparkles,
   Trophy,
-  Users,
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -17,10 +13,10 @@ import { FounderSpotlightSection } from "@/components/home/FounderSpotlightSecti
 
 export default function AboutPage() {
   return (
-    <div className="space-y-14 pb-20 mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 mt-10">
+    <div className="mx-auto w-full max-w-7xl overflow-x-clip px-4 py-8 sm:px-6 lg:px-8">
 
       {/* HERO */}
-      <section className="overflow-hidden  md:p-12 lg:grid lg:grid-cols-2 lg:gap-12 ">
+      <section className="relative isolate overflow-hidden rounded-3xl md:p-12 lg:grid lg:grid-cols-2 lg:gap-12">
 
         {/* blobs */}
         <div className="pointer-events-none absolute -right-32 -top-32 h-80 w-80 rounded-full bg-gradient-to-br from-blue-400/10 via-violet-400/10 to-pink-300/10 blur-3xl" />
@@ -161,7 +157,7 @@ export default function AboutPage() {
       {/* VALUES */}
       <section>
 
-        <div className="text-center mb-8">
+        <div className="text-center mb-8 mt-6">
 
           <Badge className="mb-3">
             <ShieldCheck className="mr-1 h-3 w-3" />
@@ -199,75 +195,8 @@ export default function AboutPage() {
 
       </section>
 
-      {/* TEAM
-      <section>
-
-        <div className="mb-6">
-
-          <Badge className="mb-3">
-            <Users className="mr-1 h-3 w-3" />
-            Mentor Team
-          </Badge>
-
-          <h2 className="text-3xl font-bold">
-            Our Mentors
-          </h2>
-
-        </div>
-
-        <div className="grid gap-6 md:grid-cols-3">
-
-          {teamHighlights.map((member) => (
-
-            <div
-              key={member.name}
-              className="flex flex-col overflow-hidden rounded-2xl border bg-white shadow-sm hover:shadow-xl transition dark:bg-slate-900/70"
-            >
-
-              <div className={`bg-gradient-to-r ${member.gradient} p-5 text-white`}>
-
-                <p className="font-bold">{member.name}</p>
-                <p className="text-xs">{member.roleKh}</p>
-
-              </div>
-
-              <div className="p-5 flex flex-col flex-1">
-
-                <p className="text-sm text-slate-600 flex-1">
-                  {member.summaryKh}
-                </p>
-
-                <div className="mt-4 flex flex-wrap gap-2">
-                  {member.topics.map((t) => (
-                    <span
-                      key={t}
-                      className="text-xs bg-slate-100 px-2 py-1 rounded-full"
-                    >
-                      {t}
-                    </span>
-                  ))}
-                </div>
-
-                <a
-                  href={member.linkedin}
-                  className="mt-4 inline-flex items-center text-xs text-blue-600 hover:underline"
-                >
-                  LinkedIn
-                  <ExternalLink className="ml-1 h-3 w-3" />
-                </a>
-
-              </div>
-
-            </div>
-
-          ))}
-
-        </div>
-
-      </section> */}
-
       {/* CTA */}
-      <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-600 via-indigo-600 to-violet-700 p-12 text-center text-white">
+      <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-600 via-indigo-600 to-violet-700 p-12 text-center text-white mt-6">
 
         <div className="space-y-4">
 
@@ -279,7 +208,7 @@ export default function AboutPage() {
             Join thousands of learners learning software engineering in Khmer
           </p>
 
-          <div className="flex justify-center gap-4">
+          <div className="flex flex-wrap justify-center gap-4">
 
             <Button asChild size="lg" className="bg-white text-blue-700">
               <Link href="/register">

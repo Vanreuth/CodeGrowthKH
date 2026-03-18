@@ -6,6 +6,7 @@ export interface LessonProgressResponse {
   lessonTitle?: string
   courseId?: number
   courseTitle?: string
+  courseTotalLessons?: number
   completed: boolean
   scrollPct?: number
   scrollPosition?: number

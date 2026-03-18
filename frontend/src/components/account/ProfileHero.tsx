@@ -48,7 +48,7 @@ interface ProfileHeroProps {
   progressLoading: boolean;
   totalLessonsTracked: number;
   lessonsCompleted: number;
-  distinctCourses: number;
+  completedCourses: number;
   totalReadSeconds: number;
   onEditToggle: () => void;
   onCancelEdit: () => void;
@@ -77,7 +77,7 @@ export function ProfileHero({
   progressLoading,
   totalLessonsTracked,
   lessonsCompleted,
-  distinctCourses,
+  completedCourses,
   totalReadSeconds,
   onEditToggle,
   onCancelEdit,
@@ -111,8 +111,8 @@ export function ProfileHero({
     },
     {
       icon: <Award className="h-5 w-5 text-amber-600 dark:text-amber-400" />,
-      value: progressLoading ? <Pulse /> : distinctCourses,
-      label: "វគ្គសិក្សា",
+      value: progressLoading ? <Pulse /> : completedCourses,
+      label: "វគ្គបានចប់",
       bgClass: "bg-amber-100 dark:bg-amber-900/30",
     },
   ];

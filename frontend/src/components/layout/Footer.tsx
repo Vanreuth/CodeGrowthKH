@@ -68,7 +68,7 @@ export default function Footer() {
 
       <div className="relative">
 
-        {/* ── Newsletter banner ─────────────────────────────────────────── */}
+        {/* ── Telegram banner ───────────────────────────────────────────── */}
         <div className="border-b border-border/70">
           <div className="container-app py-10">
             <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-700 px-7 py-8 shadow-xl shadow-blue-600/15 md:px-10">
@@ -80,26 +80,27 @@ export default function Footer() {
               <div className="relative flex flex-col items-start justify-between gap-6 md:flex-row md:items-center">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-widest text-white/60">
-                    ព័ត៌មានថ្មី
+                    Telegram Community
                   </p>
                   <h3 className="mt-1.5 text-xl font-extrabold text-white md:text-2xl">
-                    ទទួលការអប់រំ IT ចុងក្រោយ ជាភាសាខ្មែរ
+                    Join Telegram ដើម្បីទទួល updates ថ្មីៗ
                   </h3>
                   <p className="mt-1 text-sm text-blue-100/80">
-                    Course launches, tips, roadmap updates — direct to your inbox.
+                    Course launches, roadmap updates, Q&A, and learning tips on
+                    our Telegram channel. ចូលរួមជាមួយយើងដើម្បីកុំឲ្យខកខានអ្វីៗ!
                   </p>
                 </div>
-                <div className="flex w-full shrink-0 max-w-sm gap-2">
-                  <input
-                    type="email"
-                    placeholder="Email address..."
-                    className="flex-1 min-w-0 rounded-full border border-white/20 bg-white/15 px-4 py-2.5 text-sm text-white placeholder:text-white/50 backdrop-blur-sm outline-none focus:border-white/40 focus:bg-white/20 transition-all"
-                  />
-                  <button className="shrink-0 inline-flex items-center gap-1.5 rounded-full bg-white px-5 py-2.5 text-sm font-bold text-blue-700 shadow-lg transition-all hover:scale-[1.03] hover:bg-blue-50 hover:shadow-xl active:scale-[0.98]">
-                    Subscribe
+                <a
+                  href="https://t.me/Vanreuth"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex w-full max-w-sm shrink-0 items-center justify-center gap-2 rounded-full bg-white px-5 py-3 text-sm font-bold text-blue-700 shadow-lg transition-all hover:scale-[1.03] hover:bg-blue-50 hover:shadow-xl active:scale-[0.98]"
+                >
+                  <Send className="h-4 w-4" />
+                  Subscribe on Telegram
+                  <span className="text-blue-500/80">@CodeGrowthKH</span>
                     <ArrowUpRight className="h-3.5 w-3.5" />
-                  </button>
-                </div>
+                </a>
               </div>
             </div>
           </div>
@@ -268,11 +269,11 @@ export default function Footer() {
           <div className="container-app flex flex-col items-center justify-between gap-3 py-4 sm:flex-row">
             <p className="text-xs text-muted-foreground">
               © {new Date().getFullYear()}{" "}
-              <span className="font-semibold text-foreground">GrowCodeKh</span>
+              <span className="font-semibold text-foreground">CodeGrowthKH</span>
               . All rights reserved.
             </p>
             <div className="flex items-center gap-1">
-              {["Privacy Policy", "Terms of Service", "Sitemap"].map((item, i, arr) => (
+              {["Privacy Policy", "Terms of Service"].map((item, i, arr) => (
                 <span key={item} className="flex items-center">
                   <Link
                     href="#"

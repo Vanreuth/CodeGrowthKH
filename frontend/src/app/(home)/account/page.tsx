@@ -31,6 +31,7 @@ import {
   SettingsTab,
   UserPerformanceCard,
 } from "@/components/account";
+import { buildCourseProgressSummaries } from "@/components/account/progress-utils";
 import type { ProfileFormValues } from "@/components/account";
 import type { AuthResponse } from "@/types/authType";
 import type { LessonProgressResponse } from "@/types/lessonProgressType";
@@ -49,9 +50,6 @@ function deriveStats(list: LessonProgressResponse[] | null) {
       ? Math.round((lessonsCompleted / totalLessonsTracked) * 100)
       : 0;
 
-  const distinctCourses =
-    new Set(data.map((p) => p.courseId).filter(Boolean)).size;
-
   // Sum all reading time tracked via POST /upsert (readTimeSeconds field)
   const totalReadSeconds = data.reduce((sum, p) => sum + (p.readTimeSeconds ?? 0), 0);
 
@@ -69,11 +67,16 @@ function deriveStats(list: LessonProgressResponse[] | null) {
       return acc;
     }, {});
 
+  const courseSummaries = buildCourseProgressSummaries(progressByCourse);
+  const completedCourses = courseSummaries.filter(
+    (course) => course.totalLessons > 0 && course.completedLessons >= course.totalLessons,
+  ).length;
+
   return {
     lessonsCompleted,
     totalLessonsTracked,
     lessonsProgressPct,
-    distinctCourses,
+    completedCourses,
     totalReadSeconds,
     progressByCourse,
   };
@@ -264,7 +267,7 @@ export default function AccountPage() {
         progressLoading={progressLoading}
         totalLessonsTracked={stats.totalLessonsTracked}
         lessonsCompleted={trueCompleted}
-        distinctCourses={stats.distinctCourses}
+        completedCourses={stats.completedCourses}
         totalReadSeconds={stats.totalReadSeconds}
         onEditToggle={startEditing}
         onCancelEdit={cancelEdit}
@@ -330,7 +333,7 @@ export default function AccountPage() {
                   {stats.lessonsProgressPct}%
                 </p>
                 <span className="text-sm text-muted-foreground">
-                  {stats.distinctCourses} វគ្គសិក្សា
+                  {stats.completedCourses} វគ្គបានចប់
                 </span>
               </div>
               <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
@@ -414,7 +417,7 @@ export default function AccountPage() {
             progressLoading={progressLoading}
             totalLessonsTracked={stats.totalLessonsTracked}
             lessonsCompleted={trueCompleted}
-            distinctCourses={stats.distinctCourses}
+            completedCourses={stats.completedCourses}
             lessonsProgressPct={stats.lessonsProgressPct}
             totalReadSeconds={stats.totalReadSeconds}
             progressByCourse={stats.progressByCourse}

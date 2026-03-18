@@ -9,10 +9,10 @@ import {
   ChevronRight,
   Clock,
   ExternalLink,
+  Mail,
   MapPinned,
   MessageCircle,
   Send,
-  Sparkles,
   Youtube,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -21,6 +21,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { FAQSection } from "@/components/home/FAQSection";
+
 const GOALS = [
   "Frontend Developer",
   "Backend Developer",
@@ -29,8 +30,6 @@ const GOALS = [
   "DevOps / Cloud",
   "មិនទាន់ដឹង",
 ];
-
-import { Mail } from 'lucide-react';
 
 const EXPERIENCE_LEVELS = [
   "ថ្មីទាំងស្រុង (Zero)",
@@ -58,9 +57,9 @@ export default function ContactPage() {
   }
 
   return (
-    <div className="space-y-10 pb-16 mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 mt-10">
+    <div className="mx-auto mt-10 w-full max-w-7xl space-y-10 overflow-x-clip px-4 pb-16 sm:px-6 lg:px-8">
       {/* ── Hero ─────────────────────────────────────────────────────────── */}
-      <section className="overflow-hidden p-7  md:p-12 ">
+      <section className="relative isolate overflow-hidden rounded-3xl p-7 md:p-12">
         <div className="pointer-events-none absolute -right-32 -top-32 h-80 w-80 rounded-full bg-gradient-to-br from-blue-400/10 via-violet-400/10 to-pink-300/10 blur-3xl" />
 
         <div className="relative max-w-2xl">
@@ -357,44 +356,6 @@ export default function ContactPage() {
           </div>
         </div>
       </section>
-    </div>
-  );
-}
-
-// ─── FAQ Accordion Item ───────────────────────────────────────────────────────
-function FAQItem({
-  faq,
-  defaultOpen = false,
-}: {
-  faq: { question: string; questionEn: string; answer: string };
-  defaultOpen?: boolean;
-}) {
-  const [open, setOpen] = useState(defaultOpen);
-  return (
-    <div>
-      <button
-        onClick={() => setOpen((o) => !o)}
-        className="flex w-full items-center justify-between gap-4 px-6 py-4 text-left"
-      >
-        <div>
-          <p className="font-semibold text-slate-900 dark:text-white">{faq.question}</p>
-          <p className="text-xs text-slate-400 dark:text-slate-500">{faq.questionEn}</p>
-        </div>
-        <span
-          className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-slate-200 text-slate-400 transition-transform duration-200 dark:border-white/15 dark:text-slate-500 ${
-            open ? "rotate-45" : ""
-          }`}
-        >
-          +
-        </span>
-      </button>
-      {open && (
-        <div className="border-t border-slate-100 bg-slate-50/60 px-6 py-4 dark:border-white/8 dark:bg-white/3">
-          <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-400">
-            {faq.answer}
-          </p>
-        </div>
-      )}
     </div>
   );
 }

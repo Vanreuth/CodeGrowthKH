@@ -94,7 +94,11 @@ export function buildCourseProgressSummaries(
   return Object.entries(groups)
     .map(([courseTitle, lessons]) => {
       const completedLessons = lessons.filter((lesson) => lesson.completed).length;
-      const totalLessons = lessons.length;
+      const totalLessonsFromCourse = lessons.reduce(
+        (max, lesson) => Math.max(max, lesson.courseTotalLessons ?? 0),
+        0,
+      );
+      const totalLessons = Math.max(totalLessonsFromCourse, lessons.length);
       const progressPct = totalLessons > 0
         ? Math.round((completedLessons / totalLessons) * 100)
         : 0;

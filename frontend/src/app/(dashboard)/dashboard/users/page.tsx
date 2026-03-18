@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
+import { toast } from "sonner";
 import {
   Plus,
   UserCheck,
@@ -48,11 +49,20 @@ import type { UserResponse, UpdateUserRequest, UserRequest } from "@/types/userT
 
 // --- DataTable adapter hook ---------------------------------------------------
 
-function useUsersTable(params: any) {
-  const { page = 0, size = 10, sortBy = "id", sortDir = "asc" } = params;
+type UserTableParams = {
+  page?: number;
+  size?: number;
+  sortBy?: string;
+  sortDir?: "asc" | "desc";
+  search?: string;
+  status?: string;
+};
+
+function useUsersTable(params: UserTableParams) {
+  const { page = 0, size = 10, sortBy = "id", sortDir = "asc", search, status } = params;
   const query = useQuery({
-    queryKey: userKeys.list({ page, size, sortBy, sortDir }),
-    queryFn: () => fetchUsers({ page, size, sortBy, sortDir }),
+    queryKey: userKeys.list({ page, size, sortBy, sortDir, search, status }),
+    queryFn: () => fetchUsers({ page, size, sortBy, sortDir, search, status }),
     placeholderData: keepPreviousData,
   });
   return {
@@ -218,21 +228,28 @@ function UserAddDialog({
   onClose: () => void;
 }) {
   const { create, creating } = useUserAdmin();
-  const emptyForm = (): UserRequest & { confirmPassword?: string } => ({
+  const emptyForm = (): UserRequest & { confirmPassword?: string; selectedRole: string } => ({
     username: "",
     email: "",
     password: "",
     confirmPassword: "",
-    role: "USER",
+    roles: ["USER"],
+    selectedRole: "USER",
     phoneNumber: "",
     address: "",
     bio: "",
   });
   const [form, setForm] = useState(emptyForm());
+  const [profilePicture, setProfilePicture] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const handleOpenChange = (isOpen: boolean) => {
-    if (!isOpen) { setForm(emptyForm()); setError(null); onClose(); }
+    if (!isOpen) {
+      setForm(emptyForm());
+      setProfilePicture(null);
+      setError(null);
+      onClose();
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -243,9 +260,11 @@ function UserAddDialog({
       return;
     }
     try {
-      const { confirmPassword, ...payload } = form;
-      await create(payload);
+      const { confirmPassword, selectedRole, ...payload } = form;
+      await create({ ...payload, roles: [selectedRole] }, profilePicture || undefined);
       setForm(emptyForm());
+      setProfilePicture(null);
+      toast.success("User created successfully");
       onClose();
     } catch (err: any) {
       setError(err?.message ?? "Failed to create user.");
@@ -333,8 +352,18 @@ function UserAddDialog({
           </div>
 
           <div className="space-y-2">
+            <Label htmlFor="add-profile-picture">Profile Picture</Label>
+            <Input
+              id="add-profile-picture"
+              type="file"
+              accept="image/*"
+              onChange={(e) => setProfilePicture(e.target.files?.[0] ?? null)}
+            />
+          </div>
+
+          <div className="space-y-2">
             <Label>Role</Label>
-            <Select value={form.role ?? "USER"} onValueChange={(v) => setForm((f) => ({ ...f, role: v }))}>
+            <Select value={form.selectedRole} onValueChange={(v) => setForm((f) => ({ ...f, selectedRole: v }))}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="USER">User</SelectItem>
@@ -368,6 +397,8 @@ function UserEditDialog({
   onClose: () => void;
 }) {
   const { update, updating } = useUserAdmin();
+  const [error, setError] = useState<string | null>(null);
+  const [profilePicture, setProfilePicture] = useState<File | null>(null);
   const [form, setForm] = useState<UpdateUserRequest & { password?: string; _role?: string }>({});
 
   useEffect(() => {
@@ -382,22 +413,35 @@ function UserEditDialog({
         password:    "",
         _role:       primaryRole(user.roles),
       });
+      setProfilePicture(null);
+      setError(null);
     }
   }, [open, user]);
 
   const handleOpenChange = (isOpen: boolean) => {
-    if (!isOpen) onClose();
+    if (!isOpen) {
+      setForm({});
+      setProfilePicture(null);
+      setError(null);
+      onClose();
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
-    const { _role, password, ...rest } = form;
-    const payload: UpdateUserRequest = { ...rest };
-    if (password)  payload.password = password;
-    if (_role)     payload.roles    = [_role];
-    await update(user.id, payload);
-    onClose();
+    setError(null);
+    try {
+      const { _role, password, ...rest } = form;
+      const payload: UpdateUserRequest = { ...rest };
+      if (password) payload.password = password;
+      if (_role) payload.roles = [_role];
+      await update(user.id, payload, profilePicture || undefined);
+      toast.success("User updated successfully");
+      onClose();
+    } catch (err: any) {
+      setError(err?.message ?? "Failed to update user.");
+    }
   };
 
   return (
@@ -416,6 +460,11 @@ function UserEditDialog({
           <DialogDescription>Update user profile, role, and status.</DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 pt-2">
+          {error && (
+            <div className="flex items-center gap-2 rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
+              <AlertTriangle className="h-4 w-4 shrink-0" /> {error}
+            </div>
+          )}
           {/* Username + Email */}
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
@@ -444,6 +493,16 @@ function UserEditDialog({
           <div className="space-y-2">
             <Label htmlFor="edit-bio">Bio</Label>
             <Textarea id="edit-bio" value={form.bio ?? ""} onChange={(e) => setForm((f) => ({ ...f, bio: e.target.value }))} placeholder="Short bio..." rows={2} />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="edit-profile-picture">Profile Picture</Label>
+            <Input
+              id="edit-profile-picture"
+              type="file"
+              accept="image/*"
+              onChange={(e) => setProfilePicture(e.target.files?.[0] ?? null)}
+            />
           </div>
 
           {/* Role + Status */}
@@ -503,11 +562,18 @@ function UserDeleteDialog({
   onClose: () => void;
 }) {
   const { remove, removing } = useUserAdmin();
+  const [error, setError] = useState<string | null>(null);
 
   const handleDelete = async () => {
     if (!user) return;
-    await remove(user.id);
-    onClose();
+    setError(null);
+    try {
+      await remove(user.id);
+      toast.success("User deleted successfully");
+      onClose();
+    } catch (err: any) {
+      setError(err?.message ?? "Failed to delete user.");
+    }
   };
 
   return (
@@ -530,6 +596,11 @@ function UserDeleteDialog({
             <span className="font-semibold text-foreground">{user?.username}</span>?
             All their data will be permanently removed.
           </p>
+          {error && (
+            <div className="mt-3 flex items-center gap-2 rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
+              <AlertTriangle className="h-4 w-4 shrink-0" /> {error}
+            </div>
+          )}
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose} disabled={removing}>Cancel</Button>

@@ -29,6 +29,7 @@ import {
 import { useLessonProgressActions } from "@/hooks/useLessonProgress";
 import type { LessonProgressResponse } from "@/types/lessonProgressType";
 import { toast } from "sonner";
+import { learningCourseLinks } from "@/components/constants/roadmap-data";
 import {
   buildCourseProgressSummaries,
   type CourseProgressSummary,
@@ -40,7 +41,7 @@ interface ActivityTabProps {
   progressLoading: boolean;
   totalLessonsTracked: number;
   lessonsCompleted: number;
-  distinctCourses: number;
+  completedCourses: number;
   lessonsProgressPct: number;
   totalReadSeconds: number;
   progressByCourse: Record<string, LessonProgressResponse[]>;
@@ -74,41 +75,41 @@ function StatCard({
   );
 }
 
-const LESSON_THUMBNAIL_THEMES = [
-  "from-blue-500 via-cyan-500 to-sky-400",
-  "from-violet-500 via-fuchsia-500 to-pink-500",
-  "from-emerald-500 via-teal-500 to-cyan-400",
-  "from-amber-500 via-orange-500 to-rose-400",
-];
-
-function hashString(value: string): number {
-  return value.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0);
+function normalizeCourseTitle(value?: string): string {
+  return (value ?? "")
+    .toLowerCase()
+    .replace(/[.\-_/]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
-function LessonThumbnail({ lesson }: { lesson: LessonProgressResponse }) {
-  const seed = `${lesson.courseTitle ?? ""}-${lesson.lessonTitle ?? lesson.lessonId}`;
-  const theme = LESSON_THUMBNAIL_THEMES[hashString(seed) % LESSON_THUMBNAIL_THEMES.length];
-  const initials = (lesson.courseTitle ?? lesson.lessonTitle ?? "មេរៀន")
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((part) => part.charAt(0))
-    .join("")
-    .toUpperCase();
+function resolveCourseHref(courseTitle?: string): string | undefined {
+  const normalizedTitle = normalizeCourseTitle(courseTitle);
+  if (!normalizedTitle) return undefined;
 
-  return (
-    <div className={`relative hidden h-14 w-14 shrink-0 overflow-hidden rounded-2xl bg-gradient-to-br ${theme} p-3 text-white shadow-sm sm:flex`}>
-      <div className="absolute right-1.5 top-1.5 rounded-full bg-white/15 p-1">
-        <BookOpen className="h-3 w-3" />
-      </div>
-      <div className="mt-auto">
-        <p className="text-[10px] font-semibold tracking-[0.18em] text-white/80">
-          {lesson.completed ? "ចប់" : "រៀន"}
-        </p>
-        <p className="text-sm font-black leading-none">{initials || "ម"}</p>
-      </div>
-      <div className="absolute -bottom-5 -right-3 h-12 w-12 rounded-full bg-white/10 blur-xl" />
-    </div>
-  );
+  return learningCourseLinks.find(
+    (course) => normalizeCourseTitle(course.label) === normalizedTitle,
+  )?.href;
+}
+
+function toLessonSlug(value?: string): string {
+  return (value ?? "")
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, "-")
+    .replace(/[^a-z0-9\u1780-\u17FF-]/g, "")
+    .replace(/--+/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
+function resolveLessonHref(progress: LessonProgressResponse): string | undefined {
+  const courseHref = resolveCourseHref(progress.courseTitle);
+  const lessonSlug = toLessonSlug(progress.lessonTitle);
+
+  if (!courseHref) return undefined;
+  if (!lessonSlug) return courseHref;
+
+  return `${courseHref}/${encodeURIComponent(lessonSlug)}`;
 }
 
 function CourseProgressRing({
@@ -225,6 +226,8 @@ function LessonRow({ progress }: { progress: LessonProgressResponse }) {
   const estimateMinutes = estimateLessonReadMinutes(progress);
   const trackedReadLabel = formatDurationCompactKh(progress.readTimeSeconds ?? 0);
   const dateStr = progress.completedAt ?? progress.createdAt;
+  const courseHref = resolveCourseHref(progress.courseTitle);
+  const lessonHref = resolveLessonHref(progress);
 
   const handleMarkComplete = async () => {
     try {
@@ -246,8 +249,6 @@ function LessonRow({ progress }: { progress: LessonProgressResponse }) {
 
   return (
     <div className="group flex items-start gap-4 px-5 py-4 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/40">
-      <LessonThumbnail lesson={progress} />
-
       <div
         className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${
           progress.completed
@@ -264,29 +265,37 @@ function LessonRow({ progress }: { progress: LessonProgressResponse }) {
 
       <div className="min-w-0 flex-1">
         <div className="mb-1 flex items-center gap-2 text-[11px] text-muted-foreground">
-          <span className="rounded-full bg-slate-100 px-2 py-0.5 dark:bg-slate-800">
-            {progress.courseTitle ?? "វគ្គសិក្សា"}
-          </span>
+          {courseHref ? (
+            <Link
+              href={courseHref}
+              className="rounded-full bg-slate-100 px-2 py-0.5 transition-colors hover:bg-violet-100 hover:text-violet-700 dark:bg-slate-800 dark:hover:bg-violet-900/30 dark:hover:text-violet-300"
+            >
+              {progress.courseTitle ?? "វគ្គសិក្សា"}
+            </Link>
+          ) : (
+            <span className="rounded-full bg-slate-100 px-2 py-0.5 dark:bg-slate-800">
+              {progress.courseTitle ?? "វគ្គសិក្សា"}
+            </span>
+          )}
           <span>{dateStr ? new Date(dateStr).toLocaleDateString("km-KH") : "--"}</span>
         </div>
 
         <div className="flex items-start justify-between gap-2">
-          <p className="truncate text-sm font-medium leading-snug text-slate-900 dark:text-white">
-            {progress.lessonTitle ?? `មេរៀនទី ${progress.lessonId}`}
-          </p>
+          {lessonHref ? (
+            <Link
+              href={lessonHref}
+              className="truncate text-sm font-medium leading-snug text-slate-900 transition-colors hover:text-violet-700 dark:text-white dark:hover:text-violet-300"
+            >
+              {progress.lessonTitle ?? `មេរៀនទី ${progress.lessonId}`}
+            </Link>
+          ) : (
+            <p className="truncate text-sm font-medium leading-snug text-slate-900 dark:text-white">
+              {progress.lessonTitle ?? `មេរៀនទី ${progress.lessonId}`}
+            </p>
+          )}
         </div>
 
         <div className="mt-1.5 flex flex-wrap items-center gap-3">
-          <span
-            className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold ${
-              progress.completed
-                ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
-                : "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
-            }`}
-          >
-            {progress.completed ? "✓ បានបញ្ចប់" : "● កំពុងរៀន"}
-          </span>
-
           {scrollPct > 0 && scrollPct < 100 && (
             <div className="flex items-center gap-1.5">
               <div className="h-1 w-16 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
@@ -298,11 +307,6 @@ function LessonRow({ progress }: { progress: LessonProgressResponse }) {
               <span className="text-[10px] text-muted-foreground">{scrollPct}%</span>
             </div>
           )}
-
-          <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground">
-            <Timer className="h-3 w-3" />
-            អានប្រហែល {estimateMinutes} នាទី
-          </span>
 
           {(progress.readTimeSeconds ?? 0) > 0 && (
             <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground">
@@ -383,6 +387,7 @@ function LessonRow({ progress }: { progress: LessonProgressResponse }) {
 function CourseGroup({ course }: { course: CourseProgressSummary }) {
   const [showConfetti, setShowConfetti] = useState(false);
   const previousPctRef = useRef(course.progressPct);
+  const courseHref = resolveCourseHref(course.courseTitle);
 
   useEffect(() => {
     if (previousPctRef.current < 100 && course.progressPct === 100) {
@@ -406,9 +411,18 @@ function CourseGroup({ course }: { course: CourseProgressSummary }) {
             <Layers className="h-4 w-4 text-violet-600 dark:text-violet-400" />
           </div>
           <div>
-            <p className="text-sm font-semibold leading-tight text-slate-900 dark:text-white">
-              {course.courseTitle}
-            </p>
+            {courseHref ? (
+              <Link
+                href={courseHref}
+                className="text-sm font-semibold leading-tight text-slate-900 transition-colors hover:text-violet-700 dark:text-white dark:hover:text-violet-300"
+              >
+                {course.courseTitle}
+              </Link>
+            ) : (
+              <p className="text-sm font-semibold leading-tight text-slate-900 dark:text-white">
+                {course.courseTitle}
+              </p>
+            )}
             <p className="mt-0.5 text-xs text-muted-foreground">
               {course.completedLessons}/{course.totalLessons} មេរៀនបានបញ្ចប់ · អាន {formatDurationCompactKh(course.totalReadSeconds)}
             </p>
@@ -492,7 +506,7 @@ export function ActivityTab({
   progressLoading,
   totalLessonsTracked,
   lessonsCompleted,
-  distinctCourses,
+  completedCourses,
   lessonsProgressPct,
   totalReadSeconds,
   progressByCourse,
@@ -529,8 +543,8 @@ export function ActivityTab({
 
         <StatCard
           loading={progressLoading}
-          label="វគ្គសិក្សា"
-          value={distinctCourses}
+          label="វគ្គបានចប់"
+          value={completedCourses}
           icon={
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900/30">
               <Layers className="h-4 w-4 text-blue-600 dark:text-blue-400" />

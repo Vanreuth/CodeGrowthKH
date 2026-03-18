@@ -25,7 +25,7 @@ export interface UserRequest {
   username: string
   email: string
   password: string
-  role?: string
+  roles?: string[]
   phoneNumber?: string
   address?: string
   bio?: string

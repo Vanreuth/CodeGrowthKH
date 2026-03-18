@@ -56,6 +56,38 @@ type EditableSnippet = {
   orderIndex: number;
 };
 
+const SNIPPET_LANGUAGE_OPTIONS = [
+  { value: "javascript", label: "JavaScript" },
+  { value: "js", label: "JavaScript (js)" },
+  { value: "typescript", label: "TypeScript" },
+  { value: "ts", label: "TypeScript (ts)" },
+  { value: "jsx", label: "JSX" },
+  { value: "tsx", label: "TSX" },
+  { value: "html", label: "HTML" },
+  { value: "css", label: "CSS" },
+  { value: "java", label: "Java" },
+  { value: "python", label: "Python" },
+  { value: "py", label: "Python (py)" },
+  { value: "sql", label: "SQL" },
+  { value: "json", label: "JSON" },
+  { value: "bash", label: "Bash" },
+  { value: "shell", label: "Shell" },
+  { value: "sh", label: "Shell (sh)" },
+  { value: "yaml", label: "YAML" },
+  { value: "yml", label: "YAML (yml)" },
+  { value: "docker", label: "Docker" },
+  { value: "dockerfile", label: "Dockerfile" },
+  { value: "php", label: "PHP" },
+  { value: "go", label: "Go" },
+  { value: "rust", label: "Rust" },
+  { value: "kotlin", label: "Kotlin" },
+  { value: "swift", label: "Swift" },
+  { value: "dart", label: "Dart" },
+  { value: "c", label: "C" },
+  { value: "cpp", label: "C++" },
+  { value: "csharp", label: "C#" },
+] as const;
+
 function createSnippetDraft(orderIndex = 0): EditableSnippet {
   return {
     clientId: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
@@ -812,7 +844,23 @@ export default function LessonsPage() {
                         </div>
                         <div className="space-y-2">
                           <Label>Language</Label>
-                          <Input placeholder="javascript" value={snippet.language} onChange={(event) => updateSnippetDraft(snippet.clientId, "language", event.target.value)} />
+                          <Select
+                            value={snippet.language}
+                            onValueChange={(value) =>
+                              updateSnippetDraft(snippet.clientId, "language", value)
+                            }
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select language" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {SNIPPET_LANGUAGE_OPTIONS.map((option) => (
+                                <SelectItem key={option.value} value={option.value}>
+                                  {option.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                         </div>
                         <div className="space-y-2">
                           <Label>Order</Label>
