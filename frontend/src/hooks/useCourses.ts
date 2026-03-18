@@ -48,7 +48,7 @@ function toState<T>(q: { data?: T; isPending: boolean; error: Error | null }) {
 // ═════════════════════════════════════════════════════════════
 
 export function useCourses(params: CourseFilterParams = {}) {
-  const { size = 10, sortBy = 'createdAt', sortDir = 'desc', status, level, categoryId, search, isFeatured, isFree } = params
+  const { size = 10, sortBy = 'orderIndex', sortDir = 'asc', status, level, categoryId, search, isFeatured, isFree } = params
   const [page, setPage] = useState(params.page ?? 0)
 
   // Reset to page 0 whenever filter params change
@@ -151,7 +151,7 @@ export function useLessonsByCourse(courseId: number | null) {
 // ═════════════════════════════════════════════════════════════
 
 export function useFeaturedCourses(params: PaginationParams = {}) {
-  const { size = 10, sortBy = 'createdAt', sortDir = 'desc' } = params
+  const { size = 10, sortBy = 'orderIndex', sortDir = 'asc' } = params
   const [page, setPage] = useState(0)
   const query = useQuery({
     queryKey       : courseKeys.featured({ page, size, sortBy, sortDir }),
@@ -193,7 +193,7 @@ export function useCoursesByCategory(categoryId: number, params: PaginationParam
 }
 
 export function useInstructorCourses(params: CourseFilterParams = {}) {
-  const { size = 10, sortBy = 'createdAt', sortDir = 'desc', status, level, categoryId, search, isFeatured, isFree } = params
+  const { size = 10, sortBy = 'orderIndex', sortDir = 'asc', status, level, categoryId, search, isFeatured, isFree } = params
   const [page, setPage] = useState(params.page ?? 0)
 
   const filtersRef = useRef({ status, level, categoryId, search, isFeatured, isFree })

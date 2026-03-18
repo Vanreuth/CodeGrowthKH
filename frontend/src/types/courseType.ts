@@ -15,6 +15,7 @@ export interface CourseResponse {
   isFeatured?: boolean
   comingSoon: boolean
   launchDate?: string | null
+  orderIndex?: number
   categoryId?: number
   categoryName?: string
   instructorId?: number
@@ -42,6 +43,7 @@ export interface CourseRequest {
   level?: CourseLevel
   status?: CourseStatus
   language?: string
+  orderIndex?: number
   categoryId?: number
   featured?: boolean
   comingSoon?: boolean

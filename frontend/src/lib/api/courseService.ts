@@ -19,7 +19,7 @@ const INSTRUCTOR_PATH  = '/api/v1/instructor'
 export const courseService = {
   /** GET / — paginated courses with optional filters */
   getAll: (params: CourseFilterParams = {}): Promise<PageResponse<CourseResponse>> => {
-    const { page = 0, size = 10, sortBy = 'createdAt', sortDir = 'desc',
+    const { page = 0, size = 10, sortBy = 'orderIndex', sortDir = 'asc',
             categoryId, status, level, search, isFeatured, isFree } = params
     const q: Record<string, unknown> = { page, size, sortBy, sortDir }
     if (categoryId !== undefined) q.categoryId = categoryId
@@ -67,7 +67,7 @@ export const courseService = {
 
   /** GET /featured — paginated */
   getFeatured: (params: PaginationParams = {}): Promise<PageResponse<CourseResponse>> => {
-    const { page = 0, size = 10, sortBy = 'createdAt', sortDir = 'desc' } = params
+    const { page = 0, size = 10, sortBy = 'orderIndex', sortDir = 'asc' } = params
     return get<PageResponse<CourseResponse>>(`${COURSE_PATH}/featured`, { params: { page, size, sortBy, sortDir } })
   },
 
@@ -81,7 +81,7 @@ export const courseService = {
 
   /** GET /instructor/courses — courses owned by current instructor */
   getMine: (params: CourseFilterParams = {}): Promise<PageResponse<CourseResponse>> => {
-    const { page = 0, size = 10, sortBy = 'createdAt', sortDir = 'desc',
+    const { page = 0, size = 10, sortBy = 'orderIndex', sortDir = 'asc',
             categoryId, status, level, search, isFeatured, isFree } = params
     const q: Record<string, unknown> = { page, size, sortBy, sortDir }
     if (categoryId !== undefined) q.categoryId = categoryId

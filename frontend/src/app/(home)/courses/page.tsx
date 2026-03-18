@@ -29,8 +29,8 @@ export default function CoursesPage() {
     search: query.trim() || undefined,
     level: selectedLevel === "All" ? undefined : selectedLevel,
     categoryId: selectedCategoryId,
-    sortBy: "createdAt",
-    sortDir: "desc",
+    sortBy: "orderIndex",
+    sortDir: "asc",
   });
 
   const { data: categoriesPage } = useCategories({ size: 100, sortBy: "orderIndex", sortDir: "asc" });

@@ -80,7 +80,7 @@ function StatusBadge({ status }: { status: string }) {
 // ─── Adapter: wraps useQuery to match DataTable's expected hook signature ─────
 function useCoursesTable(params: any) {
   const {
-    page = 0, size = 10, sortBy = "createdAt", sortDir = "desc",
+    page = 0, size = 10, sortBy = "orderIndex", sortDir = "asc",
     search, status, level, categoryId, isFeatured, isFree,
   } = params;
   const filterParams = { page, size, sortBy, sortDir, search, status, level, categoryId, isFeatured, isFree };
@@ -189,6 +189,14 @@ export default function CoursesManagementPage() {
             </div>
           </div>
         </div>
+      ),
+    },
+    {
+      key   : "orderIndex",
+      label : "Order",
+      sortable: true,
+      render: (val: number) => (
+        <span className="font-medium">{val ?? 0}</span>
       ),
     },
     {

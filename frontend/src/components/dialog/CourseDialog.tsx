@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import {
   Loader2, Eye, Edit3, PlusCircle, Upload, ImageOff, X,
-  BookOpen, Users, Star, Globe, Tag, DollarSign, Sparkles, Clock,
+  BookOpen, Users, Star, Globe, Tag, DollarSign, Sparkles, Clock, ArrowDownUp,
 } from "lucide-react";
 import { Button }   from "@/components/ui/button";
 import { Input }    from "@/components/ui/input";
@@ -41,6 +41,7 @@ const GRADIENTS = [
 const emptyForm = (): CourseFormState => ({
   title: "", description: "", level: "BEGINNER", status: "DRAFT",
   language: "Khmer", categoryId: undefined, _categoryStr: "",
+  orderIndex: 0,
   featured: false, comingSoon: false, isFree: true, price: 0,
   requirements: "", launchDate: "",
 });
@@ -110,6 +111,7 @@ export function CourseDialog({
         level       : course.level ?? "BEGINNER",
         status      : course.status ?? "DRAFT",
         language    : course.language ?? "English",
+        orderIndex  : course.orderIndex ?? 0,
         categoryId  : course.categoryId,
         _categoryStr: course.categoryId ? String(course.categoryId) : "",
         featured    : (course.featured || course.isFeatured) ?? false,
@@ -149,6 +151,7 @@ export function CourseDialog({
       level       : form.level,
       status      : form.status,
       language    : form.language || undefined,
+      orderIndex  : Number.isFinite(form.orderIndex) ? Number(form.orderIndex) : 0,
       categoryId  : form.categoryId,
       featured    : form.featured,
       comingSoon  : form.comingSoon,
@@ -240,6 +243,7 @@ export function CourseDialog({
               <InfoRow icon={DollarSign} label="Price">
                 {course?.isFree ? <span className="text-emerald-600 font-semibold">Free</span> : `$${(course?.price ?? 0).toFixed(2)}`}
               </InfoRow>
+              <InfoRow icon={ArrowDownUp} label="Order">{course?.orderIndex ?? 0}</InfoRow>
               <InfoRow icon={BookOpen} label="Lessons">{course?.totalLessons ?? 0}</InfoRow>
               <InfoRow icon={Users} label="Enrolled">{(course?.enrolledCount ?? 0).toLocaleString()}</InfoRow>
               <InfoRow icon={Star} label="Avg. Rating">{(course?.avgRating ?? 0).toFixed(1)} / 5.0</InfoRow>
@@ -375,8 +379,8 @@ export function CourseDialog({
                 </div>
               </div>
 
-              {/* Category + Language */}
-              <div className="grid gap-4 sm:grid-cols-2">
+              {/* Category + Language + Order */}
+              <div className="grid gap-4 sm:grid-cols-3">
                 <div className="space-y-1.5">
                   <Label>Category</Label>
                   <Select
@@ -407,6 +411,19 @@ export function CourseDialog({
                   
                     </SelectContent>
                   </Select>
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="cd-orderIndex">Display Order</Label>
+                  <Input
+                    id="cd-orderIndex"
+                    type="number"
+                    min={0}
+                    step={1}
+                    value={form.orderIndex ?? 0}
+                    onChange={(e) => setField("orderIndex", parseInt(e.target.value, 10) || 0)}
+                    disabled={isSubmitting}
+                  />
+                  <p className="text-xs text-muted-foreground">Lower numbers appear first.</p>
                 </div>
               </div>
 
