@@ -1,4 +1,5 @@
 import { get, post, put, buildFormData } from '@/lib/api/client'
+import type { ApiResponse } from '@/types/apiType'
 import type {
   AuthResponse,
   LoginRequest,
@@ -9,8 +10,23 @@ import type {
 const AUTH_PATH = '/api/v1/auth'
 // ✅ No backend URL needed in browser at all
 
+function normalizeAuthResponse(
+  user: AuthResponse,
+  timestamp?: string,
+): AuthResponse {
+  return {
+    ...user,
+    createdAt: user.createdAt ?? timestamp,
+  }
+}
+
 export async function login(payload: LoginRequest): Promise<AuthResponse> {
-  return post<AuthResponse>(`${AUTH_PATH}/login`, payload)
+  const response = await post<ApiResponse<AuthResponse>>(
+    `${AUTH_PATH}/login`,
+    payload,
+    { raw: true },
+  )
+  return normalizeAuthResponse(response.data, response.timestamp)
 }
 
 export async function logout(): Promise<void> {
@@ -23,8 +39,8 @@ export async function getMe(): Promise<AuthResponse> {
     cache      : 'no-store',
   })
   if (!res.ok) throw new Error('Unauthorized')
-  const data = await res.json()
-  return data.data
+  const data = await res.json() as ApiResponse<AuthResponse>
+  return normalizeAuthResponse(data.data, data.timestamp)
 }
 
 export async function register(
@@ -44,8 +60,8 @@ export async function refreshToken(): Promise<AuthResponse> {
     credentials: 'include',
   })
   if (!res.ok) throw new Error('Refresh failed')
-  const data = await res.json()
-  return data.data
+  const data = await res.json() as ApiResponse<AuthResponse>
+  return normalizeAuthResponse(data.data, data.timestamp)
 }
 
 export async function updateProfile(
@@ -56,7 +72,12 @@ export async function updateProfile(
     payload as Record<string, unknown>,
     { profilePicture: photo },
   )
-  return put<AuthResponse>(`${AUTH_PATH}/profile`, form, { multipart: true })
+  const response = await put<ApiResponse<AuthResponse>>(
+    `${AUTH_PATH}/profile`,
+    form,
+    { multipart: true, raw: true },
+  )
+  return normalizeAuthResponse(response.data, response.timestamp)
 }
 
 // ✅ Goes to Next.js route handler → handler reads API_BASE_URL server-side

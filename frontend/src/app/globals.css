@@ -680,3 +680,358 @@
   background-color: var(--sidebar) !important;
   border-right-color: var(--sidebar-border) !important;
 }
+
+/* ── Not Found Page — theme-aware ──────────────────────────────── */
+
+.not-found-shell {
+  background-color: var(--background);
+  background-image:
+    radial-gradient(ellipse 65% 55% at 50% 35%,
+      color-mix(in oklch, var(--primary) 8%, transparent),
+      transparent 70%);
+}
+
+.not-found-grid {
+  background-image:
+    linear-gradient(color-mix(in oklch, var(--primary) 10%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in oklch, var(--primary) 10%, transparent) 1px, transparent 1px);
+  background-size: 48px 48px;
+  opacity: 0.65;
+}
+
+.not-found-glow {
+  background:
+    radial-gradient(ellipse 60% 50% at 50% 40%,
+      color-mix(in oklch, var(--accent) 14%, transparent) 0%,
+      transparent 72%);
+}
+
+.not-found-brand-chip {
+  border: 1px solid color-mix(in oklch, var(--border) 80%, transparent);
+  background: color-mix(in oklch, var(--card) 82%, transparent);
+  box-shadow: 0 18px 40px color-mix(in oklch, var(--foreground) 8%, transparent);
+}
+
+.not-found-brand-chip:hover {
+  border-color: color-mix(in oklch, var(--primary) 35%, var(--border));
+  background: color-mix(in oklch, var(--card) 92%, transparent);
+}
+
+.not-found-logo-frame {
+  background:
+    linear-gradient(135deg,
+      color-mix(in oklch, var(--primary) 15%, transparent),
+      color-mix(in oklch, var(--accent) 18%, transparent));
+}
+
+.not-found-brand-name {
+  background-image:
+    linear-gradient(90deg,
+      color-mix(in oklch, var(--primary) 92%, white),
+      color-mix(in oklch, var(--accent) 92%, white));
+}
+
+.not-found-brand-tagline {
+  color: color-mix(in oklch, var(--muted-foreground) 88%, var(--foreground));
+}
+
+.not-found-watermark {
+  color: color-mix(in oklch, var(--foreground) 14%, transparent);
+}
+
+.not-found-badge {
+  border: 1px solid color-mix(in oklch, var(--primary) 28%, var(--border));
+  background: color-mix(in oklch, var(--primary) 10%, var(--card));
+  color: color-mix(in oklch, var(--primary) 92%, var(--foreground));
+}
+
+.not-found-title {
+  color: var(--foreground);
+}
+
+.not-found-body {
+  color: color-mix(in oklch, var(--muted-foreground) 90%, var(--foreground));
+}
+
+.not-found-tip-card {
+  border: 1px solid color-mix(in oklch, var(--border) 85%, transparent);
+  background:
+    linear-gradient(180deg,
+      color-mix(in oklch, var(--card) 94%, transparent),
+      color-mix(in oklch, var(--muted) 72%, var(--background)));
+  box-shadow: 0 14px 28px color-mix(in oklch, var(--foreground) 5%, transparent);
+}
+
+.not-found-tip-title {
+  color: var(--foreground);
+}
+
+.not-found-tip-desc,
+.not-found-quick {
+  color: color-mix(in oklch, var(--muted-foreground) 88%, var(--foreground));
+}
+
+.not-found-primary {
+  background: linear-gradient(
+    90deg,
+    color-mix(in oklch, var(--primary) 92%, white),
+    color-mix(in oklch, var(--accent) 78%, var(--primary))
+  );
+  color: var(--primary-foreground);
+  border: 0;
+  box-shadow: 0 16px 28px color-mix(in oklch, var(--primary) 22%, transparent);
+}
+
+.not-found-primary:hover {
+  filter: brightness(1.02);
+}
+
+.not-found-outline {
+  border-color: color-mix(in oklch, var(--border) 95%, transparent) !important;
+  color: var(--foreground) !important;
+  background: color-mix(in oklch, var(--card) 48%, transparent) !important;
+}
+
+.not-found-outline:hover {
+  border-color: color-mix(in oklch, var(--primary) 35%, var(--border)) !important;
+  background: color-mix(in oklch, var(--primary) 8%, var(--card)) !important;
+  color: var(--foreground) !important;
+}
+
+.not-found-ghost {
+  color: color-mix(in oklch, var(--muted-foreground) 95%, var(--foreground)) !important;
+}
+
+.not-found-ghost:hover {
+  background: color-mix(in oklch, var(--muted) 80%, var(--card)) !important;
+  color: var(--foreground) !important;
+}
+
+.not-found-link {
+  color: color-mix(in oklch, var(--primary) 85%, var(--foreground));
+}
+
+.not-found-link:hover {
+  color: color-mix(in oklch, var(--accent) 75%, var(--primary));
+}
+
+.dark .not-found-shell {
+  background-color: oklch(0.11 0 0);
+}
+
+.dark .not-found-brand-chip {
+  background: color-mix(in oklch, var(--card) 70%, transparent);
+}
+
+.dark .not-found-watermark {
+  color: oklch(1 0 0 / 0.08);
+}
+
+.dark .not-found-tip-card {
+  background:
+    linear-gradient(180deg,
+      oklch(0.19 0.01 250 / 0.86),
+      oklch(0.16 0.01 250 / 0.82));
+}
+
+.aurora .not-found-shell {
+  background-image:
+    radial-gradient(ellipse 60% 55% at 15% 10%,
+      oklch(0.58 0.18 224 / 0.14), transparent 72%),
+    radial-gradient(ellipse 55% 55% at 90% 85%,
+      oklch(0.72 0.14 170 / 0.12), transparent 70%);
+}
+
+.aurora .not-found-watermark {
+  color: oklch(0.58 0.18 224 / 0.16);
+}
+
+.aurora .not-found-brand-chip,
+.aurora .not-found-tip-card {
+  box-shadow: 0 18px 38px oklch(0.58 0.18 224 / 0.10);
+}
+
+.sakura .not-found-shell {
+  background-image:
+    radial-gradient(ellipse 60% 55% at 12% 8%,
+      oklch(0.63 0.19 14 / 0.14), transparent 72%),
+    radial-gradient(ellipse 55% 55% at 88% 82%,
+      oklch(0.76 0.13 340 / 0.12), transparent 70%);
+}
+
+.sakura .not-found-watermark {
+  color: oklch(0.63 0.19 14 / 0.18);
+}
+
+.sakura .not-found-brand-chip,
+.sakura .not-found-tip-card {
+  box-shadow: 0 18px 38px oklch(0.63 0.19 14 / 0.10);
+}
+
+/* ── Tech Bar — theme-aware ────────────────────────────────────── */
+
+.techbar-shell {
+  background-color: var(--background);
+  background-image:
+    radial-gradient(ellipse 55% 35% at 50% 0%,
+      color-mix(in oklch, var(--primary) 8%, transparent),
+      transparent 72%);
+}
+
+.techbar-orb {
+  background: color-mix(in oklch, var(--primary) 16%, transparent);
+}
+
+.techbar-topline {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in oklch, var(--border) 85%, transparent),
+    transparent
+  );
+}
+
+.techbar-card-core {
+  border: 1px solid color-mix(in oklch, var(--border) 85%, transparent);
+  background: color-mix(in oklch, var(--card) 96%, transparent);
+  box-shadow:
+    0 10px 22px color-mix(in oklch, var(--foreground) 7%, transparent),
+    inset 0 1px 0 color-mix(in oklch, white 75%, transparent);
+}
+
+.group:hover .techbar-card-core {
+  box-shadow:
+    0 16px 30px color-mix(in oklch, var(--primary) 14%, transparent),
+    inset 0 1px 0 color-mix(in oklch, white 75%, transparent);
+}
+
+.techbar-card-sheen {
+  opacity: 0.95;
+}
+
+.techbar-fallback-badge {
+  background: color-mix(in oklch, var(--muted) 82%, var(--card));
+  color: color-mix(in oklch, var(--foreground) 88%, var(--muted-foreground));
+}
+
+.techbar-card-name {
+  color: color-mix(in oklch, var(--muted-foreground) 78%, var(--foreground));
+}
+
+.group:hover .techbar-card-name {
+  color: var(--foreground);
+}
+
+.techbar-course-pill {
+  background: color-mix(in oklch, var(--primary) 10%, var(--card));
+  color: color-mix(in oklch, var(--primary) 85%, var(--foreground));
+}
+
+.group:hover .techbar-course-pill {
+  background: color-mix(in oklch, var(--primary) 16%, var(--card));
+}
+
+.techbar-nav-btn {
+  border: 1px solid color-mix(in oklch, var(--border) 90%, transparent);
+  background: color-mix(in oklch, var(--card) 90%, transparent);
+  color: color-mix(in oklch, var(--muted-foreground) 82%, var(--foreground));
+  box-shadow: 0 8px 18px color-mix(in oklch, var(--foreground) 6%, transparent);
+}
+
+.techbar-nav-btn:hover {
+  border-color: color-mix(in oklch, var(--primary) 35%, var(--border));
+  background: color-mix(in oklch, var(--primary) 7%, var(--card));
+  color: color-mix(in oklch, var(--primary) 88%, var(--foreground));
+}
+
+.techbar-dot {
+  background: color-mix(in oklch, var(--muted-foreground) 24%, transparent);
+}
+
+.techbar-dot:hover {
+  background: color-mix(in oklch, var(--muted-foreground) 38%, transparent);
+}
+
+.techbar-dot-active {
+  background: linear-gradient(
+    90deg,
+    color-mix(in oklch, var(--primary) 92%, white),
+    color-mix(in oklch, var(--accent) 85%, var(--primary))
+  );
+}
+
+.techbar-progress {
+  background: color-mix(in oklch, var(--muted) 88%, var(--background));
+}
+
+.techbar-progress [data-slot="progress-indicator"] {
+  background: linear-gradient(
+    90deg,
+    color-mix(in oklch, var(--primary) 92%, white),
+    color-mix(in oklch, var(--accent) 85%, var(--primary))
+  );
+}
+
+.dark .techbar-shell {
+  background-image:
+    radial-gradient(ellipse 60% 38% at 50% 0%,
+      oklch(0.646 0.222 41 / 0.08),
+      transparent 75%);
+}
+
+.dark .techbar-card-core {
+  background: linear-gradient(
+    180deg,
+    oklch(0.20 0.01 250 / 0.92),
+    oklch(0.17 0.01 250 / 0.88)
+  );
+  border-color: oklch(1 0 0 / 0.10);
+  box-shadow:
+    0 14px 28px oklch(0 0 0 / 0.22),
+    inset 0 1px 0 oklch(1 0 0 / 0.06);
+}
+
+.dark .techbar-card-name {
+  color: oklch(0.82 0 0);
+}
+
+.dark .techbar-course-pill {
+  background: oklch(0.25 0.05 220 / 0.85);
+  color: oklch(0.86 0.08 220);
+}
+
+.dark .techbar-nav-btn {
+  background: oklch(0.20 0.01 250 / 0.92);
+  border-color: oklch(1 0 0 / 0.10);
+  color: oklch(0.82 0 0);
+}
+
+.dark .techbar-dot {
+  background: oklch(1 0 0 / 0.18);
+}
+
+.aurora .techbar-shell {
+  background-image:
+    radial-gradient(ellipse 60% 40% at 15% 0%,
+      oklch(0.58 0.18 224 / 0.12), transparent 75%),
+    radial-gradient(ellipse 55% 35% at 90% 0%,
+      oklch(0.72 0.14 170 / 0.10), transparent 75%);
+}
+
+.aurora .techbar-card-core,
+.aurora .techbar-nav-btn {
+  box-shadow: 0 16px 30px oklch(0.58 0.18 224 / 0.10);
+}
+
+.sakura .techbar-shell {
+  background-image:
+    radial-gradient(ellipse 60% 40% at 15% 0%,
+      oklch(0.63 0.19 14 / 0.12), transparent 75%),
+    radial-gradient(ellipse 55% 35% at 90% 0%,
+      oklch(0.76 0.13 340 / 0.10), transparent 75%);
+}
+
+.sakura .techbar-card-core,
+.sakura .techbar-nav-btn {
+  box-shadow: 0 16px 30px oklch(0.63 0.19 14 / 0.10);
+}

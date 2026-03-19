@@ -218,14 +218,14 @@ function TechCard({
     <>
       <div className="relative flex h-[94px] w-[94px] items-center justify-center sm:h-[102px] sm:w-[102px]">
         <div
-          className="absolute inset-[-8px] rounded-full blur-[18px] opacity-70 transition-opacity duration-300 group-hover:opacity-100 animate-pulse"
+          className="techbar-card-glow absolute inset-[-8px] rounded-full blur-[18px] opacity-70 transition-opacity duration-300 group-hover:opacity-100 animate-pulse"
           style={{
             background: `radial-gradient(circle, ${item.glow}, transparent 68%)`,
           }}
         />
-        <div className="relative flex h-full w-full items-center justify-center rounded-full border border-slate-500/70 bg-white shadow-[0_10px_22px_rgba(15,23,42,0.08)] transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-[0_14px_28px_rgba(37,99,235,0.14)]">
+        <div className="techbar-card-core relative flex h-full w-full items-center justify-center rounded-full transition-all duration-300 group-hover:-translate-y-1">
           <div
-            className="pointer-events-none absolute inset-[10px] rounded-full"
+            className="techbar-card-sheen pointer-events-none absolute inset-[10px] rounded-full"
             style={{
               background:
                 "radial-gradient(circle at 30% 28%, rgba(255,255,255,0.95), rgba(255,255,255,0))",
@@ -245,7 +245,7 @@ function TechCard({
             <div
               className={cn(
                 "relative z-10 flex h-[54px] w-[54px] items-center justify-center rounded-2xl text-base font-extrabold tracking-tight shadow-[inset_0_1px_0_rgba(255,255,255,0.24)]",
-                item.badgeClassName ?? "bg-slate-200 text-slate-700",
+                item.badgeClassName ?? "techbar-fallback-badge",
               )}
             >
               {item.badge}
@@ -253,11 +253,11 @@ function TechCard({
           )}
         </div>
       </div>
-      <span className="text-center text-[15px] font-semibold tracking-tight text-slate-600 transition-colors duration-300 group-hover:text-slate-900">
+      <span className="techbar-card-name text-center text-[15px] font-semibold tracking-tight transition-colors duration-300">
         {item.name}
       </span>
       {item.href ? (
-        <span className="rounded-full bg-blue-50 px-2.5 py-1 text-[11px] font-semibold text-blue-600 opacity-80 transition-all duration-300 group-hover:bg-blue-100 group-hover:opacity-100">
+        <span className="techbar-course-pill rounded-full px-2.5 py-1 text-[11px] font-semibold opacity-80 transition-all duration-300 group-hover:opacity-100">
           មើលវគ្គសិក្សា
         </span>
       ) : null}
@@ -330,10 +330,10 @@ export function TechBar() {
   };
 
   return (
-    <section className="relative overflow-hidden bg-white py-16 sm:py-20">
+    <section className="techbar-shell relative overflow-hidden py-16 sm:py-20">
       <div className="pointer-events-none absolute inset-0">
-        <div className="absolute left-1/2 top-0 h-40 w-40 -translate-x-1/2 rounded-full bg-blue-300/10 blur-3xl" />
-        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
+        <div className="techbar-orb absolute left-1/2 top-0 h-40 w-40 -translate-x-1/2 rounded-full blur-3xl" />
+        <div className="techbar-topline absolute inset-x-0 top-0 h-px" />
       </div>
 
       <div className="relative mx-auto w-full max-w-8xl px-4 sm:px-6 lg:px-8">
@@ -352,7 +352,7 @@ export function TechBar() {
           <button
             type="button"
             onClick={goPrev}
-            className="absolute left-2 top-1/2 z-20 hidden h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200 bg-white/95 text-slate-600 shadow-sm transition hover:border-blue-300 hover:text-blue-600 lg:inline-flex"
+            className="techbar-nav-btn absolute left-2 top-1/2 z-20 hidden h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full lg:inline-flex"
             aria-label="Previous technologies"
           >
             <ChevronLeft className="h-5 w-5" />
@@ -361,7 +361,7 @@ export function TechBar() {
           <button
             type="button"
             onClick={goNext}
-            className="absolute right-2 top-1/2 z-20 hidden h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200 bg-white/95 text-slate-600 shadow-sm transition hover:border-blue-300 hover:text-blue-600 lg:inline-flex"
+            className="techbar-nav-btn absolute right-2 top-1/2 z-20 hidden h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full lg:inline-flex"
             aria-label="Next technologies"
           >
             <ChevronRight className="h-5 w-5" />
@@ -398,10 +398,10 @@ export function TechBar() {
                 type="button"
                 onClick={() => goToSlide(index)}
                 className={cn(
-                  "h-2.5 rounded-full transition-all duration-300",
+                  "techbar-dot h-2.5 rounded-full transition-all duration-300",
                   index === activeSlide
-                    ? "w-12 bg-gradient-to-r from-blue-500 via-violet-500 to-blue-500"
-                    : "w-2.5 bg-slate-300 hover:bg-slate-400",
+                    ? "techbar-dot-active w-12"
+                    : "w-2.5",
                 )}
                 aria-label={`Go to technology slide ${index + 1}`}
               />
@@ -409,14 +409,14 @@ export function TechBar() {
           </div>
 
           <div className="mx-auto mt-4 w-36 sm:w-44">
-            <Progress value={progress} className="h-1.5 bg-slate-200 [&_[data-slot=progress-indicator]]:bg-gradient-to-r [&_[data-slot=progress-indicator]]:from-blue-500 [&_[data-slot=progress-indicator]]:via-violet-500 [&_[data-slot=progress-indicator]]:to-blue-500" />
+            <Progress value={progress} className="techbar-progress h-1.5" />
           </div>
 
           <div className="mt-6 flex items-center justify-center gap-2 lg:hidden">
             <button
               type="button"
               onClick={goPrev}
-              className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:border-blue-300 hover:text-blue-600"
+              className="techbar-nav-btn inline-flex h-10 w-10 items-center justify-center rounded-full"
               aria-label="Previous technologies"
             >
               <ChevronLeft className="h-5 w-5" />
@@ -424,7 +424,7 @@ export function TechBar() {
             <button
               type="button"
               onClick={goNext}
-              className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:border-blue-300 hover:text-blue-600"
+              className="techbar-nav-btn inline-flex h-10 w-10 items-center justify-center rounded-full"
               aria-label="Next technologies"
             >
               <ChevronRight className="h-5 w-5" />

@@ -104,8 +104,10 @@ function getAccountStatus(user: AuthResponse): string {
 
 function formatJoinedDate(createdAt?: string): string {
   if (!createdAt) return "មិនមានទិន្នន័យ";
+  const date = new Date(createdAt);
+  if (Number.isNaN(date.getTime())) return "មិនមានទិន្នន័យ";
 
-  return new Date(createdAt).toLocaleDateString("km-KH", {
+  return date.toLocaleDateString("km-KH", {
     year: "numeric",
     month: "long",
     day: "numeric",
@@ -250,6 +252,7 @@ export default function AccountPage() {
   const accountStatus = getAccountStatus(user);
   const primaryRole = getPrimaryRoleLabel(user);
   const isAccountActive = accountStatus === "ACTIVE";
+  const joinedDate = formatJoinedDate(user.createdAt);
 
   // ── Render ─────────────────────────────────────────────────
   return (
@@ -312,10 +315,12 @@ export default function AccountPage() {
             <div className="min-w-0">
               <p className="text-sm text-muted-foreground">បានចូលរួម</p>
               <p className="mt-2 text-base font-semibold text-slate-900 dark:text-white">
-                {formatJoinedDate(user.createdAt)}
+                {joinedDate}
               </p>
               <p className="mt-3 text-sm text-muted-foreground">
-                ព័ត៌មានផ្ទាល់ខ្លួន និងវឌ្ឍនភាពសិក្សារបស់អ្នកត្រូវបានរក្សាទុកនៅទីនេះ។
+                {joinedDate === "មិនមានទិន្នន័យ"
+                  ? "ថ្ងៃបង្កើតគណនីមិនទាន់មាននៅក្នុងប្រព័ន្ធនៅឡើយ។"
+                  : "ព័ត៌មានផ្ទាល់ខ្លួន និងវឌ្ឍនភាពសិក្សារបស់អ្នកត្រូវបានរក្សាទុកនៅទីនេះ។"}
               </p>
             </div>
           </div>

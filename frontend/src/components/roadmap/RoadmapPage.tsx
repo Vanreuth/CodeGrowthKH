@@ -11,7 +11,6 @@ import {
   Goal,
   Sparkles,
   TimerReset,
-  Trophy,
   Zap,
 } from "lucide-react";
 
@@ -62,12 +61,40 @@ const accentMap = {
 
 type AccentKey = keyof typeof accentMap;
 
+type PathCourse = {
+  label: string;
+  href: string;
+};
+
+function getPathCourses(path: RoadmapPath): PathCourse[] {
+  const courseLabelByHref = new Map<string, string>();
+
+  learningCourseLinks.forEach((course) => {
+    courseLabelByHref.set(course.href, course.label);
+  });
+
+  const uniqueCourses = new Map<string, PathCourse>();
+
+  path.stages.forEach((stage) => {
+    stage.resources.forEach((resource) => {
+      if (!resource.internal) return;
+
+      uniqueCourses.set(resource.url, {
+        href: resource.url,
+        label: courseLabelByHref.get(resource.url) ?? resource.label,
+      });
+    });
+  });
+
+  return [...uniqueCourses.values()];
+}
+
 export default function RoadmapPage() {
   const [activePathId, setActivePathId] =
     useState<RoadmapPath["id"]>("frontend");
 
   const activePath = roadmapPaths.find((p) => p.id === activePathId)!;
-
+  const activePathCourses = getPathCourses(activePath);
   const colors = accentMap[activePath.accent as AccentKey];
 
   const progress = 0;
@@ -106,7 +133,6 @@ export default function RoadmapPage() {
               { icon: Goal, label: "1 project / phase" },
               { icon: TimerReset, label: "5–7 hrs / week" },
               { icon: CheckCircle2, label: "Mentor support" },
-              { icon: Trophy, label: "Certificate" },
             ].map(({ icon: Icon, label }) => (
               <div
                 key={label}
@@ -148,6 +174,161 @@ export default function RoadmapPage() {
           </div>
         </div>
 
+      </section>
+
+      <section className="mb-12">
+        <div className="mb-6 max-w-3xl">
+          <Badge className="mb-3 border-primary/20 bg-primary/5 text-primary">
+            <Zap className="mr-1 h-3 w-3" />
+            Developer Roles
+          </Badge>
+
+          <h2 className="text-2xl font-bold sm:text-3xl">
+            ជ្រើសមើលតួនាទីនីមួយៗ ដើម្បីយល់ថា developer នីមួយៗធ្វើអ្វីខ្លះ និង  ត្រូវរៀនអ្វីខ្លះ។
+          </h2>
+
+          <p className="mt-3 text-sm leading-6 text-muted-foreground sm:text-base">
+            What do Frontend, Backend, and Full-Stack Developers do?
+          </p>
+        </div>
+
+        <div className="grid gap-4 lg:grid-cols-3">
+          {roadmapPaths.map((path) => {
+            const c = accentMap[path.accent as AccentKey];
+            const active = path.id === activePathId;
+            const pathCourses = getPathCourses(path);
+
+            return (
+              <div
+                key={path.id}
+                className={`rounded-3xl border p-6 text-left transition hover:-translate-y-1 hover:shadow-lg ${
+                  active
+                    ? `border-transparent bg-gradient-to-br ${path.gradient} text-white shadow-xl`
+                    : "bg-card hover:border-primary/30"
+                }`}
+              >
+                <button
+                  type="button"
+                  onClick={() => setActivePathId(path.id)}
+                  className="w-full text-left"
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-semibold">
+                        {path.icon} {path.label} Developer
+                      </p>
+                      <p
+                        className={`mt-1 text-xs ${
+                          active ? "text-white/75" : "text-muted-foreground"
+                        }`}
+                      >
+                        {path.labelKh}
+                      </p>
+                    </div>
+
+                    <span
+                      className={`rounded-full px-3 py-1 text-[11px] font-semibold ${
+                        active
+                          ? "bg-white/15 text-white"
+                          : `${c.badge} border`
+                      }`}
+                    >
+                      {path.stages.length} phases
+                    </span>
+                  </div>
+
+                  <p
+                    className={`mt-2 text-sm leading-6 ${
+                      active ? "text-white/75" : "text-muted-foreground"
+                    }`}
+                  >
+                    {path.summaryKh}
+                  </p>
+
+                  <p
+                    className={`mt-4 text-sm leading-6 ${
+                      active ? "text-white/90" : "text-muted-foreground"
+                    }`}
+                  >
+                    {path.summary}
+                  </p>
+
+                  <div className="mt-5">
+                    <p
+                      className={`text-xs font-semibold uppercase tracking-[0.14em] ${
+                        active ? "text-white/70" : "text-muted-foreground"
+                      }`}
+                    >
+                      What they do
+                    </p>
+
+                    <ul className="mt-3 space-y-2">
+                      {path.responsibilities.map((item) => (
+                        <li
+                          key={item}
+                          className="flex items-start gap-2 text-sm"
+                        >
+                          <span
+                            className={`mt-2 h-2 w-2 rounded-full ${
+                              active ? "bg-white" : c.dot
+                            }`}
+                          />
+                          <span className={active ? "text-white/90" : ""}>
+                            {item}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <div className="mt-5 flex flex-wrap gap-2">
+                    {path.tools.map((tool) => (
+                      <span
+                        key={tool}
+                        className={`rounded-full px-3 py-1 text-xs font-medium ${
+                          active
+                            ? "bg-white/15 text-white"
+                            : "border bg-muted text-muted-foreground"
+                        }`}
+                      >
+                        {tool}
+                      </span>
+                    ))}
+                  </div>
+                </button>
+
+                {pathCourses.length > 0 && (
+                  <div className="mt-5 border-t border-current/10 pt-5">
+                    <p
+                      className={`text-xs font-semibold uppercase tracking-[0.14em] ${
+                        active ? "text-white/70" : "text-muted-foreground"
+                      }`}
+                    >
+                      Recommended Courses
+                    </p>
+
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {pathCourses.map((course) => (
+                        <Link
+                          key={course.href}
+                          href={course.href}
+                          className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition hover:scale-[1.02] ${
+                            active
+                              ? "bg-white/15 text-white hover:bg-white/20"
+                              : "border border-primary/20 bg-primary/5 text-primary hover:bg-primary/10"
+                          }`}
+                        >
+                          {course.label}
+                          <ChevronRight className="h-3 w-3" />
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
       </section>
 
       {/* PATH TABS */}
@@ -236,7 +417,7 @@ export default function RoadmapPage() {
         </p>
 
         <Link
-          href={learningCourseLinks[0].href}
+          href={activePathCourses[0]?.href ?? learningCourseLinks[0].href}
           className="inline-flex items-center gap-2 mt-5 bg-white text-black px-6 py-3 rounded-full font-semibold hover:scale-105 transition"
         >
           Start Learning
@@ -299,6 +480,20 @@ function StageCard({
         {open && (
 
           <div className="border-t p-6">
+
+            <div className="mb-5 rounded-2xl border bg-muted/40 p-4">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+                ចំណុចផ្តោតសំខាន់
+              </p>
+
+              <p className="mt-2 text-sm font-medium">
+                {stage.focusKh}
+              </p>
+
+              <p className="mt-1 text-xs text-muted-foreground">
+                {stage.focus}
+              </p>
+            </div>
 
             {/* topics */}
 
