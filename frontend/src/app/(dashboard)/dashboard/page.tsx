@@ -4,9 +4,10 @@ import { useMemo } from "react";
 import Link from "next/link";
 import {
   BookOpen, Users, Layers, TrendingUp, Star, Eye,
-  GraduationCap, Plus, ArrowRight, Sparkles, Clock,
+  Plus, ArrowRight, Sparkles, Clock,
   Activity, BarChart3, Mail, Calendar, Shield,
   ArrowUpRight, ArrowDownRight, ChevronRight, FileText,
+  GraduationCap,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -120,9 +121,8 @@ function StatusBadge({ status }: { status: string }) {
 /* ── Role badge ─────────────────────────────────────────────────── */
 function RoleBadge({ role }: { role: string }) {
   const config: Record<string, { className: string; icon: React.ElementType }> = {
-    ADMIN:      { className: "bg-violet-500/10 text-violet-600 dark:text-violet-400", icon: Shield },
-    INSTRUCTOR: { className: "bg-blue-500/10 text-blue-600 dark:text-blue-400",       icon: GraduationCap },
-    USER:       { className: "bg-muted text-muted-foreground",                         icon: Users },
+    ADMIN: { className: "bg-violet-500/10 text-violet-600 dark:text-violet-400", icon: Shield },
+    USER:  { className: "bg-muted text-muted-foreground",                         icon: Users },
   };
   const c = config[role] ?? config.USER;
   const RoleIcon = c.icon;

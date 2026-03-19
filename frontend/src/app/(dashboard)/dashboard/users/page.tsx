@@ -8,7 +8,6 @@ import {
   UserCheck,
   UserX,
   Shield,
-  GraduationCap,
   Users as UsersIcon,
   Mail,
   Calendar,
@@ -79,7 +78,6 @@ function useUsersTable(params: UserTableParams) {
 /** Pick highest-priority role from array */
 function primaryRole(roles: string[] = []): string {
   if (roles.includes("ADMIN") || roles.includes("ROLE_ADMIN"))      return "ADMIN";
-  if (roles.includes("INSTRUCTOR") || roles.includes("ROLE_INSTRUCTOR")) return "INSTRUCTOR";
   return "USER";
 }
 
@@ -88,9 +86,8 @@ function primaryRole(roles: string[] = []): string {
 function RoleBadge({ roles }: { roles: string[] }) {
   const role = primaryRole(roles);
   const config: Record<string, { color: string; bg: string; icon: typeof Shield }> = {
-    ADMIN:      { color: "text-violet-700 dark:text-violet-300", bg: "bg-violet-100 dark:bg-violet-900/40", icon: Shield },
-    INSTRUCTOR: { color: "text-blue-700 dark:text-blue-300",    bg: "bg-blue-100 dark:bg-blue-900/40",    icon: GraduationCap },
-    USER:       { color: "text-slate-700 dark:text-slate-300",  bg: "bg-slate-100 dark:bg-slate-800",     icon: UsersIcon },
+    ADMIN: { color: "text-violet-700 dark:text-violet-300", bg: "bg-violet-100 dark:bg-violet-900/40", icon: Shield },
+    USER:  { color: "text-slate-700 dark:text-slate-300",   bg: "bg-slate-100 dark:bg-slate-800",      icon: UsersIcon },
   };
   const { color, bg, icon: Icon } = config[role] || config.USER;
   return (
@@ -367,7 +364,6 @@ function UserAddDialog({
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="USER">User</SelectItem>
-                <SelectItem value="INSTRUCTOR">Instructor</SelectItem>
                 <SelectItem value="ADMIN">Admin</SelectItem>
               </SelectContent>
             </Select>
@@ -513,7 +509,6 @@ function UserEditDialog({
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="USER">User</SelectItem>
-                  <SelectItem value="INSTRUCTOR">Instructor</SelectItem>
                   <SelectItem value="ADMIN">Admin</SelectItem>
                 </SelectContent>
               </Select>
@@ -692,9 +687,9 @@ export default function UsersPage() {
   const { data: statsData, loading: statsLoading } = useUsers({ page: 0, size: 1000 });
   const allUsers = statsData?.content ?? [];
   const stats = {
-    total:       statsData?.totalElements ?? 0,
-    admins:      allUsers.filter((u) => primaryRole(u.roles) === "ADMIN").length,
-    instructors: allUsers.filter((u) => primaryRole(u.roles) === "INSTRUCTOR").length,
+    total:        statsData?.totalElements ?? 0,
+    admins:       allUsers.filter((u) => primaryRole(u.roles) === "ADMIN").length,
+    regularUsers: allUsers.filter((u) => primaryRole(u.roles) === "USER").length,
     activeUsers: allUsers.filter((u) => u.status === "ACTIVE").length,
   };
 
@@ -713,10 +708,10 @@ export default function UsersPage() {
 
       {/* Stats */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard icon={UsersIcon}     label="Total Users"  value={stats.total}       color="#8b5cf6" loading={statsLoading} />
-        <StatCard icon={Shield}        label="Admins"       value={stats.admins}      color="#ef4444" loading={statsLoading} />
-        <StatCard icon={GraduationCap} label="Instructors"  value={stats.instructors} color="#3b82f6" loading={statsLoading} />
-        <StatCard icon={UserCheck}     label="Active Users" value={stats.activeUsers} color="#10b981" loading={statsLoading} />
+        <StatCard icon={UsersIcon} label="Total Users"   value={stats.total}        color="#8b5cf6" loading={statsLoading} />
+        <StatCard icon={Shield}    label="Admins"        value={stats.admins}       color="#ef4444" loading={statsLoading} />
+        <StatCard icon={UsersIcon} label="Regular Users" value={stats.regularUsers} color="#3b82f6" loading={statsLoading} />
+        <StatCard icon={UserCheck} label="Active Users"  value={stats.activeUsers}  color="#10b981" loading={statsLoading} />
       </div>
 
       {/* Data Table */}

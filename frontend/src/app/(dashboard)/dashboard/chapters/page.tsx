@@ -266,22 +266,34 @@ export default function ChaptersPage() {
   const [formTitle, setFormTitle] = useState("");
   const [formOrder, setFormOrder] = useState(0);
 
-  const { data: coursesData, loading: coursesLoading } = useCourses({ size: 100 });
+  const { data: coursesData, loading: coursesLoading } = useCourses({
+    size: 100,
+    sortBy: "orderIndex",
+    sortDir: "desc",
+  });
   const { data: chaptersData, loading: chaptersLoading, refetch } = useChaptersByCourse(selectedCourseId);
   const { creating, updating, removing, create, update, remove } = useChapterAdmin();
 
   const courses = coursesData?.content ?? [];
   const chapters = chaptersData ?? [];
-  const firstCreatedCourseId = useMemo(() => {
+  const sortedCourses = useMemo(
+    () =>
+      [...courses].sort((left, right) => {
+        const orderDiff = (right.orderIndex ?? 0) - (left.orderIndex ?? 0);
+        if (orderDiff !== 0) return orderDiff;
+
+        const createdAtDiff = new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime();
+        if (createdAtDiff !== 0) return createdAtDiff;
+
+        return right.id - left.id;
+      }),
+    [courses]
+  );
+  const latestOrderCourseId = useMemo(() => {
     if (courses.length === 0) return 0;
 
-    return [...courses]
-      .sort((left, right) => {
-        const createdAtDiff = new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime();
-        if (createdAtDiff !== 0) return createdAtDiff;
-        return left.id - right.id;
-      })[0]?.id ?? 0;
-  }, [courses]);
+    return sortedCourses[0]?.id ?? 0;
+  }, [courses.length, sortedCourses]);
   const selectedCourse = courses.find((course) => course.id === selectedCourseId);
   const totalChapters = chapters.length;
   const totalLessons = chapters.reduce(
@@ -360,13 +372,13 @@ export default function ChaptersPage() {
         onChange: (value: string | undefined) => setSelectedCourseId(value ? Number(value) : 0),
         placeholder: "Select a course",
         allLabel: "All courses",
-        options: courses.map((course) => ({
+        options: sortedCourses.map((course) => ({
           label: course.title,
           value: String(course.id),
         })),
       },
     ],
-    [courses, selectedCourseId]
+    [selectedCourseId, sortedCourses]
   );
 
   useEffect(() => {
@@ -380,10 +392,10 @@ export default function ChaptersPage() {
   }, []);
 
   useEffect(() => {
-    if (coursesLoading || selectedCourseId > 0 || firstCreatedCourseId === 0) return;
+    if (coursesLoading || selectedCourseId > 0 || latestOrderCourseId === 0) return;
 
-    setSelectedCourseId(firstCreatedCourseId);
-  }, [coursesLoading, firstCreatedCourseId, selectedCourseId]);
+    setSelectedCourseId(latestOrderCourseId);
+  }, [coursesLoading, latestOrderCourseId, selectedCourseId]);
 
   useEffect(() => {
     if (selectedCourseId > 0) {
@@ -399,14 +411,14 @@ export default function ChaptersPage() {
 
     const courseExists = courses.some((course) => course.id === selectedCourseId);
     if (!courseExists) {
-      if (firstCreatedCourseId > 0) {
-        setSelectedCourseId(firstCreatedCourseId);
+      if (latestOrderCourseId > 0) {
+        setSelectedCourseId(latestOrderCourseId);
       } else {
         setSelectedCourseId(0);
         window.localStorage.removeItem(storageKey);
       }
     }
-  }, [courses, coursesLoading, firstCreatedCourseId, selectedCourseId]);
+  }, [courses, coursesLoading, latestOrderCourseId, selectedCourseId]);
 
   const openCreateDialog = () => {
     setEditingChapter(null);

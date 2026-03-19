@@ -11,7 +11,7 @@ import { courseService } from '@/lib/api/courseService'
 import { chapterService } from '@/lib/api/chapterService'
 import { lessonService } from '@/lib/api/lessonService'
 import type { PageResponse, PaginationParams, CourseFilterParams } from '@/types/api'
-import type { CourseResponse, CourseRequest, InstructorStatsResponse } from '../types/courseType'
+import type { CourseResponse, CourseRequest } from '../types/courseType'
 import type { ChapterResponse } from '../types/chapterType'
 import type { LessonResponse } from '../types/lessonType'
 
@@ -31,9 +31,6 @@ export const courseKeys = {
   lesson           : (courseSlug: string, lessonSlug: string) => ['courses', courseSlug, 'lessons', lessonSlug] as const,
   chaptersByCourse : (courseId: number) => ['courses', courseId, 'chapters'] as const,
   lessonsByCourse  : (courseId: number) => ['courses', courseId, 'lessons'] as const,
-  instructorLists  : () => ['instructor', 'courses', 'list'] as const,
-  instructorList   : (params: object) => ['instructor', 'courses', 'list', params] as const,
-  instructorStats  : () => ['instructor', 'stats'] as const,
 }
 
 // Shared cache config for stable reference data
@@ -192,45 +189,6 @@ export function useCoursesByCategory(categoryId: number, params: PaginationParam
   return { ...toState<PageResponse<CourseResponse>>(query), page, setPage, refetch: query.refetch }
 }
 
-export function useInstructorCourses(params: CourseFilterParams = {}) {
-  const { size = 10, sortBy = 'orderIndex', sortDir = 'asc', status, level, categoryId, search, isFeatured, isFree } = params
-  const [page, setPage] = useState(params.page ?? 0)
-
-  const filtersRef = useRef({ status, level, categoryId, search, isFeatured, isFree })
-  useEffect(() => {
-    const prev = filtersRef.current
-    if (
-      prev.status     !== status     ||
-      prev.level      !== level      ||
-      prev.categoryId !== categoryId ||
-      prev.search     !== search     ||
-      prev.isFeatured !== isFeatured ||
-      prev.isFree     !== isFree
-    ) {
-      setPage(0)
-      filtersRef.current = { status, level, categoryId, search, isFeatured, isFree }
-    }
-  }, [status, level, categoryId, search, isFeatured, isFree])
-
-  const filterParams = { page, size, sortBy, sortDir, status, level, categoryId, search, isFeatured, isFree }
-  const query = useQuery({
-    queryKey       : courseKeys.instructorList(filterParams),
-    queryFn        : () => courseService.getMine(filterParams),
-    placeholderData: keepPreviousData,
-  })
-
-  return { ...toState<PageResponse<CourseResponse>>(query), page, setPage, refetch: query.refetch }
-}
-
-export function useInstructorStats() {
-  const query = useQuery({
-    queryKey: courseKeys.instructorStats(),
-    queryFn : () => courseService.getInstructorStats(),
-  })
-
-  return { ...toState<InstructorStatsResponse>(query), refetch: query.refetch }
-}
-
 // ═════════════════════════════════════════════════════════════
 //  8. useCourseAdmin — CRUD mutations for admin
 // ═════════════════════════════════════════════════════════════
@@ -244,8 +202,6 @@ export function useCourseAdmin() {
       courseService.create(payload, thumbnail),
     onSuccess: () => {
       invalidate()
-      qc.invalidateQueries({ queryKey: courseKeys.instructorLists() })
-      qc.invalidateQueries({ queryKey: courseKeys.instructorStats() })
     },
   })
 
@@ -255,8 +211,6 @@ export function useCourseAdmin() {
     onSuccess: (data) => {
       qc.invalidateQueries({ queryKey: courseKeys.slug(data.slug) })
       invalidate()
-      qc.invalidateQueries({ queryKey: courseKeys.instructorLists() })
-      qc.invalidateQueries({ queryKey: courseKeys.instructorStats() })
     },
   })
 
@@ -264,8 +218,6 @@ export function useCourseAdmin() {
     mutationFn: (id: number) => courseService.remove(id),
     onSuccess : () => {
       invalidate()
-      qc.invalidateQueries({ queryKey: courseKeys.instructorLists() })
-      qc.invalidateQueries({ queryKey: courseKeys.instructorStats() })
     },
   })
 

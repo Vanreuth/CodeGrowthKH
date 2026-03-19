@@ -8,7 +8,7 @@ import {
   login as apiLogin, logout as apiLogout,
   getMe, refreshToken, updateProfile as apiUpdateProfile,
 } from '@/lib/api/auth'
-import { hasAdminRole, hasInstructorRole, hasUserRole } from '@/types/api'
+import { hasAdminRole, hasUserRole } from '@/types/api'
 import type { AuthResponse, UpdateProfileRequest } from '@/types/auth'
 
 interface AuthContextValue {
@@ -17,7 +17,6 @@ interface AuthContextValue {
   initialized     : boolean
   isRefreshing    : boolean
   isAdmin         : boolean
-  isInstructor    : boolean
   isUser          : boolean
   isAuthenticated : boolean
   login           : (username: string, password: string) => Promise<AuthResponse>
@@ -104,15 +103,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const isAdmin         = hasAdminRole(user?.roles)
-  const isInstructor    = hasInstructorRole(user?.roles)
-  const isUser          = hasUserRole(user?.roles) && !isAdmin && !isInstructor
+  const isUser          = hasUserRole(user?.roles) && !isAdmin
   const isAuthenticated = !!user
   const initialized     = !loading   // ✅ derived — no separate state needed
 
   return (
     <AuthContext.Provider value={{
       user, loading, initialized, isRefreshing,
-      isAdmin, isInstructor, isUser, isAuthenticated,
+      isAdmin, isUser, isAuthenticated,
       login, logout, updateProfile,
     }}>
       {children}

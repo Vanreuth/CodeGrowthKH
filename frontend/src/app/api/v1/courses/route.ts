@@ -1,6 +1,6 @@
 /**
  * GET  /api/v1/courses   — paginated list with filters
- * POST /api/v1/courses   — [ADMIN/INSTRUCTOR] create (multipart)
+ * POST /api/v1/courses   — [ADMIN] create (multipart)
  */
 import { NextRequest } from 'next/server'
 import { proxyToBackend } from '@/lib/proxy'

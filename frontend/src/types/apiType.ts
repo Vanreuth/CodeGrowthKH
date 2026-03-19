@@ -39,17 +39,12 @@ export function hasAdminRole(roles: string[] = []): boolean {
   return hasRole(roles, 'ADMIN')
 }
 
-export function hasInstructorRole(roles: string[] = []): boolean {
-  return hasRole(roles, 'INSTRUCTOR')
-}
-
 export function hasUserRole(roles: string[] = []): boolean {
   return hasRole(roles, 'USER')
 }
 
 export function getPrimaryRole(roles: string[] = []): string {
   if (hasAdminRole(roles)) return 'ROLE_ADMIN'
-  if (hasInstructorRole(roles)) return 'ROLE_INSTRUCTOR'
   if (hasUserRole(roles)) return 'ROLE_USER'
   return roles[0] ? normalizeRole(roles[0]) : 'ROLE_USER'
 }
@@ -58,7 +53,6 @@ export function getDefaultAppRoute(roles: string[] = []): string {
   const primaryRole = getPrimaryRole(roles)
 
   if (primaryRole === 'ROLE_ADMIN') return '/dashboard'
-  if (primaryRole === 'ROLE_INSTRUCTOR') return '/instructor'
   return '/account'
 }
 

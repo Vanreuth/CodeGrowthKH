@@ -23,7 +23,6 @@ export const ROUTES = {
 
   // ── Role-specific ─────────────────────────────────────────
   DASHBOARD     : '/dashboard',   // ROLE_ADMIN
-  INSTRUCTOR    : '/instructor',  // ROLE_INSTRUCTOR
 
   // ── Content ───────────────────────────────────────────────
   COURSES       : '/courses',
@@ -52,10 +51,6 @@ export const ADMIN_ROUTES: string[] = [
   ROUTES.DASHBOARD,
 ]
 
-export const INSTRUCTOR_ROUTES: string[] = [
-  ROUTES.INSTRUCTOR,
-]
-
 export const USER_ROUTES: string[] = [
   ROUTES.ACCOUNT,
 ]
@@ -63,6 +58,5 @@ export const USER_ROUTES: string[] = [
 /** All routes that require a logged-in session. */
 export const PROTECTED_ROUTES: string[] = [
   ...ADMIN_ROUTES,
-  ...INSTRUCTOR_ROUTES,
   ...USER_ROUTES,
 ]

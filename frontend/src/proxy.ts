@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server'
 import {
   PUBLIC_ROUTES,
   ADMIN_ROUTES,
-  INSTRUCTOR_ROUTES,
   USER_ROUTES,
 } from './constants/routes'
 
@@ -47,7 +46,6 @@ function hasRole(roles: string[], role: string): boolean {
 
 function getDefaultRoute(roles: string[]): string {
   if (hasRole(roles, 'ADMIN'))       return '/dashboard'
-  if (hasRole(roles, 'INSTRUCTOR'))  return '/instructor'
   return '/account'
 }
 
@@ -75,9 +73,8 @@ export function proxy(req: NextRequest): NextResponse {
   // Route types
   const isPublic     = isMatch(pathname, PUBLIC_ROUTES)
   const isAdmin      = isMatch(pathname, ADMIN_ROUTES)
-  const isInstructor = isMatch(pathname, INSTRUCTOR_ROUTES)
   const isUser       = isMatch(pathname, USER_ROUTES)
-  const isProtected  = isAdmin || isInstructor || isUser
+  const isProtected  = isAdmin || isUser
 
   // ── 1. Logged-in → away from public pages ─────────────────────────────
   if (isLoggedIn && isPublic) {
@@ -103,10 +100,7 @@ export function proxy(req: NextRequest): NextResponse {
 
   // ── 5. Wrong role → redirect to own area ──────────────────────────────
   if (isLoggedIn && isAdmin      && !hasRole(roles, 'ADMIN'))       return redirect(appRoute, req)
-  if (isLoggedIn && isInstructor && !hasRole(roles, 'INSTRUCTOR'))  return redirect(appRoute, req)
-  if (isLoggedIn && isUser       && (
-    hasRole(roles, 'ADMIN') || hasRole(roles, 'INSTRUCTOR')
-  )) return redirect(appRoute, req)
+  if (isLoggedIn && isUser       && hasRole(roles, 'ADMIN')) return redirect(appRoute, req)
 
   // ── 6. All good ────────────────────────────────────────────────────────
   return NextResponse.next()

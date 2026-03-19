@@ -52,9 +52,3 @@ export interface CourseRequest {
   price?: number
   requirements?: string
 }
-
-export interface InstructorStatsResponse {
-  totalCourses: number
-  totalStudents: number
-  totalRevenue: number
-}

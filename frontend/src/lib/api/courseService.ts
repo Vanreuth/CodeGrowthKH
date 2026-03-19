@@ -6,7 +6,6 @@ import type {
   CourseLevel,
   CourseRequest,
   CourseResponse,
-  InstructorStatsResponse,
 } from '@/types/courseType'
 
 
@@ -74,19 +73,19 @@ export const courseService = {
     const { page = 0, size = 10 } = params
     return get<PageResponse<CourseResponse>>(`${COURSE_PATH}/coming-soon`, { params: { page, size } })
   },
-  /** POST / — [ADMIN, INSTRUCTOR] multipart/form-data */
+  /** POST / — [ADMIN] multipart/form-data */
   create: (payload: CourseRequest, thumbnail?: File): Promise<CourseResponse> => {
     const form = buildFormData(payload as unknown as Record<string, unknown>, { thumbnail })
     return post<CourseResponse>(COURSE_PATH, form, { multipart: true })
   },
 
-  /** PUT /:id — [ADMIN, INSTRUCTOR] multipart/form-data */
+  /** PUT /:id — [ADMIN] multipart/form-data */
   update: (id: number, payload: CourseRequest, thumbnail?: File): Promise<CourseResponse> => {
     const form = buildFormData(payload as unknown as Record<string, unknown>, { thumbnail })
     return put<CourseResponse>(`${COURSE_PATH}/${id}`, form, { multipart: true })
   },
 
-  /** DELETE /:id — [ADMIN, INSTRUCTOR] */
+  /** DELETE /:id — [ADMIN] */
   remove: (id: number): Promise<void> =>
     del<void>(`${COURSE_PATH}/${id}`, { raw: true }),
 }

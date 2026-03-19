@@ -21,7 +21,6 @@ export {
   normalizeRole,
   hasRole,
   hasAdminRole,
-  hasInstructorRole,
   hasUserRole,
   getPrimaryRole,
   getDefaultAppRoute,
