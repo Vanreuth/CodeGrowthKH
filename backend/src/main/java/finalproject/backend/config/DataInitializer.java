@@ -41,7 +41,6 @@ public class DataInitializer implements CommandLineRunner {
         fixSchema();
         seedRoles();
         seedAdmin();
-        seedInstructor();
         try {
             seedAll();
         } catch (Exception e) {
@@ -120,7 +119,6 @@ public class DataInitializer implements CommandLineRunner {
     private void seedRoles() {
         for (String role : List.of(
                 RoleUtil.ROLE_USER,
-                RoleUtil.ROLE_INSTRUCTOR,
                 RoleUtil.ROLE_MODERATOR,
                 RoleUtil.ROLE_ADMIN
         ))
@@ -157,41 +155,12 @@ public class DataInitializer implements CommandLineRunner {
     }
 
 
-    private void seedInstructor() {
-        String encodedPassword = passwordEncoder.encode("Instructor@1234");
-
-        Set<Role> instructorRoles = new HashSet<>();
-        instructorRoles.add(roleRepository.findByName(RoleUtil.ROLE_INSTRUCTOR).orElseThrow());
-
-        userRepository.findByUsername("instructor").ifPresentOrElse(
-                instructor -> {
-                    instructor.setEmail("instructor@codegrowthkh.site");
-                    instructor.setPassword(encodedPassword);
-                    instructor.setStatus("ACTIVE");
-                    instructor.setRoles(instructorRoles);
-                    userRepository.save(instructor);
-                    log.info("✅ Instructor password updated → instructor / Instructor@1234");
-                },
-                () -> {
-                    userRepository.save(User.builder()
-                            .username("instructor")
-                            .email("instructor@codegrowthkh.site")
-                            .password(encodedPassword)
-                            .status("ACTIVE")
-                            .roles(instructorRoles)
-                            .build());
-                    log.info("✅ Instructor seeded → instructor / Instructor@1234");
-                }
-        );
-    }
-
     // ══════════════════════════════════════════════════════════════════════════
     // MAIN SEED
     // ══════════════════════════════════════════════════════════════════════════
 
     private void seedAll() {
-        User ins = userRepository.findByUsername("instructor")
-                .or(() -> userRepository.findByUsername("admin"))
+        User ins = userRepository.findByUsername("admin")
                 .orElseThrow();
 
         // ── Categories ────────────────────────────────────────────────────────

@@ -3,7 +3,6 @@ package finalproject.backend.util;
 public final class RoleUtil {
 
     public static final String ROLE_USER = "ROLE_USER";
-    public static final String ROLE_INSTRUCTOR = "ROLE_INSTRUCTOR";
     public static final String ROLE_ADMIN = "ROLE_ADMIN";
     public static final String ROLE_MODERATOR = "ROLE_MODERATOR";
 
@@ -21,7 +20,7 @@ public final class RoleUtil {
         }
 
         return switch (normalized) {
-            case ROLE_USER, ROLE_INSTRUCTOR, ROLE_ADMIN, ROLE_MODERATOR -> normalized;
+            case ROLE_USER, ROLE_ADMIN, ROLE_MODERATOR -> normalized;
             default -> throw new IllegalArgumentException("Unsupported role: " + value);
         };
     }

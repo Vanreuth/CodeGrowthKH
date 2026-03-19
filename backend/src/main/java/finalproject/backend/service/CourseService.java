@@ -5,7 +5,6 @@ import finalproject.backend.modal.CourseStatus;
 import finalproject.backend.request.CourseRequest;
 import finalproject.backend.response.ApiResponse;
 import finalproject.backend.response.CourseResponse;
-import finalproject.backend.response.InstructorStatsResponse;
 import finalproject.backend.response.LessonResponse;
 import finalproject.backend.response.PageResponse;
 import org.springframework.data.domain.Pageable;
@@ -46,20 +45,6 @@ public interface CourseService {
 
     /** Returns all COMING_SOON courses ordered by launchDate ascending. */
     PageResponse<CourseResponse> getComingSoonCourses(Pageable pageable);
-
-    PageResponse<CourseResponse> getInstructorCourses(
-            Pageable pageable,
-            String search,
-            String status,
-            String level,
-            Long categoryId,
-            Boolean isFeatured,
-            Boolean isFree
-    );
-
-    ApiResponse<CourseResponse> getInstructorCourseById(Long id);
-
-    ApiResponse<InstructorStatsResponse> getInstructorStats();
 
     ApiResponse<CourseResponse> updateCourse(Long id, CourseRequest request, MultipartFile thumbnail);
     ApiResponse<Void> deleteCourse(Long id);

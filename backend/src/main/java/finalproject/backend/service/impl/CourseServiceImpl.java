@@ -19,7 +19,6 @@ import finalproject.backend.repository.UserRepository;
 import finalproject.backend.request.CourseRequest;
 import finalproject.backend.response.ApiResponse;
 import finalproject.backend.response.CourseResponse;
-import finalproject.backend.response.InstructorStatsResponse;
 import finalproject.backend.response.LessonResponse;
 import finalproject.backend.response.PageResponse;
 import finalproject.backend.service.CourseService;
@@ -39,7 +38,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.math.BigDecimal;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -125,25 +123,8 @@ public class CourseServiceImpl implements CourseService {
                 .and(isFeatured(isFeatured))
                 .and(isFree(isFree));
 
-        if (isAuthenticatedInstructor() && !isCurrentUserAdmin()) {
-            spec = spec.and(hasInstructor(getCurrentUserId()));
-        }
-
         Page<Course> page = courseRepository.findAll(spec, pageable);
         return PageResponse.of(page.map(courseMapper::toResponse));
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public PageResponse<CourseResponse> getInstructorCourses(
-            Pageable pageable,
-            String search,
-            String status,
-            String level,
-            Long categoryId,
-            Boolean isFeatured,
-            Boolean isFree) {
-        return getAllCourses(pageable, search, status, level, categoryId, isFeatured, isFree);
     }
 
     // ─── Specifications ───────────────────────────────────────────────────────
@@ -200,13 +181,6 @@ public class CourseServiceImpl implements CourseService {
         return (root, query, cb) -> {
             if (isFree == null) return null;
             return cb.equal(root.get("isFree"), isFree);
-        };
-    }
-
-    private Specification<Course> hasInstructor(Long instructorId) {
-        return (root, query, cb) -> {
-            if (instructorId == null) return null;
-            return cb.equal(root.get("instructor").get("id"), instructorId);
         };
     }
 
@@ -308,14 +282,10 @@ public class CourseServiceImpl implements CourseService {
             throw new CustomMessageException("Course slug already exists",
                     String.valueOf(HttpStatus.CONFLICT.value()));
 
-        User instructor = isCurrentUserAdmin() && request.getInstructorId() != null
-            ? findInstructorOrThrow(request.getInstructorId())
-            : null;
-
         Set<Category> categories = request.hasCategorySelection()
                 ? findCategoriesOrThrow(request.getResolvedCategoryIds()) : null;
 
-        courseMapper.updateEntity(request, course, instructor, categories);
+        courseMapper.updateEntity(request, course, null, categories);
         // updatedAt + publishedAt handled by @PreUpdate
 
         if (thumbnail != null && !thumbnail.isEmpty()) {
@@ -360,44 +330,6 @@ public class CourseServiceImpl implements CourseService {
         return ApiResponse.success("Course deleted successfully");
     }
 
-    @Override
-    @Transactional(readOnly = true)
-    public ApiResponse<CourseResponse> getInstructorCourseById(Long id) {
-        Course course = findCourseOrThrow(id);
-        validateCourseOwnership(course);
-        return ApiResponse.success(courseMapper.toResponse(course), "Instructor course retrieved successfully");
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public ApiResponse<InstructorStatsResponse> getInstructorStats() {
-        List<Course> courses = isCurrentUserAdmin()
-                ? courseRepository.findAll()
-                : courseRepository.findAllByInstructorId(getCurrentUserId());
-
-        long totalStudents = 0L;
-        BigDecimal totalRevenue = BigDecimal.ZERO;
-
-        for (Course course : courses) {
-            long enrolledCount = lessonProgressRepository.countDistinctUsersByCourseId(course.getId());
-            totalStudents += enrolledCount;
-
-            BigDecimal price = Boolean.TRUE.equals(course.getIsFree())
-                    ? BigDecimal.ZERO
-                    : (course.getPrice() != null ? course.getPrice() : BigDecimal.ZERO);
-
-            totalRevenue = totalRevenue.add(price.multiply(BigDecimal.valueOf(enrolledCount)));
-        }
-
-        InstructorStatsResponse stats = InstructorStatsResponse.builder()
-                .totalCourses(courses.size())
-                .totalStudents(totalStudents)
-                .totalRevenue(totalRevenue)
-                .build();
-
-        return ApiResponse.success(stats, "Instructor stats retrieved successfully");
-    }
-
     // ── helpers ───────────────────────────────────────────────────────────────
 
     /**
@@ -427,13 +359,6 @@ public class CourseServiceImpl implements CourseService {
         return courseRepository.findById(id)
                 .orElseThrow(() -> new CustomMessageException(
                         "Course not found with id: " + id,
-                        String.valueOf(HttpStatus.NOT_FOUND.value())));
-    }
-
-    private User findInstructorOrThrow(Long instructorId) {
-        return userRepository.findById(instructorId)
-                .orElseThrow(() -> new CustomMessageException(
-                        "Instructor not found with id: " + instructorId,
                         String.valueOf(HttpStatus.NOT_FOUND.value())));
     }
 
@@ -480,25 +405,9 @@ public class CourseServiceImpl implements CourseService {
         if (isCurrentUserAdmin()) {
             return;
         }
-
-        Long currentUserId = getCurrentUserId();
-        Long instructorId = course.getInstructor() != null ? course.getInstructor().getId() : null;
-
-        if (instructorId == null || !instructorId.equals(currentUserId)) {
-            throw new CustomMessageException(
-                    "You can only manage your own courses",
-                    String.valueOf(HttpStatus.FORBIDDEN.value()));
-        }
-    }
-
-    private boolean isAuthenticatedInstructor() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || authentication instanceof AnonymousAuthenticationToken) {
-            return false;
-        }
-
-        return authentication.getAuthorities().stream()
-            .anyMatch(authority -> authority.getAuthority().equals(RoleUtil.ROLE_INSTRUCTOR));
+        throw new CustomMessageException(
+                "Only admins can manage courses",
+                String.valueOf(HttpStatus.FORBIDDEN.value()));
     }
 
     private boolean isCurrentUserAdmin() {

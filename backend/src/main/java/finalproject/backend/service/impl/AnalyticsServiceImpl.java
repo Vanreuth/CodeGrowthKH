@@ -50,7 +50,6 @@ public class AnalyticsServiceImpl implements AnalyticsService {
 
     private static final Map<String, String> ROLE_COLORS = Map.of(
             "ADMIN", "#8b5cf6",
-            "INSTRUCTOR", "#3b82f6",
             "USER", "#64748b",
             "MODERATOR", "#f59e0b"
     );
@@ -279,7 +278,6 @@ public class AnalyticsServiceImpl implements AnalyticsService {
                 .collect(Collectors.toCollection(LinkedHashSet::new));
 
         if (roles.contains(RoleUtil.ROLE_ADMIN)) return "ADMIN";
-        if (roles.contains(RoleUtil.ROLE_INSTRUCTOR)) return "INSTRUCTOR";
         if (roles.contains(RoleUtil.ROLE_MODERATOR)) return "MODERATOR";
         return "USER";
     }
