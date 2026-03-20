@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 @Builder
@@ -30,5 +31,7 @@ public class CoursePdfExportResponse {
     private String courseTitle;
     private String thumbnail;
     private String level;
+    private List<Integer> categoryIds;
+    private List<String> categoryNames;
 }
 

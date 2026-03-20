@@ -17,8 +17,12 @@ public class CoursePdfExportController {
     private final CoursePdfExportService coursePdfExportService;
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<CoursePdfExportResponse>>> getAllCoursePdfs() {
-        return ResponseEntity.ok(coursePdfExportService.getAllCoursePdfs());
+    public ResponseEntity<ApiResponse<List<CoursePdfExportResponse>>> getAllCoursePdfs(
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String level,
+            @RequestParam(required = false) Long categoryId) {
+        return ResponseEntity.ok(coursePdfExportService.getAllCoursePdfs(search, status, level, categoryId));
     }
 
     @GetMapping("/{courseId}")

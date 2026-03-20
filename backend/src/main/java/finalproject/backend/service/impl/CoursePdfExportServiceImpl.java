@@ -18,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -39,12 +40,20 @@ public class CoursePdfExportServiceImpl implements CoursePdfExportService {
 
     @Override
     @Transactional(readOnly = true)
-    public ApiResponse<List<CoursePdfExportResponse>> getAllCoursePdfs() {
+    public ApiResponse<List<CoursePdfExportResponse>> getAllCoursePdfs(
+            String search,
+            String status,
+            String level,
+            Long categoryId) {
         List<Course> courses = courseRepository.findAll()
                 .stream()
-                .sorted(Comparator.comparing(
-                        Course::getCreatedAt,
-                        Comparator.nullsLast(Comparator.reverseOrder())))
+                .filter(course -> matchesSearch(course, search))
+                .filter(course -> matchesStatus(course, status))
+                .filter(course -> matchesLevel(course, level))
+                .filter(course -> matchesCategory(course, categoryId))
+                .sorted(Comparator
+                        .comparing(Course::getOrderIndex, Comparator.nullsLast(Comparator.naturalOrder()))
+                        .thenComparing(Course::getCreatedAt, Comparator.nullsLast(Comparator.reverseOrder())))
                 .toList();
 
         Map<Long, CoursePdfExport> exportByCourseId = pdfExportRepository.findAll()
@@ -72,6 +81,12 @@ public class CoursePdfExportServiceImpl implements CoursePdfExportService {
                             .courseTitle(course.getTitle())
                             .thumbnail(course.getThumbnail())
                             .level(course.getLevel() != null ? course.getLevel().name() : null)
+                            .categoryIds(course.getCategories() != null
+                                    ? course.getCategories().stream().map(Category::getId).toList()
+                                    : Collections.emptyList())
+                            .categoryNames(course.getCategories() != null
+                                    ? course.getCategories().stream().map(Category::getName).toList()
+                                    : Collections.emptyList())
                             .build();
                 })
                 .toList();
@@ -289,5 +304,44 @@ public class CoursePdfExportServiceImpl implements CoursePdfExportService {
             }
         }
         return 0;
+    }
+
+    private boolean matchesSearch(Course course, String search) {
+        if (!StringUtils.hasText(search)) return true;
+
+        String keyword = search.trim().toLowerCase();
+        String title = course.getTitle() == null ? "" : course.getTitle().toLowerCase();
+        String slug = course.getSlug() == null ? "" : course.getSlug().toLowerCase();
+        return title.contains(keyword) || slug.contains(keyword);
+    }
+
+    private boolean matchesStatus(Course course, String status) {
+        if (!StringUtils.hasText(status)) return true;
+
+        try {
+            CourseStatus expected = CourseStatus.valueOf(status.trim().toUpperCase());
+            return course.getStatus() == expected;
+        } catch (IllegalArgumentException ignored) {
+            return true;
+        }
+    }
+
+    private boolean matchesLevel(Course course, String level) {
+        if (!StringUtils.hasText(level)) return true;
+
+        try {
+            CourseLevel expected = CourseLevel.valueOf(level.trim().toUpperCase());
+            return course.getLevel() == expected;
+        } catch (IllegalArgumentException ignored) {
+            return true;
+        }
+    }
+
+    private boolean matchesCategory(Course course, Long categoryId) {
+        if (categoryId == null) return true;
+        if (course.getCategories() == null || course.getCategories().isEmpty()) return false;
+
+        return course.getCategories().stream()
+                .anyMatch(category -> category != null && category.getId() != null && category.getId().equals(categoryId));
     }
 }

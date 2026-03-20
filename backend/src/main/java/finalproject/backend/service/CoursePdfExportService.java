@@ -7,7 +7,7 @@ import java.util.List;
 
 public interface CoursePdfExportService {
 
-    ApiResponse<List<CoursePdfExportResponse>> getAllCoursePdfs();
+    ApiResponse<List<CoursePdfExportResponse>> getAllCoursePdfs(String search, String status, String level, Long categoryId);
     ApiResponse<CoursePdfExportResponse> getPdfExportByCourse(Long courseId);
     ApiResponse<CoursePdfExportResponse> savePdfExport(Long courseId, String pdfUrl,
                                                         String pdfName, Long pdfSizeKb,
