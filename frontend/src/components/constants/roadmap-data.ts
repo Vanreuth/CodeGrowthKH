@@ -39,7 +39,7 @@ export const learningCourseLinks = [
   { label: "Next.js ជាភាសាខ្មែរ", href: "/courses/nextjs-ជាភាសាខ្មែរ" },
   { label: "Java ជាភាសាខ្មែរ", href: "/courses/java-ជាភាសាខ្មែរ" },
   { label: "Spring Boot ជាភាសាខ្មែរ", href: "/courses/spring-boot-ជាភាសាខ្មែរ" },
-  { label: "Git & DevOps Fundamentals", href: "/courses//git-devops-fundamentals-1" },
+  { label: "Git & DevOps Fundamentals", href: "/courses/git-devops-fundamentals-1" },
 ] as const;
 
 export const roadmapPaths: RoadmapPath[] = [
