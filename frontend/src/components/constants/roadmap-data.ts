@@ -101,15 +101,15 @@ export const roadmapPaths: RoadmapPath[] = [
           "បង្កើតគេហទំព័រ Portfolio ផ្ទាល់ខ្លួន ដែលមានច្រើនផ្នែក (About, Skills, Projects, Contact) ដំណើរការបានល្អលើទូរស័ព្ទ Tablet និង Desktop ហើយ deploy ទៅ GitHub Pages ដើម្បីឱ្យអ្នកដទៃចូលមើលបាន",
         color: "from-orange-500 to-pink-500",
         resources: [
-          { label: "HTML Course", url: "/courses/html-សម្រាប់អ្នកចាប់ផ្តើម", internal: true },
+          { label: "HTML Course", url: "/courses/html-សម្រាប់អ្នកចាប់ផ្តើម-1", internal: true },
           {
             label: "CSS Course",
-            url: "/courses/css-styling-ជាភាសាខ្មែរ-full-course",
+            url: "/courses/css-styling-ជាភាសាខ្មែរ-full-course-1",
             internal: true,
           },
           {
             label: "Git & DevOps Course",
-            url: "/courses/git-devops-fundamentals",
+            url: "/courses/git-devops-fundamentals-1",
             internal: true,
           },
           { label: "MDN Web Docs", url: "https://developer.mozilla.org" },
@@ -173,7 +173,7 @@ export const roadmapPaths: RoadmapPath[] = [
         resources: [
           {
             label: "JavaScript Course",
-            url: "/courses/javascript-ជាភាសាខ្មែរ",
+            url: "/courses/javascript-ជាភាសាខ្មែរ-1",
             internal: true,
           },
           { label: "JavaScript.info", url: "https://javascript.info" },
@@ -237,7 +237,7 @@ export const roadmapPaths: RoadmapPath[] = [
         resources: [
           {
             label: "React Course",
-            url: "/courses/reactjs-ជាភាសាខ្មែរ",
+            url: "/courses/reactjs-ជាភាសាខ្មែរ-1",
             internal: true,
           },
           { label: "React Docs", url: "https://react.dev" },
@@ -577,7 +577,7 @@ export const roadmapPaths: RoadmapPath[] = [
         resources: [
           {
             label: "Git & DevOps Course",
-            url: "/courses/git-devops-fundamentals",
+            url: "/courses/git-devops-fundamentals-1",
             internal: true,
           },
           { label: "Docker Docs", url: "https://docs.docker.com" },
@@ -667,22 +667,22 @@ export const roadmapPaths: RoadmapPath[] = [
         resources: [
           {
             label: "HTML Course",
-            url: "/courses/html-សម្រាប់អ្នកចាប់ផ្តើម",
+            url: "/courses/html-សម្រាប់អ្នកចាប់ផ្តើម-11",
             internal: true,
           },
           {
             label: "CSS Course",
-            url: "/courses/css-styling-ជាភាសាខ្មែរ-full-course",
+            url: "/courses/css-styling-ជាភាសាខ្មែរ-full-course-1",
             internal: true,
           },
           {
             label: "JavaScript Course",
-            url: "/courses/javascript-ជាភាសាខ្មែរ",
+            url: "/courses/javascript-ជាភាសាខ្មែរ-1",
             internal: true,
           },
           {
             label: "Git & DevOps Course",
-            url: "/courses/git-devops-fundamentals",
+            url: "/courses/git-devops-fundamentals-1",
             internal: true,
           },
           { label: "MDN Web Docs", url: "https://developer.mozilla.org" },
@@ -746,7 +746,7 @@ export const roadmapPaths: RoadmapPath[] = [
         resources: [
           {
             label: "React Course",
-            url: "/courses/reactjs-ជាភាសាខ្មែរ",
+            url: "/courses/reactjs-ជាភាសាខ្មែរ-1",
             internal: true,
           },
           { label: "React Docs", url: "https://react.dev" },
@@ -933,7 +933,7 @@ export const roadmapPaths: RoadmapPath[] = [
         resources: [
           {
             label: "Git & DevOps Course",
-            url: "/courses/git-devops-fundamentals",
+            url: "/courses/git-devops-fundamentals-1",
             internal: true,
           },
           { label: "Docker Docs", url: "https://docs.docker.com" },
