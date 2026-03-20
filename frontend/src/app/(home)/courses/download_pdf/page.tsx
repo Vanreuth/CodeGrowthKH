@@ -1,9 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Loader2, Sparkles } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import type { CoursePdfExportResponse } from "@/types/coursePDFType";
+import { courseService } from "@/lib/api/courseService";
 import { pdfService } from "@/lib/api/pdfService";
+import { useCategories } from "@/hooks/useCategories";
 import { toast } from "sonner";
 import { PdfCourseCard, type BusyAction, type LevelOption, normalizeLevel } from "@/components/course/PdfCourseCard";
 import { PdfFilterBar } from "@/components/course/PdfFilterBar";
@@ -18,7 +20,13 @@ export default function CourseDownloadPdfPage() {
   const [loadingRows, setLoadingRows] = useState(true);
   const [query, setQuery] = useState("");
   const [selectedLevel, setSelectedLevel] = useState<LevelOption>("All");
+  const [selectedCategory, setSelectedCategory] = useState("All");
+  const [selectedCategoryId, setSelectedCategoryId] = useState<number | undefined>(undefined);
+  const [categoryCourseIds, setCategoryCourseIds] = useState<Set<number> | null>(null);
   const [busyByCourse, setBusyByCourse] = useState<Record<number, BusyAction | undefined>>({});
+  const [debouncedQuery, setDebouncedQuery] = useState("");
+
+  const { data: categoriesPage } = useCategories({ size: 100, sortBy: "orderIndex", sortDir: "asc" });
 
   const mergeRow = useCallback((row: CoursePdfExportResponse) => {
     setRows((prev) => prev.map((item) => (item.courseId === row.courseId ? { ...item, ...row } : item)));
@@ -32,10 +40,17 @@ export default function CourseDownloadPdfPage() {
     return generated;
   }, [rows, mergeRow]);
 
-  const loadRows = useCallback(async () => {
+  const loadRows = useCallback(async (params?: { search?: string; level?: LevelOption }) => {
     setLoadingRows(true);
     try {
-      const data = await pdfService.getAll();
+      const data = await pdfService.getAll({
+        search: params?.search || undefined,
+        status: "PUBLISHED",
+        level: params?.level && params.level !== "All" && params.level !== "OTHER"
+          ? params.level
+          : undefined,
+        categoryId: selectedCategoryId,
+      });
       setRows(data);
     } catch (error) {
       toast.error(toErrorMessage(error, "មិនអាចផ្ទុកបញ្ជី Course PDF"));
@@ -43,19 +58,95 @@ export default function CourseDownloadPdfPage() {
     } finally {
       setLoadingRows(false);
     }
-  }, []);
+  }, [selectedCategoryId]);
 
-  useEffect(() => { void loadRows(); }, [loadRows]);
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      setDebouncedQuery(query.trim());
+    }, 250);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [query]);
+
+  useEffect(() => {
+    void loadRows({
+      search: debouncedQuery || undefined,
+      level: selectedLevel,
+    });
+  }, [debouncedQuery, selectedLevel, selectedCategoryId, loadRows]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadCategoryCourseIds() {
+      if (selectedCategoryId === undefined) {
+        setCategoryCourseIds(null);
+        return;
+      }
+
+      try {
+        const page = await courseService.getAll({
+          page: 0,
+          size: 500,
+          sortBy: "orderIndex",
+          sortDir: "asc",
+          status: "PUBLISHED",
+          categoryId: selectedCategoryId,
+        });
+
+        if (cancelled) return;
+        setCategoryCourseIds(new Set(page.content.map((course) => course.id)));
+      } catch {
+        if (cancelled) return;
+        setCategoryCourseIds(null);
+      }
+    }
+
+    void loadCategoryCourseIds();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedCategoryId]);
 
   const filteredRows = useMemo(() => {
-    const keyword = query.trim().toLowerCase();
     return rows.filter((row) => {
       const level = normalizeLevel(row.level);
-      const matchesLevel = selectedLevel === "All" || level === selectedLevel;
-      const matchesQuery = keyword.length === 0 || row.courseTitle.toLowerCase().includes(keyword);
-      return matchesLevel && matchesQuery;
+      const matchesLevel =
+        selectedLevel === "All"
+          ? true
+          : selectedLevel === "OTHER"
+            ? level === "OTHER"
+            : level === selectedLevel;
+
+      const matchesCategory =
+        selectedCategoryId === undefined
+          ? true
+          : categoryCourseIds
+            ? categoryCourseIds.has(row.courseId)
+            : (row.categoryIds ?? []).includes(selectedCategoryId);
+
+      return matchesLevel && matchesCategory;
     });
-  }, [rows, query, selectedLevel]);
+  }, [rows, selectedLevel, selectedCategoryId, categoryCourseIds]);
+
+  const categoryOptions = useMemo(() => {
+    const apiCategories = categoriesPage?.content ?? [];
+    return [{ id: undefined, name: "All" }, ...apiCategories.map((category) => ({
+      id: category.id,
+      name: category.name,
+    }))];
+  }, [categoriesPage]);
+
+  const hasActiveFilters =
+    query.trim().length > 0 || selectedLevel !== "All" || selectedCategoryId !== undefined;
+
+  const clearFilters = useCallback(() => {
+    setQuery("");
+    setSelectedLevel("All");
+    setSelectedCategory("All");
+    setSelectedCategoryId(undefined);
+  }, []);
 
   const setBusy = useCallback((courseId: number, action?: BusyAction) => {
     setBusyByCourse((prev) => {
@@ -123,7 +214,7 @@ export default function CourseDownloadPdfPage() {
 					 ទាញយកសៀវភៅមេរៀន<span className="bg-gradient-to-r from-violet-600 to-pink-500 bg-clip-text text-transparent">PDFរបស់យើង</span>
 				</h2>
 				<p className="mx-auto mt-3 max-w-3xl text-sm text-slate-600 dark:text-slate-400 md:text-base">
-				 ទាញយកសៀវភៅមេរៀនសម្រាប់វគ្គសិក្សានីមួយៗ ជាមួយប៊ូតុងតែម្តង។ ប្រសិនបើមិនទាន់មាន PDF ប្រព័ន្ធនឹងបង្កើតអោយស្វ័យប្រវត្តិ។
+				 ទាញយកសៀវភៅមេរៀនសម្រាប់វគ្គសិក្សានីមួយៗ ជាមួយប៊ូតុងតែម្តង។
 				</p>
 			</div>
 
@@ -133,7 +224,15 @@ export default function CourseDownloadPdfPage() {
         onQueryChange={setQuery}
         selectedLevel={selectedLevel}
         onLevelChange={setSelectedLevel}
+        selectedCategory={selectedCategory}
+        onCategoryChange={(name, id) => {
+          setSelectedCategory(name);
+          setSelectedCategoryId(id);
+        }}
+        categoryOptions={categoryOptions}
         totalCount={filteredRows.length}
+        hasActiveFilters={hasActiveFilters}
+        onClearFilters={clearFilters}
       />
       {/* ── Grid ── */}
       {loadingRows ? (
@@ -143,7 +242,9 @@ export default function CourseDownloadPdfPage() {
         </div>
       ) : filteredRows.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-border bg-card/60 p-10 text-center text-sm text-muted-foreground">
-          មិនមានវគ្គសិក្សាត្រូវនឹងការស្វែងរកទេ។
+          {hasActiveFilters
+            ? "មិនមានវគ្គសិក្សាត្រូវនឹង filter ដែលអ្នកបានជ្រើសទេ។"
+            : "មិនទាន់មានវគ្គសិក្សាសម្រាប់ទាញយក PDF នៅឡើយទេ។"}
         </div>
       ) : (
         <section className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
@@ -162,5 +263,3 @@ export default function CourseDownloadPdfPage() {
     </div>
   );
 }
-
-

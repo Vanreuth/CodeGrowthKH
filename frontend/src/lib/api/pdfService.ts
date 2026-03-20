@@ -1,12 +1,13 @@
 import { get, post, del } from '@/lib/api/client'
 import type { CoursePdfExportResponse } from '@/types/coursePDFType'
+import type { CourseFilterParams } from '@/types/api'
 
 const PDF_PATH = '/api/v1/course/pdf'
 
 export const pdfService = {
   /** GET / → CoursePdfExportResponse[] */
-  getAll: (): Promise<CoursePdfExportResponse[]> =>
-    get<CoursePdfExportResponse[]>(PDF_PATH),
+  getAll: (params: Pick<CourseFilterParams, 'search' | 'status' | 'level' | 'categoryId'> = {}): Promise<CoursePdfExportResponse[]> =>
+    get<CoursePdfExportResponse[]>(PDF_PATH, { params }),
 
   /** GET /:courseId */
   getByCourse: (courseId: number): Promise<CoursePdfExportResponse> =>

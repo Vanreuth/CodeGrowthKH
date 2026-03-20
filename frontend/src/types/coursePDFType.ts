@@ -8,6 +8,8 @@ export interface CoursePdfExportResponse {
   courseTitle: string
   thumbnail?: string | null
   level?: string | null
+  categoryIds?: number[]
+  categoryNames?: string[]
   pdfName?: string
   pdfSizeKb?: number
   totalPages?: number

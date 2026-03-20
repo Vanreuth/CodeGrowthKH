@@ -144,14 +144,6 @@ export function PdfCourseCard({
           </div>
 
           <div className="flex items-center justify-between text-xs">
-            <button
-                type="button"
-                onClick={() => onGenerate(row.courseId)}
-                disabled={busy}
-                className="text-muted-foreground hover:text-blue-600 disabled:opacity-50 dark:hover:text-blue-300"
-            >
-              បង្កើត/អាប់ដេត PDF
-            </button>
 
             <button
                 type="button"
