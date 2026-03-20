@@ -41,14 +41,17 @@ export default function CourseLessonPage() {
   useEffect(() => {
     if (!courseSlug || !rawLessonParam || !pathname) return;
 
-    if (/\.asp$/i.test(rawLessonParam)) {
-      const canonicalLesson = lessonFromPath;
-      const canonical = `/courses/${encodeURIComponent(courseSlug)}/${encodeURIComponent(canonicalLesson)}`;
-      if (pathname !== canonical) {
-        router.replace(canonical, { scroll: false });
-      }
+    const canonicalLesson = lessonFromQuery || lessonFromPath;
+    if (!canonicalLesson) return;
+
+    const params = new URLSearchParams(searchParams?.toString());
+    params.set("lesson", canonicalLesson);
+    const canonical = `/courses/${encodeURIComponent(courseSlug)}?${params.toString()}`;
+
+    if (`${pathname}${searchParams?.toString() ? `?${searchParams.toString()}` : ""}` !== canonical) {
+      router.replace(canonical, { scroll: false });
     }
-  }, [courseSlug, lessonFromPath, pathname, rawLessonParam, router]);
+  }, [courseSlug, lessonFromPath, lessonFromQuery, pathname, rawLessonParam, router, searchParams]);
 
   const initialLessonSlug = lessonFromQuery || lessonFromPath;
 

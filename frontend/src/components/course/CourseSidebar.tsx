@@ -53,8 +53,7 @@ interface CourseSidebarProps {
   onExpandToggle: (chapterId: number) => void;
   onLessonClick: (lesson: LessonResponse, e: React.MouseEvent) => void;
   onPdfDownload: () => void;
-  lessonPathSegment: (slug?: string | null, title?: string | null) => string;
-  slug: string;
+  getLessonHref: (lesson: LessonResponse) => string;
 }
 
 export function CourseSidebar({
@@ -74,8 +73,7 @@ export function CourseSidebar({
   onExpandToggle,
   onLessonClick,
   onPdfDownload,
-  lessonPathSegment,
-  slug,
+  getLessonHref,
 }: CourseSidebarProps) {
   return (
     <>
@@ -174,10 +172,12 @@ export function CourseSidebar({
             >
               {pdfDownloading ? (
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : !isAuthenticated ? (
+                <LogIn className="h-3.5 w-3.5" />
               ) : (
                 <Download className="h-3.5 w-3.5" />
               )}
-              Download PDF
+              {isAuthenticated ? "Download PDF" : "Sign in to Download PDF"}
             </button>
           </div>
         )}
@@ -290,7 +290,7 @@ export function CourseSidebar({
                       return (
                         <Link
                           key={lesson.id}
-                          href={`/courses/${slug}/${lessonPathSegment(lesson.slug, lesson.title)}`}
+                          href={getLessonHref(lesson)}
                           onClick={(e) => onLessonClick(lesson, e)}
                           className="sidebar-lesson-item lesson-link flex items-center gap-2.5 px-2 py-2 rounded-lg mb-0.5 relative"
                           style={{

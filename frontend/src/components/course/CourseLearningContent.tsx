@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import Link from "next/link";
-import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { courseService } from "@/lib/api/courseService";
@@ -121,10 +121,18 @@ function toUrlSlug(title: string): string {
     .replace(/^-|-$/g, "");
 }
 
-function lessonPathSegment(slug?: string | null, title?: string | null): string {
-  const raw = (title ? toUrlSlug(title) : null) || slug;
-  const normalized = normalizeLessonSlug(raw);
-  return normalized ? encodeURIComponent(normalized) : "";
+function buildLessonHref(
+  courseSlug: string,
+  lessonSlug?: string | null,
+  lessonTitle?: string | null
+): string {
+  const coursePath = `/courses/${encodeURIComponent(courseSlug)}`;
+  const lessonSegment = normalizeLessonSlug(
+    (lessonTitle ? toUrlSlug(lessonTitle) : null) || lessonSlug
+  );
+  if (!lessonSegment) return coursePath;
+  const params = new URLSearchParams({ lesson: lessonSegment });
+  return `${coursePath}?${params.toString()}`;
 }
 
 function hasLessonPayload(lesson?: LessonResponse | null) {
@@ -167,6 +175,10 @@ export function CourseLearningContent({ courseSlug, initialLessonSlug }: Props) 
 
   const { user } = useAuth();
   const isAuthenticated = Boolean(user);
+  const getCurrentReturnUrl = useCallback(() => {
+    if (typeof window === "undefined") return `/courses/${encodeURIComponent(slug)}`;
+    return `${window.location.pathname}${window.location.search}`;
+  }, [slug]);
 
   // completedLessons is now derived from useMyProgress (React Query) — no localStorage needed
   const { data: progressData } = useMyProgress();
@@ -179,6 +191,14 @@ export function CourseLearningContent({ courseSlug, initialLessonSlug }: Props) 
   const { data: pdfData, downloading: pdfDownloading, incrementDownload } = useCoursePdf(course?.id ?? 0);
 
   const handlePdfDownload = async () => {
+    if (!isAuthenticated) {
+      toast.info("Please sign in to download the PDF", { duration: 2000 });
+      setTimeout(() => {
+        router.push(`/login?returnUrl=${encodeURIComponent(getCurrentReturnUrl())}`);
+      }, 1500);
+      return;
+    }
+
     const result = await incrementDownload();
     const url = result?.fileUrl ?? pdfData?.fileUrl;
     if (url) window.open(url, "_blank");
@@ -300,21 +320,21 @@ export function CourseLearningContent({ courseSlug, initialLessonSlug }: Props) 
   const openLesson = useCallback(
     async (lesson: LessonResponse, options: OpenLessonOptions = {}) => {
       const { syncUrl = true, history = "push" } = options;
+      const selectionPromise = selectLesson(lesson);
+
       if (syncUrl && typeof window !== "undefined") {
-        const lessonPath = lessonPathSegment(lesson.slug, lesson.title);
-        if (lessonPath) {
-          const href = `/courses/${slug}/${lessonPath}`;
-          const currentPath = window.location.pathname;
-          if (currentPath !== href) {
-            if (history === "replace") {
-              router.replace(href, { scroll: false });
-            } else {
-              router.push(href, { scroll: false });
-            }
+        const href = buildLessonHref(slug, lesson.slug, lesson.title);
+        const currentHref = `${window.location.pathname}${window.location.search}`;
+        if (currentHref !== href) {
+          if (history === "replace") {
+            router.replace(href, { scroll: false });
+          } else {
+            router.push(href, { scroll: false });
           }
         }
       }
-      await selectLesson(lesson);
+
+      await selectionPromise;
     },
     [router, selectLesson, slug]
   );
@@ -379,7 +399,7 @@ export function CourseLearningContent({ courseSlug, initialLessonSlug }: Props) 
     if (!isAuthenticated) {
       toast.info("សូមចូលប្រើប្រាស់ដើម្បីរក្សាទុកវឌ្ឍនភាព", { duration: 2000 });
       setTimeout(
-        () => router.push(`/login?returnUrl=${encodeURIComponent(window.location.pathname)}`),
+        () => router.push(`/login?returnUrl=${encodeURIComponent(getCurrentReturnUrl())}`),
         1500,
       );
       return;
@@ -525,8 +545,7 @@ export function CourseLearningContent({ courseSlug, initialLessonSlug }: Props) 
           }
           onLessonClick={handleLessonClick}
           onPdfDownload={handlePdfDownload}
-          lessonPathSegment={lessonPathSegment}
-          slug={slug}
+          getLessonHref={(lesson) => buildLessonHref(slug, lesson.slug, lesson.title)}
         />
       </aside>
 
